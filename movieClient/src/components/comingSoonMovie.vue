@@ -1,9 +1,13 @@
-<script setup></script>
+<script setup>
+  
+</script>
 
 <template>
   <div>
-    <h1>即將上映</h1>
+  <h1>即將上映</h1>
   </div>
 </template>
 
-<style lang="css" scoped></style>
+<style lang="css" scoped>
+
+</style>

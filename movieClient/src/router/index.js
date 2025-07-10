@@ -1,6 +1,6 @@
 import CinemaEvent from "@/components/cinemaEvent.vue";
 import ComingSoonMovie from "@/components/comingSoonMovie.vue";
-import homeView from "@/components/homeView.vue";
+import homeView from "@/components/HomeView.vue";
 import MemberCenter from "@/components/memberCenter.vue";
 import MemberEvent from "@/components/memberEvent.vue";
 import OnShowMovie from "@/components/onShowMovie.vue";

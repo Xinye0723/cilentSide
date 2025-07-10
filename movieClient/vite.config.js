@@ -15,4 +15,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://localhost:7181/", // 後端實際位址
+        changeOrigin: true,
+        secure: false, // 若是自簽憑證要設 false
+      },
+    },
+  },
 })
