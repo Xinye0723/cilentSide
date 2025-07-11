@@ -10,21 +10,18 @@ import FooterView from "./components/footerView.vue";
 <template>
   <div class="d-flex flex-column min-vh-100">
     <!-- 置頂導覽列 (固定) -->
-    <div>
-      <HeaderView></HeaderView>
-    </div>
+    <HeaderView />
 
-    <!-- 2️⃣ 內容區：flex-fill 把「Header ↕︎ Footer」之間的空隙全部吃掉 -->
-
-    <body class="pt-4">
-      <RouterView></RouterView>
-    </body>
+    <!-- 內容區：放路由切換的畫面 -->
+    <main class="flex-fill pt-4">
+      <RouterView />
+    </main>
 
     <!-- 頁腳 -->
-    <div>
-      <FooterView></FooterView>
-    </div>
+    <FooterView />
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* 若你有全域背景或樣式可加在這 */
+</style>

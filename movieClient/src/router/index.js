@@ -6,6 +6,8 @@ import MemberEvent from "@/components/memberEvent.vue";
 import OnShowMovie from "@/components/onShowMovie.vue";
 import SocialArea from "@/components/socialArea.vue";
 import TicketView from "@/components/ticketView.vue";
+import EventDetail from "@/views/EventDetail.vue";
+
 import { createRouter, createWebHistory } from "vue-router";
 const routes = [
   {
@@ -24,6 +26,7 @@ const routes = [
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/socialArea", component: SocialArea, name: "socialArea" },
   { path: "/memberCenter", component: MemberCenter, name: "memberCenter" },
+  { path: "/event/:id",component:EventDetail,name:"EventDetail"},
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

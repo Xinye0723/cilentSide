@@ -36,17 +36,26 @@ const events = ref([
     </div>
 
     <div class="event-grid">
-      <div v-for="event in events" :key="event.id" class="event-card">
-        <img :src="event.image" alt="活動圖片" class="event-image" />
-        <div class="event-category">{{ event.category }}</div>
-        <h3 class="event-title">{{ event.title }}</h3>
-        <p class="event-description">{{ event.description }}</p>
-      </div>
+      <RouterLink v-for="event in events" :key="event.id" :to="`/event/${event.id}`" class="event-card-link" >
+        <div class="event-card">
+          <img :src="event.image" alt="活動圖片" class="event-image" />
+          <div class="event-category">{{ event.category }}</div>
+          <h3 class="event-title">{{ event.title }}</h3>
+          <p class="event-description">{{ event.description }}</p>
+        </div>
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
+
+.event-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .cinema-event {
   background-color: #0d0d1c;
   color: white;
