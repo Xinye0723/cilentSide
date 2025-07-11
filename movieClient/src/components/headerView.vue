@@ -59,20 +59,15 @@ function scrollToFooter() {
         <span class="bar" /><span class="bar" /><span class="bar" />
       </button>
 
-<<<<<<< HEAD
-      <ul class="nav-links" :class="{ active: isMenuOpen }">
-        <li>
-          <RouterLink :to="{ name: 'about' }" @click="toggleMenu">關於影城</RouterLink>
-        </li>
-=======
       <ul class="nav-links z-50" :class="{ active: isMenuOpen }">
->>>>>>> xinye1
         <li
           class="dropdown"
           @mouseenter="showMovieSubmenu = true"
           @mouseleave="showMovieSubmenu = false"
         >
-          <RouterLink :to="{ name: 'movie' }" @click="toggleMenu">電影介紹</RouterLink>
+          <RouterLink :to="{ name: 'movie' }" @click="toggleMenu"
+            >電影介紹</RouterLink
+          >
           <ul class="submenu mt-2" v-show="showMovieSubmenu">
             <li>
               <RouterLink :to="{ name: 'onShowMovie' }" @click="toggleMenu"
@@ -96,7 +91,9 @@ function scrollToFooter() {
           @mouseenter="showEventSubmenu = true"
           @mouseleave="showEventSubmenu = false"
         >
-          <RouterLink :to="{ name: 'event' }" @click="toggleMenu">活動公告</RouterLink>
+          <RouterLink :to="{ name: 'event' }" @click="toggleMenu"
+            >活動公告</RouterLink
+          >
           <ul class="submenu mt-2" v-show="showEventSubmenu">
             <li>
               <RouterLink :to="{ name: 'cinemaEvent' }" @click="toggleMenu"
@@ -116,13 +113,9 @@ function scrollToFooter() {
           >
         </li>
         <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
-      </ul>
-    </div>
-    <div class="navbar-member">
-      <ul class="nav-links" :class="{ active: isMenuOpen }">
         <li>
           <RouterLink :to="{ name: 'memberCenter' }" @click="toggleMenu">
-            <i class="bi bi-person-circle" style="font-size:1.7rem;"></i>
+            會員中心
           </RouterLink>
         </li>
       </ul>
