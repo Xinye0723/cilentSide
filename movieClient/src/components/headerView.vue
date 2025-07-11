@@ -47,7 +47,7 @@ function scrollToFooter() {
 <template>
   <nav class="navbar fixed-top" :class="{ scrolled: isScrolled }">
     <div class="logo">
-      <RouterLink :to="{ name: 'home' }">INFINITE CINEMA</RouterLink>
+      <RouterLink :to="{ name: 'home' }">INFINITY CINEMA</RouterLink>
     </div>
     <div class="navbar-container">
       <button
@@ -60,12 +60,15 @@ function scrollToFooter() {
       </button>
 
       <ul class="nav-links" :class="{ active: isMenuOpen }">
+        <li>
+          <RouterLink :to="{ name: 'about' }" @click="toggleMenu">關於影城</RouterLink>
+        </li>
         <li
           class="dropdown"
           @mouseenter="showMovieSubmenu = true"
           @mouseleave="showMovieSubmenu = false"
         >
-          <a href="#" @click="toggleMenu">電影介紹</a>
+          <RouterLink :to="{ name: 'movie' }" @click="toggleMenu">電影介紹</RouterLink>
           <ul class="submenu mt-2" v-show="showMovieSubmenu">
             <li>
               <RouterLink :to="{ name: 'onShowMovie' }" @click="toggleMenu"
@@ -89,7 +92,7 @@ function scrollToFooter() {
           @mouseenter="showEventSubmenu = true"
           @mouseleave="showEventSubmenu = false"
         >
-          <a href="#" @click="toggleMenu">活動公告</a>
+          <RouterLink :to="{ name: 'event' }" @click="toggleMenu">活動公告</RouterLink>
           <ul class="submenu mt-2" v-show="showEventSubmenu">
             <li>
               <RouterLink :to="{ name: 'cinemaEvent' }" @click="toggleMenu"
@@ -109,10 +112,14 @@ function scrollToFooter() {
           >
         </li>
         <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
+      </ul>
+    </div>
+    <div class="navbar-member">
+      <ul class="nav-links" :class="{ active: isMenuOpen }">
         <li>
-          <RouterLink :to="{ name: 'memberCenter' }" @click="toggleMenu"
-            >會員中心</RouterLink
-          >
+          <RouterLink :to="{ name: 'memberCenter' }" @click="toggleMenu">
+            <i class="bi bi-person-circle" style="font-size:1.7rem;"></i>
+          </RouterLink>
         </li>
       </ul>
     </div>
@@ -169,6 +176,12 @@ function scrollToFooter() {
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
+  transform: translateX(-120px);
+}
+.navbar-member {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .logo {

@@ -1,6 +1,6 @@
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+    <h1>關於影城</h1>
   </div>
 </template>
 
@@ -11,5 +11,8 @@
     display: flex;
     align-items: center;
   }
+}
+h1 {
+  color: white;
 }
 </style>
