@@ -1,8 +1,10 @@
-<script setup></script>
+<script setup>
+import NowPlayingView from "@/views/NowPlayingView.vue";
+</script>
 
 <template>
   <div>
-    <h1>訂票頁面</h1>
+    <NowPlayingView></NowPlayingView>
   </div>
 </template>
 

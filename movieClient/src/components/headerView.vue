@@ -59,10 +59,14 @@ function scrollToFooter() {
         <span class="bar" /><span class="bar" /><span class="bar" />
       </button>
 
+<<<<<<< HEAD
       <ul class="nav-links" :class="{ active: isMenuOpen }">
         <li>
           <RouterLink :to="{ name: 'about' }" @click="toggleMenu">關於影城</RouterLink>
         </li>
+=======
+      <ul class="nav-links z-50" :class="{ active: isMenuOpen }">
+>>>>>>> xinye1
         <li
           class="dropdown"
           @mouseenter="showMovieSubmenu = true"
@@ -501,4 +505,15 @@ section:nth-child(even) {
 /* 子選單 hover 色（需要再開啟） */
 /* .submenu li a:hover,
    .submenu li router-link:hover { background-color: #f0f0f0; } */
+/* 讓絕對定位的 submenu 不會被裁掉 */
+.navbar,
+.nav-links,
+.dropdown {
+  overflow: visible !important;
+}
+
+/* 讓 submenu 穩居最上層（高於卡片/overlay） */
+.submenu {
+  z-index: 2000; /* 比 .navbar 的 1000 再高一層即可 */
+}
 </style>

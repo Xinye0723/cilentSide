@@ -1,6 +1,10 @@
 import CinemaEvent from "@/components/cinemaEvent.vue";
 import ComingSoonMovie from "@/components/comingSoonMovie.vue";
+<<<<<<< HEAD
 import HomeView from "@/components/HomeView.vue";
+=======
+import homeView from "@/components/HomeView.vue";
+>>>>>>> xinye1
 import MemberCenter from "@/components/memberCenter.vue";
 import MemberEvent from "@/components/memberEvent.vue";
 import MovieView from "@/components/MovieView.vue";
