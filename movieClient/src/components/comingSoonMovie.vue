@@ -1,4 +1,5 @@
 <script setup>
+<<<<<<< HEAD
 import { computed, onMounted, ref } from 'vue';
 
   const tags = ['8月', '9月', '10月', '11月', '12月']
@@ -35,10 +36,14 @@ import { computed, onMounted, ref } from 'vue';
       allMovies.value = data.filter(m => m.movieStatusId === 1);
     });
   });
+=======
+  
+>>>>>>> 52c569e7ae41cca9a59a21828abaa70cbd4bcf5f
 </script>
 
 <template>
   <div>
+<<<<<<< HEAD
     <!-- 篩選 chips -->
     <div class="chips-row">
       <button v-for="(tag, idx) in tags" :key="tag" class="chip" :class="{active: activeTag.value === idx}" 
@@ -51,10 +56,14 @@ import { computed, onMounted, ref } from 'vue';
         <div class="movie-title">{{ movie.movieNameChinese }}</div>
       </div>
     </div>
+=======
+  <h1>即將上映</h1>
+>>>>>>> 52c569e7ae41cca9a59a21828abaa70cbd4bcf5f
   </div>
 </template>
 
 <style lang="css" scoped>
+<<<<<<< HEAD
   .chips-row {
     max-width: 500px;
     margin: 0 auto;
@@ -85,3 +94,7 @@ import { computed, onMounted, ref } from 'vue';
     position: relative;
   }
 </style>
+=======
+
+</style>
+>>>>>>> 52c569e7ae41cca9a59a21828abaa70cbd4bcf5f

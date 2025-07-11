@@ -15,10 +15,18 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
+<<<<<<< HEAD
         target: "https://localhost:7181", // 後端實際位址
+=======
+        target: "https://localhost:7181/", // 後端實際位址
+>>>>>>> 52c569e7ae41cca9a59a21828abaa70cbd4bcf5f
         changeOrigin: true,
         secure: false, // 若是自簽憑證要設 false
       },
     },
   },
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> 52c569e7ae41cca9a59a21828abaa70cbd4bcf5f
