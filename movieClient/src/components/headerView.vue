@@ -47,7 +47,7 @@ function scrollToFooter() {
 <template>
   <nav class="navbar fixed-top" :class="{ scrolled: isScrolled }">
     <div class="logo">
-      <RouterLink :to="{ name: 'home' }">INFINITE CINEMA</RouterLink>
+      <RouterLink :to="{ name: 'home' }">INFINITY CINEMA</RouterLink>
     </div>
     <div class="navbar-container">
       <button
