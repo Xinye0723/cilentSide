@@ -1,10 +1,10 @@
 <script setup>
-import NowPlayingView from "@/views/NowPlayingView.vue";
+import MovieGallery from "./MovieGallery.vue";
 </script>
 
 <template>
   <div>
-    <NowPlayingView></NowPlayingView>
+    <MovieGallery></MovieGallery>
   </div>
 </template>
 

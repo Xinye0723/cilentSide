@@ -75,7 +75,7 @@ function scrollToFooter() {
               >
             </li>
             <li>
-              <RouterLink :to="{ name: 'comingSonnMovie' }" @click="toggleMenu"
+              <RouterLink :to="{ name: 'comingSoonMovie' }" @click="toggleMenu"
                 >即將上映</RouterLink
               >
             </li>
