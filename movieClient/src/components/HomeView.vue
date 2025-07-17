@@ -1,7 +1,7 @@
 <script setup>
-import { ref, shallowRef } from "vue";
 import Status1View from "@/movies/Status1View.vue";
 import Status2View from "@/movies/Status2View.vue";
+import { ref } from "vue";
 
 const apiUrl = "https://localhost:7181/api/Movies";
 const movies = ref([]);
@@ -12,8 +12,9 @@ fetch(apiUrl)
   .then((response) => response.json())
   .then((datas) => {
     movies.value = datas;
+    // ✅ 依照 DisplayOrder 排序
     const sorted = datas
-      .filter((m) => m.isActive)
+      .filter((m) => m.isActive) // 只要啟用中的
       .sort((a, b) => a.displayOrder - b.displayOrder);
     nowShowing.value = sorted
       .filter((movie) => movie.movieStatusId === 2)
@@ -23,7 +24,7 @@ fetch(apiUrl)
       .slice(0, 7);
   });
 
-const tabs = shallowRef([
+const tabs = ref([
   { name: "現正熱映", component: Status1View },
   { name: "即將上映", component: Status2View },
 ]);
@@ -31,7 +32,6 @@ const activedIndex = ref(0);
 const setActive = (index) => {
   activedIndex.value = index;
 };
-
 // const nowShowing = [
 //   {
 //     MovieId: 1,

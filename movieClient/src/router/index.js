@@ -1,16 +1,17 @@
 import BookTicket from "@/components/bookTicket.vue";
 import CinemaEvent from "@/components/cinemaEvent.vue";
-import ComingSoonMovie from "@/components/comingSoonMovie.vue";
+import ComingSoonMovie from "@/movies/comingSoonMovie.vue";
 import HomeView from "@/components/HomeView.vue";
 import MemberCenter from "@/components/memberCenter.vue";
 import MemberEvent from "@/components/memberEvent.vue";
 import MovieView from "@/components/MovieView.vue";
-import OnShowMovie from "@/components/onShowMovie.vue";
+import OnShowMovie from "@/movies/onShowMovie.vue";
 import SocialArea from "@/components/socialArea.vue";
 import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
+import MovieDetail from "@/movies/MovieDetail.vue";
 const routes = [
   {
     path: "/",
@@ -31,6 +32,7 @@ const routes = [
     component: ComingSoonMovie,
     name: "comingSoonMovie",
   },
+  { path: "/movies/:movieId", component: MovieDetail, name: "movieDetail" },
 
   { path: "/ticket", component: TicketView, name: "ticket" },
   {

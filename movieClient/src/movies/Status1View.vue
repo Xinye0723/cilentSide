@@ -1,14 +1,27 @@
 <script setup>
-  const { movies } = defineProps({ movies: Array });
+import { ref } from 'vue';
+import MovieSwiper from './MovieSwiper.vue';
+import MovieDetail from './MovieDetail.vue';
+
+  const props = defineProps({ movies: Array, imgBaseUrl: String });
+  const selectedMovie = ref(null)
 </script>
 
 <template>
-  <div>
-    <div class="movie-row d-flex justify-content-center flex-wrap">
-      <div class="movie-card" v-for="movie in movies" :key="movie.slug">
-        <img :src="`/${movie.posterPicture}`" class="movie-poster-img" :alt="movie.movieNameChinese" loading="lazy" />
-        <div class="movie-title">{{ movie.movieNameChinese }}</div>
-      </div>
+  <div class="row">
+    <div class="col-8">
+      <MovieSwiper
+        :movies="movies"
+        :img-base-url="imgBaseUrl"
+        @select-movie="selectedMovie = $event"
+      />
+    </div>
+    <div class="col-4">
+      <MovieDetail
+        v-if="selectedMovie"
+        :movie="selectedMovie"
+        :img-base-url="imgBaseUrl"
+      />
     </div>
   </div>
 </template>
