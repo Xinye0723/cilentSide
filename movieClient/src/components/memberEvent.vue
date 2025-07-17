@@ -1,58 +1,52 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
-// 原始資料（一次性不顯示全部）
-const allEvents = [
-  {
-    id: 1,
-    title: 'X 座影廳看電影',
-    date: '4月30日',
-    time: '19:00',
-    location: '台北 INFINITE CINEMA'
-  },
-  {
-    id: 2,
-    title: 'X 座影廳看電影',
-    date: '5月5日',
-    time: '14:00',
-    location: '台北 INFINITE CINEMA'
-  },
-  {
-    id: 3,
-    title: 'X 座影廳看電影',
-    date: '5月11日',
-    time: '20:30',
-    location: '台北 INFINITE CINEMA'
+const router = useRouter();
+const events = ref([]);
+
+onMounted(async () => {
+  try {
+    const res = await fetch("https://localhost:7181/api/MemberEvent");
+    const data = await res.json();
+
+    events.value = data.map((item) => ({
+      id: item.memberEventId,
+      title: item.title,
+      date: item.startTime.split("T")[0].replace(/-/g, "/"),
+      time: item.startTime.split("T")[1].slice(0, 5),
+      location: `影廳 ${item.theaterNumber} 號`,
+    }));
+  } catch (err) {
+    console.error("❌ 無法取得活動資料", err);
   }
-]
+});
 
-// 用來逐步呈現的陣列
-const events = ref([])
+const goToDetail = (id) => {
+  router.push(`/memberEvent/${id}`);
+};
 
-// onMounted 時逐張顯示
-onMounted(() => {
-  allEvents.forEach((event, index) => {
-    setTimeout(() => {
-      events.value.push(event)
-    }, index * 200) // 每張延遲 0.2 秒
-  })
-})
-
-const viewDetails = (id) => {
-  console.log('查看活動 ID：', id)
-}
+// ✅ 加這個：跳轉到建立活動頁
+const goToCreateEvent = () => {
+  router.push("/createMemberEvent");
+};
 </script>
 
 <template>
   <div class="group-event">
     <h1 class="title">電影揪團活動</h1>
-    <p class="subtitle">一起揪團看電影，享受大堆幕震撼體驗！</p>
+
+    <!-- ✅ 將副標與按鈕包在同一行 -->
+    <div class="subtitle-row">
+      <p class="subtitle">一起揪團看電影，享受大堆幕震撼體驗！</p>
+      <button class="create-btn" @click="goToCreateEvent">➕ 我要辦團</button>
+    </div>
 
     <div
       v-for="(event, index) in events"
       :key="event.id"
       class="event-card"
-      :style="{ animationDelay: (index * 0.2) + 's' }"
+      :style="{ animationDelay: index * 0.2 + 's' }"
     >
       <div class="icon">
         <i class="fa fa-users"></i>
@@ -63,23 +57,21 @@ const viewDetails = (id) => {
         <p>{{ event.location }}</p>
       </div>
       <div class="event-action">
-        <button @click="viewDetails(event.id)">查看詳情</button>
+        <button @click="goToDetail(event.id)">查看詳情</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ========== 基本樣式 + 美化背景 ========== */
 .group-event {
   padding: 2rem;
   min-height: 100vh;
   background: linear-gradient(135deg, #0a0a23, #141433);
   color: white;
-  font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+  font-family: "Poppins", "Noto Sans TC", sans-serif;
 }
 
-/* 標題與副標題 */
 .title {
   font-size: 2.8rem;
   font-weight: bold;
@@ -91,11 +83,45 @@ const viewDetails = (id) => {
 
 .subtitle {
   font-size: 1.2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: #ccc;
+  margin: 0;
+  flex: 1;
 }
 
-/* ========== 活動卡片樣式 ========== */
+.subtitle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ✅ 我要辦團按鈕樣式 */
+.create-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.create-btn {
+  background-color: #a387ff;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 0 12px #a387ff;
+  transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+  background-color: #7e5de4;
+  box-shadow: 0 0 18px #7e5de4;
+}
+
 .event-card {
   display: flex;
   align-items: center;
@@ -106,19 +132,15 @@ const viewDetails = (id) => {
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-
-  /* 動畫初始值與套用 */
   opacity: 0;
   animation: slideFadeIn 0.6s ease forwards;
 }
 
-/* hover 放大發光 */
 .event-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 0 25px rgba(163, 135, 255, 0.5);
 }
 
-/* ========== 內容區塊 ========== */
 .icon {
   font-size: 2rem;
   color: #a387ff;
@@ -141,7 +163,6 @@ const viewDetails = (id) => {
   font-size: 1rem;
 }
 
-/* ========== 按鈕樣式 ========== */
 .event-action button {
   background-color: transparent;
   border: 1px solid #a387ff;
@@ -161,7 +182,6 @@ const viewDetails = (id) => {
   animation: glowPulse 1s infinite;
 }
 
-/* ========== 動畫定義 ========== */
 @keyframes slideFadeIn {
   from {
     opacity: 0;
@@ -189,7 +209,8 @@ const viewDetails = (id) => {
 }
 
 @keyframes flicker {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     text-shadow: 0 0 10px #a387ff, 0 0 20px #7c7cfb;
   }

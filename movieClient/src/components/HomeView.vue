@@ -1,6 +1,6 @@
 <script setup>
 import Status1View from "@/movies/Status1View.vue";
-import Status2View from "@/movies/Status2View.vue";
+
 import { ref } from "vue";
 
 const apiUrl = "https://localhost:7181/api/Movies";
@@ -24,10 +24,7 @@ fetch(apiUrl)
       .slice(0, 7);
   });
 
-const tabs = ref([
-  { name: "現正熱映", component: Status1View },
-  { name: "即將上映", component: Status2View },
-]);
+const tabs = ref([{ name: "現正熱映", component: Status1View }]);
 const activedIndex = ref(0);
 const setActive = (index) => {
   activedIndex.value = index;

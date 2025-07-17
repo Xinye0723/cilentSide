@@ -9,6 +9,8 @@ import OnShowMovie from "@/movies/onShowMovie.vue";
 import SocialArea from "@/components/socialArea.vue";
 import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
+import memberIn from "@/components/memberIn.vue";
+import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
@@ -48,10 +50,20 @@ const routes = [
   { path: "/event/:id", component: EventDetail, name: "EventDetail" },
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
+  { path: "/memberIn", component: memberIn, name: "memberIn" },
+  {
+    path: "/createMemberEvent",
+    component: CreatMemberEvent,
+    name: "createMemberEvent",
+  },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 切換頁面自動捲到最上方
+    return { top: 0 };
+  },
 });
 
 export default router;

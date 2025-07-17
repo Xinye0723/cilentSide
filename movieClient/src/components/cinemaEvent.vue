@@ -1,32 +1,35 @@
 <script setup>
-import { ref } from 'vue'
-import dragonImg from '@/assets/te/馴龍高手.jpg'
-import conan from '@/assets/te/貝克街.jpg'
-import topgun from '@/assets/te/捍衛戰士.jpg'
+import { ref } from "vue";
+import dragonImg from "@/assets/te/馴龍高手.jpg";
+import conan from "@/assets/te/貝克街.jpg";
+import topgun from "@/assets/te/捍衛戰士.jpg";
+import EventView from "./EventView.vue";
 
 const events = ref([
   {
     id: 1,
-    category: '官方活動',
-    title: '【馴龍高手】抽獎活動得獎名單',
-    description: '抽獎活動得獎名單公布，看【馴龍高手】就有機會前往新加坡環球影城！',
-    image: dragonImg
+    category: "官方活動",
+    title: "【馴龍高手】抽獎活動得獎名單",
+    description:
+      "抽獎活動得獎名單公布，看【馴龍高手】就有機會前往新加坡環球影城！",
+    image: dragonImg,
   },
   {
     id: 2,
-    category: '重溫童年',
-    title: '【貝克街的亡靈】帶大家重溫虛擬世界',
-    description: '過了十幾年的電影回歸大螢幕，讓大家一起用大螢幕回味！',
-    image: conan
+    category: "重溫童年",
+    title: "【貝克街的亡靈】帶大家重溫虛擬世界",
+    description: "過了十幾年的電影回歸大螢幕，讓大家一起用大螢幕回味！",
+    image: conan,
   },
   {
     id: 3,
-    category: '重溫熱血飛行夢',
-    title: '【捍衛戰士】熱血歸來，帶你翱翔天際！',
-    description: '空軍精英飛官齊聚「TOP GUN」訓練基地，速度與膽量交織，展現男人的榮耀與激情！',
-    image: topgun
-  }
-])
+    category: "重溫熱血飛行夢",
+    title: "【捍衛戰士】熱血歸來，帶你翱翔天際！",
+    description:
+      "空軍精英飛官齊聚「TOP GUN」訓練基地，速度與膽量交織，展現男人的榮耀與激情！",
+    image: topgun,
+  },
+]);
 </script>
 
 <template>
@@ -36,7 +39,12 @@ const events = ref([
     </div>
 
     <div class="event-grid">
-      <RouterLink v-for="event in events" :key="event.id" :to="`/event/${event.id}`" class="event-card-link" >
+      <RouterLink
+        v-for="event in events"
+        :key="event.id"
+        :to="`/event/${event.id}`"
+        class="event-card-link"
+      >
         <div class="event-card">
           <img :src="event.image" alt="活動圖片" class="event-image" />
           <div class="event-category">{{ event.category }}</div>
@@ -49,7 +57,6 @@ const events = ref([
 </template>
 
 <style scoped>
-
 .event-card-link {
   text-decoration: none;
   color: inherit;
@@ -65,7 +72,7 @@ const events = ref([
 }
 
 .hero {
-  background-image: url('https://picsum.photos/1600/400?grayscale');
+  background-image: url("https://picsum.photos/1600/400?grayscale");
   background-size: cover;
   background-position: center;
   padding: 4rem 2rem;
