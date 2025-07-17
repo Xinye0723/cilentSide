@@ -6,11 +6,13 @@ const movieId = Number(useRoute().params.id);
 
 interface SessionDto {
   id: number;
-  date: string;
-  time: string;
+  startDate: string; // 對應後端的 startDate
+  startTime: string; // 對應後端的 startTime
   availableSeats: number;
   totalSeats: number;
   theaterNumber: number;
+  endDate: string; // 對應後端的 endDate
+  endTime: string; // 對應後端的 endTime
 }
 interface SeatDto {
   id: number;
@@ -69,10 +71,10 @@ onMounted(async () => {
 });
 
 const dates = computed(() =>
-  Array.from(new Set(sessions.value.map((s) => s.date))).sort()
+  Array.from(new Set(sessions.value.map((s) => s.startDate))).sort()
 );
 const sessionsOfSelected = computed(() =>
-  sessions.value.filter((s) => s.date === selectedDate.value)
+  sessions.value.filter((s) => s.startDate === selectedDate.value)
 );
 
 async function chooseSession(sess: SessionDto) {
@@ -216,7 +218,7 @@ const sortedSelectedSeats = computed(() =>
               : 'bg-gray-700 text-gray-200 opacity-40 cursor-not-allowed',
           ]"
         >
-          <span>{{ fmtTime(s.time) }}</span>
+          <span>{{ fmtTime(s.startTime) }}~{{ fmtTime(s.endTime) }}</span>
           <span class="text-sm">({{ s.theaterNumber }}號廳)</span>
         </button>
       </div>
