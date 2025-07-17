@@ -1,13 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 
+const router = useRouter();
 const isMenuOpen = ref(false);
 const isScrolled = ref(false);
+const showMovieSubmenu = ref(false);
+const showEventSubmenu = ref(false);
+
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function toggleMenu() {
+  if (debounceTimeout) clearTimeout(debounceTimeout);
   isMenuOpen.value = !isMenuOpen.value;
   document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
+  // 確保在選單狀態變化後應用 overflow
+  debounceTimeout = setTimeout(() => {
+    document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
+  }, 300); // 延遲 300ms 等待動畫完成
+}
+
+function handleLinkClick(to: { name: string }) {
+  if (isMenuOpen.value) {
+    toggleMenu();
+    // 延遲導航，確保選單關閉和 overflow 重置完成
+    setTimeout(() => {
+      router.push(to);
+    }, 300);
+  } else {
+    router.push(to);
+  }
 }
 
 onMounted(() => {
@@ -15,7 +37,10 @@ onMounted(() => {
     isScrolled.value = window.scrollY > 50;
   };
   const onResize = () => {
-    if (window.innerWidth > 768 && isMenuOpen.value) toggleMenu();
+    if (window.innerWidth > 768 && isMenuOpen.value) {
+      isMenuOpen.value = false;
+      document.body.style.overflow = ""; // 明確重置
+    }
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.key === "Escape" && isMenuOpen.value) toggleMenu();
@@ -24,21 +49,19 @@ onMounted(() => {
   window.addEventListener("scroll", onScroll);
   window.addEventListener("resize", onResize);
   window.addEventListener("keydown", onKey);
-  onScroll(); // 初始化一次
+  onScroll(); // 初始化
 
   onUnmounted(() => {
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("keydown", onKey);
+    document.body.style.overflow = ""; // 清除 overflow
+    if (debounceTimeout) clearTimeout(debounceTimeout);
   });
 });
-const showMovieSubmenu = ref(false);
-const showEventSubmenu = ref(false);
-function scrollToFooter() {
-  // 若側欄打開先關閉
-  if (isMenuOpen.value) toggleMenu();
 
-  // 再讓瀏覽器捲到 #footer
+function scrollToFooter() {
+  if (isMenuOpen.value) toggleMenu();
   const footer = document.getElementById("footer");
   footer?.scrollIntoView({ behavior: "smooth" });
 }
@@ -65,24 +88,32 @@ function scrollToFooter() {
           @mouseenter="showMovieSubmenu = true"
           @mouseleave="showMovieSubmenu = false"
         >
-          <RouterLink :to="{ name: 'movie' }" @click="toggleMenu"
+          <RouterLink
+            :to="{ name: 'movie' }"
+            @click.prevent="handleLinkClick({ name: 'movie' })"
             >電影介紹</RouterLink
           >
           <ul class="submenu mt-2" v-show="showMovieSubmenu">
             <li>
-              <RouterLink :to="{ name: 'onShowMovie' }" @click="toggleMenu"
+              <RouterLink
+                :to="{ name: 'onShowMovie' }"
+                @click.prevent="handleLinkClick({ name: 'onShowMovie' })"
                 >現正熱映</RouterLink
               >
             </li>
             <li>
-              <RouterLink :to="{ name: 'comingSoonMovie' }" @click="toggleMenu"
+              <RouterLink
+                :to="{ name: 'comingSoonMovie' }"
+                @click.prevent="handleLinkClick({ name: 'comingSoonMovie' })"
                 >即將上映</RouterLink
               >
             </li>
           </ul>
         </li>
         <li>
-          <RouterLink :to="{ name: 'ticket' }" @click="toggleMenu"
+          <RouterLink
+            :to="{ name: 'ticket' }"
+            @click.prevent="handleLinkClick({ name: 'ticket' })"
             >快速訂票</RouterLink
           >
         </li>
@@ -91,32 +122,42 @@ function scrollToFooter() {
           @mouseenter="showEventSubmenu = true"
           @mouseleave="showEventSubmenu = false"
         >
-          <RouterLink :to="{ name: 'event' }" @click="toggleMenu"
+          <RouterLink
+            :to="{ name: 'event' }"
+            @click.prevent="handleLinkClick({ name: 'event' })"
             >活動公告</RouterLink
           >
           <ul class="submenu mt-2" v-show="showEventSubmenu">
             <li>
-              <RouterLink :to="{ name: 'cinemaEvent' }" @click="toggleMenu"
+              <RouterLink
+                :to="{ name: 'cinemaEvent' }"
+                @click.prevent="handleLinkClick({ name: 'cinemaEvent' })"
                 >影城活動</RouterLink
               >
             </li>
             <li>
-              <RouterLink :to="{ name: 'memberEvent' }" @click="toggleMenu"
+              <RouterLink
+                :to="{ name: 'memberEvent' }"
+                @click.prevent="handleLinkClick({ name: 'memberEvent' })"
                 >揪團活動</RouterLink
               >
             </li>
           </ul>
         </li>
         <li>
-          <RouterLink :to="{ name: 'socialArea' }" @click="toggleMenu"
+          <RouterLink
+            :to="{ name: 'socialArea' }"
+            @click.prevent="handleLinkClick({ name: 'socialArea' })"
             >討論區</RouterLink
           >
         </li>
         <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
         <li>
-          <RouterLink :to="{ name: 'memberCenter' }" @click="toggleMenu">
-            會員中心
-          </RouterLink>
+          <RouterLink
+            :to="{ name: 'memberCenter' }"
+            @click.prevent="handleLinkClick({ name: 'memberCenter' })"
+            >會員中心</RouterLink
+          >
         </li>
       </ul>
     </div>
@@ -146,7 +187,10 @@ function scrollToFooter() {
   min-height: 100vh;
   padding-top: 64px;
 }
-
+.page-container {
+  min-height: 100vh; /* 確保頁面高度至少等於視窗高度 */
+  overflow-y: auto; /* 強制啟用垂直滾動 */
+}
 /* ---------- Navbar ---------- */
 .navbar {
   position: fixed;

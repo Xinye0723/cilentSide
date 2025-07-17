@@ -268,6 +268,12 @@ const sortedSelectedSeats = computed(() =>
         </span>
         <span v-else class="text-gray-400">無</span>
       </p>
+      <button
+        class="rounded bg-gray-600 hover:bg-gray-500 text-white disabled:opacity-40 p-2 px-3"
+      >
+        下一步
+      </button>
+
       <!-- ① 包一層 inline-block，讓內容寬度可被 w-full 捕捉 -->
       <div class="inline-block">
         <!-- 螢幕文字＋條，直接用 w-full 置中 -->
