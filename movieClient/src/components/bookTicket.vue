@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-
+import Swal from "sweetalert2";
 const movieId = Number(useRoute().params.id);
 
 interface SessionDto {
@@ -90,7 +90,12 @@ async function chooseSession(sess: SessionDto) {
     if (!res.ok) throw new Error(res.statusText);
     seats.value = await res.json();
   } catch (e: any) {
-    alert("座位資料取得失敗：" + e.message);
+    await Swal.fire({
+      icon: "error",
+      title: "座位資料取得失敗",
+      text: e.message,
+      confirmButtonColor: "#d33",
+    });
     seats.value = [];
   } finally {
     loadingSeats.value = false;
@@ -100,15 +105,25 @@ async function chooseSession(sess: SessionDto) {
 function toggleSeat(seat: SeatDto) {
   if (seat.isBooked) return;
   if (totalTickets.value === 0) {
-    alert("請先選擇票數！");
+    Swal.fire({
+      icon: "warning",
+      title: "請先選擇票數！",
+      confirmButtonColor: "#d33",
+    });
     return;
   }
+
   const idx = selectedSeats.value.findIndex((s) => s.id === seat.id);
   if (idx === -1) {
     if (selectedSeats.value.length < totalTickets.value) {
       selectedSeats.value.push(seat);
     } else {
-      alert("已達選擇的票數上限！");
+      Swal.fire({
+        icon: "info",
+        title: "已達選擇的票數上限！",
+        text: "請取消其他座位或調整票數。",
+        confirmButtonColor: "#3085d6",
+      });
     }
   } else {
     selectedSeats.value.splice(idx, 1);
@@ -122,7 +137,12 @@ function incrementTicket(type: string) {
       selectedSeats.value = selectedSeats.value.slice(0, totalTickets.value);
     }
   } else {
-    alert("票數不能超過場次可用座位數！");
+    Swal.fire({
+      icon: "warning",
+      title: "票數超出限制",
+      text: "不能超過可用座位數",
+      confirmButtonColor: "#f39c12",
+    });
   }
 }
 function decrementTicket(type: string) {

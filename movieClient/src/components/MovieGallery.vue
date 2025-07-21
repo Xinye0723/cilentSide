@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import MovieCard from "@/components/MovieCard.vue";
 
 /* ===== 取得電影 ===== */
 interface Movie {
-  id: number;
+  movieId: number;
   posterPicture: string;
   movieNameChinese?: string;
   movieNameEnglish?: string;
@@ -20,6 +20,7 @@ onMounted(async () => {
 onUnmounted(() => window.removeEventListener("mousemove", handleMove));
 
 /* ===== 搜尋 ===== */
+
 const keyword = ref("");
 const filtered = computed(() =>
   !keyword.value.trim()
@@ -30,7 +31,9 @@ const filtered = computed(() =>
           .includes(keyword.value.trim().toLowerCase())
       )
 );
-
+watch(keyword, () => {
+  currentPage.value = 1;
+});
 /* ===== 分頁 ===== */
 const pageSize = 10;
 const currentPage = ref(1);
@@ -77,7 +80,7 @@ const titleStyle = computed(() => {
 
     <!-- 卡片 Grid -->
     <div class="grid lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-2 gap-8">
-      <MovieCard v-for="m in pagedMovies" :key="m.id" :movie="m" />
+      <MovieCard v-for="m in pagedMovies" :key="m.movieId" :movie="m" />
     </div>
   </div>
 
