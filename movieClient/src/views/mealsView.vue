@@ -79,14 +79,15 @@ const ticketDetails = computed(() =>
 <template>
   <PopcornBackground />
 
+  <!-- ❶ 仍用 max-w-screen-lg，但改成 3 欄 Grid  -->
   <main
-    class="relative z-10 max-w-screen-lg mx-auto py-10 px-6 grid md:grid-cols-[1fr_300px] gap-8 text-white"
+    class="relative z-10 max-w-screen-xl mx-auto py-10 px-6 text-white grid gap-10 md:grid-cols-[1fr_320px]"
   >
-    <!-- 卡片區 -->
-    <section class="space-y-6">
-      <h2 class="text-2xl font-bold">請選擇附餐</h2>
+    <section>
+      <h2 class="text-2xl font-bold mb-6">請選擇附餐</h2>
 
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6">
+      <!-- 依容器寬度自動塞滿 -->
+      <div class="grid gap-8 grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
         <div
           v-for="m in meals"
           :key="m.snackId"
@@ -96,7 +97,7 @@ const ticketDetails = computed(() =>
             <img
               :src="`https://localhost:7181${m.snackImage}`"
               alt=""
-              class="w-full h-32 object-cover rounded mb-3"
+              class="w-full h-40 object-cover rounded mb-3"
             />
             <h3 class="text-base font-semibold mb-1">{{ m.snackName }}</h3>
             <p class="font-bold text-yellow-400">NT${{ m.snackPrice }}</p>
@@ -114,12 +115,13 @@ const ticketDetails = computed(() =>
       </div>
     </section>
 
-    <!-- 明細 -->
+    <!-- ❸ 明細側欄：放第 3 欄，sticky 吸頂 -->
     <aside
-      class="sticky top-10 self-start bg-[#0d1117]/90 p-6 rounded-xl shadow-lg w-full"
+      class="sticky top-10 self-start bg-[#0d1117]/90 p-6 rounded-xl shadow-lg"
     >
       <h2 class="text-xl font-bold mb-4">明細</h2>
 
+      <!-- 票券 -->
       <template v-if="ticketTotal">
         <h3 class="mb-2 font-semibold">票券</h3>
         <ul class="text-lg mb-4 space-y-1">
@@ -131,6 +133,7 @@ const ticketDetails = computed(() =>
         <hr class="border-gray-300 mb-4" />
       </template>
 
+      <!-- 附餐 -->
       <h3 class="font-semibold mb-2">附餐</h3>
       <ul class="text-lg space-y-1">
         <li
@@ -149,9 +152,53 @@ const ticketDetails = computed(() =>
       <p class="text-right text-lg">票券：NT${{ ticketTotal }}</p>
       <p class="text-right mb-1 text-lg">附餐：NT${{ snackTotal }}</p>
       <p class="text-right font-bold text-lg">總金額：NT${{ grandTotal }}</p>
-      <p class="text-right font-bold text-lg mt-2">
-        <button>前往結帳</button>
-      </p>
+
+      <!-- 結帳按鈕 -->
+      <div class="mt-4 text-center">
+        <button
+          class="w-full py-3 rounded-lg font-semibold tracking-wide bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 hover:brightness-110 transition"
+        >
+          前往結帳
+        </button>
+      </div>
     </aside>
   </main>
 </template>
+
+<style scoped>
+.button {
+  width: 100%;
+  padding: 0.6rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  gap: 0.4rem;
+  font-weight: bold;
+  border-radius: 30px;
+  text-shadow: 2px 2px 3px rgb(136 0 136 / 50%);
+  background: linear-gradient(
+      15deg,
+      #880088,
+      #aa2068,
+      #cc3f47,
+      #de6f3d,
+      #f09f33,
+      #de6f3d,
+      #cc3f47,
+      #aa2068,
+      #880088
+    )
+    no-repeat;
+  background-size: 300%;
+  color: #ffffff;
+  border: none;
+  background-position: left center;
+  box-shadow: 0 30px 10px -20px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+.button:hover {
+  background-size: 320%;
+  background-position: right center;
+}
+</style>
