@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import Swal from "sweetalert2";
+
 const movieId = Number(useRoute().params.id);
 
 interface SessionDto {
@@ -63,6 +64,24 @@ onMounted(async () => {
     const res = await fetch(`/api/ShowTimes/movie/${movieId}`);
     if (!res.ok) throw new Error(res.statusText);
     sessions.value = await res.json();
+
+    // 嘗試還原資料
+    const cached = localStorage.getItem("bookingState");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const matched = sessions.value.find((s) => s.id === parsed.sessionId);
+      if (matched) {
+        selectedDate.value = matched.startDate;
+        selectedSession.value = matched;
+        ticketCounts.value = parsed.ticketCounts;
+        selectedSeats.value = parsed.selectedSeats;
+
+        const resSeats = await fetch(`/api/ShowTimes/${matched.id}/seats`);
+        if (resSeats.ok) {
+          seats.value = await resSeats.json();
+        }
+      }
+    }
   } catch (e: any) {
     error.value = e.message;
   } finally {
@@ -189,6 +208,16 @@ const sortedSelectedSeats = computed(() =>
     return a.row.localeCompare(b.row);
   })
 );
+function saveBookingState() {
+  localStorage.setItem(
+    "bookingState",
+    JSON.stringify({
+      selectedSeats: selectedSeats.value,
+      ticketCounts: ticketCounts.value,
+      sessionId: selectedSession.value?.id,
+    })
+  );
+}
 </script>
 
 <template>
@@ -290,14 +319,25 @@ const sortedSelectedSeats = computed(() =>
         </span>
         <span v-else class="text-gray-400">無</span>
       </p>
-      <button
-        class="rounded bg-gray-600 hover:bg-gray-500 text-white disabled:opacity-40 p-2 px-3"
+
+      <RouterLink
+        v-if="selectedSeats.length === totalTickets"
+        :to="{
+          name: 'meals',
+          state: {
+            selectedSeats,
+            ticketCounts,
+            sessionId: selectedSession?.id,
+          },
+        }"
+        @click="saveBookingState()"
+        class="rounded bg-red-600 hover:bg-red-700 text-white p-2 px-3 inline-block"
       >
         下一步
-      </button>
+      </RouterLink>
 
       <!-- ① 包一層 inline-block，讓內容寬度可被 w-full 捕捉 -->
-      <div class="inline-block">
+      <div class="inline-block ml-20">
         <!-- 螢幕文字＋條，直接用 w-full 置中 -->
         <p class="text-center text-gray-400 mb-1">螢幕位置</p>
         <div

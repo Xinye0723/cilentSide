@@ -140,6 +140,9 @@ const titleStyle = computed(() => {
   background: url("https://phandroid.s3.amazonaws.com/wp-content/uploads/2014/05/rainbow-nebula.jpg")
     repeat;
   background-position: 40% 50%;
+
+  /* 為了相容性，加上標準版 */
+  background-clip: text;
   -webkit-background-clip: text;
 
   user-select: none;

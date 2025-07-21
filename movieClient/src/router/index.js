@@ -14,6 +14,7 @@ import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
+import MealsView from "@/views/mealsView.vue";
 const routes = [
   {
     path: "/",
@@ -56,6 +57,7 @@ const routes = [
     component: CreatMemberEvent,
     name: "createMemberEvent",
   },
+  { path: "/meals", component: MealsView, name: "meals" },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
