@@ -11,6 +11,8 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
+import RegisterView from "@/components/registerView.vue";
+import LoginView from "@/components/loginView.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
@@ -51,6 +53,8 @@ const routes = [
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
   { path: "/memberIn", component: memberIn, name: "memberIn" },
+  { path: "/login", component: LoginView, name: "login" },
+  { path: "/register", component: RegisterView, name: "register" },
   {
     path: "/createMemberEvent",
     component: CreatMemberEvent,
