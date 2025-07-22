@@ -11,10 +11,10 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
-
-import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
+import OrderDetail from "@/views/orderDetail.vue";
+import { createRouter, createWebHistory } from "vue-router";
 const routes = [
   {
     path: "/",
@@ -58,6 +58,7 @@ const routes = [
     name: "createMemberEvent",
   },
   { path: "/meals", component: MealsView, name: "meals" },
+  { path: "/orderDetail", component: OrderDetail, name: "orderDetail" },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

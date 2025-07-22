@@ -1,32 +1,42 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Swal from "sweetalert2";
+import { useBookingStore } from "@/stores/booking";
 
+// Pinia & router
+const booking = useBookingStore();
+const router = useRouter();
+
+// movieId + 本地 movieName + duration
 const movieId = Number(useRoute().params.id);
+const movieName = ref("");
+const movieDuration = ref(0);
 
+// 型別
 interface SessionDto {
   id: number;
-  startDate: string; // 對應後端的 startDate
-  startTime: string; // 對應後端的 startTime
+  startDate: string;
+  startTime: string; // HH:mm:ss
   availableSeats: number;
   totalSeats: number;
   theaterNumber: number;
-  endDate: string; // 對應後端的 endDate
-  endTime: string; // 對應後端的 endTime
+  endDate: string;
+  endTime: string;
 }
 interface SeatDto {
   id: number;
   row: string;
   col: string;
   isBooked: boolean;
-  status?: string;
-  isDisabled: boolean; // 新欄位
+  isDisabled: boolean;
 }
 interface TicketType {
   name: string;
   price: number;
 }
+
+// 票種 & 計數
 const TicketTypes = ref<TicketType[]>([
   { name: "全票", price: 360 },
   { name: "會員票", price: 300 },
@@ -35,51 +45,67 @@ const TicketTypes = ref<TicketType[]>([
   { name: "早場票", price: 260 },
 ]);
 const ticketCounts = ref<Record<string, number>>(
-  TicketTypes.value.reduce((acc, type) => ({ ...acc, [type.name]: 0 }), {})
+  TicketTypes.value.reduce((acc, t) => ({ ...acc, [t.name]: 0 }), {})
 );
-const aisleRows = ["D", "H"]; // ← 你想留走道的排，大小寫對應資料
-const aisleCols = [4, 30]; // 直向走道（第 2、10 欄右側留縫）★ 新增
-const aisleGapPx = 30; // 走道寬 (px)；改大改小都行
+
+// 走道設定
+const aisleRows = ["D", "H"];
+const aisleCols = [4, 30];
+const aisleGapPx = 30;
+
+// 主要 state
 const sessions = ref<SessionDto[]>([]);
 const loadingSess = ref(true);
 const error = ref("");
 
 const selectedDate = ref<string | null>(null);
 const selectedSession = ref<SessionDto | null>(null);
-
 const seats = ref<SeatDto[]>([]);
 const loadingSeats = ref(false);
 const selectedSeats = ref<SeatDto[]>([]);
-// 計算總票數
+
+// 計算總票數 & 驗證
 const totalTickets = computed(() =>
-  Object.values(ticketCounts.value).reduce((sum, count) => sum + count, 0)
+  Object.values(ticketCounts.value).reduce((sum, c) => sum + c, 0)
 );
-// 驗證票數是否有效
-const isTicketCountValid = computed(() => {
-  if (!selectedSession.value) return true;
-  return totalTickets.value <= selectedSession.value.availableSeats;
-});
+const isTicketCountValid = computed(() =>
+  !!selectedSession.value
+    ? totalTickets.value <= selectedSession.value.availableSeats
+    : true
+);
+
+// onMounted：抓電影 & 場次 & 復原 localStorage
 onMounted(async () => {
+  // 抓電影名稱 + 片長
+  try {
+    const mRes = await fetch(`/api/movies/${movieId}`);
+    if (mRes.ok) {
+      const m = await mRes.json();
+      movieName.value = m.movieNameChinese;
+      movieDuration.value = m.duration; // 後端回傳「分鐘」
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 抓場次
   try {
     const res = await fetch(`/api/ShowTimes/movie/${movieId}`);
     if (!res.ok) throw new Error(res.statusText);
     sessions.value = await res.json();
 
-    // 嘗試還原資料
-    const cached = localStorage.getItem("bookingState");
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      const matched = sessions.value.find((s) => s.id === parsed.sessionId);
-      if (matched) {
-        selectedDate.value = matched.startDate;
-        selectedSession.value = matched;
-        ticketCounts.value = parsed.ticketCounts;
-        selectedSeats.value = parsed.selectedSeats;
-
-        const resSeats = await fetch(`/api/ShowTimes/${matched.id}/seats`);
-        if (resSeats.ok) {
-          seats.value = await resSeats.json();
-        }
+    // 復原
+    const raw = localStorage.getItem("bookingState");
+    if (raw) {
+      const p = JSON.parse(raw);
+      const s = sessions.value.find((x) => x.id === p.sessionId);
+      if (s) {
+        selectedDate.value = s.startDate;
+        selectedSession.value = s;
+        ticketCounts.value = p.ticketCounts;
+        selectedSeats.value = p.selectedSeats;
+        const r2 = await fetch(`/api/ShowTimes/${s.id}/seats`);
+        if (r2.ok) seats.value = await r2.json();
       }
     }
   } catch (e: any) {
@@ -89,6 +115,7 @@ onMounted(async () => {
   }
 });
 
+// 日期 / 場次
 const dates = computed(() =>
   Array.from(new Set(sessions.value.map((s) => s.startDate))).sort()
 );
@@ -96,22 +123,23 @@ const sessionsOfSelected = computed(() =>
   sessions.value.filter((s) => s.startDate === selectedDate.value)
 );
 
+// 換場次
 async function chooseSession(sess: SessionDto) {
   selectedSession.value = sess;
-  selectedSeats.value = []; // 重置座位
+  selectedSeats.value = [];
   ticketCounts.value = TicketTypes.value.reduce(
-    (acc, type) => ({ ...acc, [type.name]: 0 }),
+    (acc, t) => ({ ...acc, [t.name]: 0 }),
     {}
-  ); // 重置票數
+  );
   loadingSeats.value = true;
   try {
-    const res = await fetch(`/api/ShowTimes/${sess.id}/seats`);
-    if (!res.ok) throw new Error(res.statusText);
-    seats.value = await res.json();
+    const r = await fetch(`/api/ShowTimes/${sess.id}/seats`);
+    if (!r.ok) throw new Error(r.statusText);
+    seats.value = await r.json();
   } catch (e: any) {
     await Swal.fire({
       icon: "error",
-      title: "座位資料取得失敗",
+      title: "座位取得失敗",
       text: e.message,
       confirmButtonColor: "#d33",
     });
@@ -121,114 +149,137 @@ async function chooseSession(sess: SessionDto) {
   }
 }
 
+// toggle 座位
 function toggleSeat(seat: SeatDto) {
   if (seat.isBooked) return;
   if (totalTickets.value === 0) {
-    Swal.fire({
+    return Swal.fire({
       icon: "warning",
-      title: "請先選擇票數！",
-      confirmButtonColor: "#d33",
+      title: "請先選票數",
     });
-    return;
   }
-
-  const idx = selectedSeats.value.findIndex((s) => s.id === seat.id);
-  if (idx === -1) {
+  const i = selectedSeats.value.findIndex((s) => s.id === seat.id);
+  if (i === -1) {
     if (selectedSeats.value.length < totalTickets.value) {
       selectedSeats.value.push(seat);
     } else {
       Swal.fire({
         icon: "info",
-        title: "已達選擇的票數上限！",
-        text: "請取消其他座位或調整票數。",
-        confirmButtonColor: "#3085d6",
+        title: "已達上限",
       });
     }
   } else {
-    selectedSeats.value.splice(idx, 1);
+    selectedSeats.value.splice(i, 1);
   }
 }
+
+// 增減票
 function incrementTicket(type: string) {
-  if (totalTickets.value < selectedSession.value!.availableSeats) {
-    ticketCounts.value[type] += 1;
-    // 如果票數增加導致超過已選座位數，重置座位
+  if (!selectedSession.value) return;
+  if (totalTickets.value < selectedSession.value.availableSeats) {
+    ticketCounts.value[type]++;
     if (selectedSeats.value.length > totalTickets.value) {
-      selectedSeats.value = selectedSeats.value.slice(0, totalTickets.value);
+      selectedSeats.value.length = totalTickets.value;
     }
   } else {
-    Swal.fire({
-      icon: "warning",
-      title: "票數超出限制",
-      text: "不能超過可用座位數",
-      confirmButtonColor: "#f39c12",
-    });
+    Swal.fire({ icon: "warning", title: "票數超過可用" });
   }
 }
 function decrementTicket(type: string) {
   if (ticketCounts.value[type] > 0) {
-    ticketCounts.value[type] -= 1;
-    // 如果票數減少導致超過已選座位數，重置座位
+    ticketCounts.value[type]--;
     if (selectedSeats.value.length > totalTickets.value) {
-      selectedSeats.value = selectedSeats.value.slice(0, totalTickets.value);
+      selectedSeats.value.length = totalTickets.value;
     }
   }
 }
-function fmtTime(str: string) {
-  return new Date(`1970-01-01T${str}`).toLocaleTimeString("zh-TW", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+
+// 格式化時間只要前 5 碼
+function fmtTime(t: string) {
+  return t.slice(0, 5);
 }
 
+// 座位格子
 const maxCol = 34;
 const colNums = Array.from({ length: maxCol }, (_, i) => i + 1);
 const seatMapsByRow = computed(() => {
-  const tmp = new Map<string, Map<number, SeatDto>>();
-  for (const seat of seats.value) {
-    if (!tmp.has(seat.row)) tmp.set(seat.row, new Map());
-    tmp.get(seat.row)!.set(Number(seat.col), seat);
-  }
-  return Array.from(tmp.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const m = new Map<string, Map<number, SeatDto>>();
+  seats.value.forEach((s) => {
+    if (!m.has(s.row)) m.set(s.row, new Map());
+    m.get(s.row)!.set(Number(s.col), s);
+  });
+  return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 });
 const gridTemplate = computed(() => {
-  const parts: string[] = [];
+  const arr: string[] = [];
   for (let c = 1; c <= maxCol; c++) {
-    parts.push("2rem"); // 每個座位格 2rem
-    if (aisleCols.includes(c)) parts.push(`${aisleGapPx}px`); // 直向走道
+    arr.push("2rem");
+    if (aisleCols.includes(c)) arr.push(`${aisleGapPx}px`);
   }
-  return parts.join(" ");
+  return arr.join(" ");
 });
-// 座位點選顯示邏輯
+
+// 已選座位排序
 const sortedSelectedSeats = computed(() =>
-  selectedSeats.value.slice().sort((a, b) => {
-    if (a.row === b.row) {
-      return Number(a.col) - Number(b.col);
-    }
-    return a.row.localeCompare(b.row);
-  })
+  selectedSeats.value
+    .slice()
+    .sort((a, b) =>
+      a.row === b.row
+        ? Number(a.col) - Number(b.col)
+        : a.row.localeCompare(b.row)
+    )
 );
-function saveBookingState() {
+
+// 計算票價總額
+const ticketTotalAmount = computed(() =>
+  TicketTypes.value.reduce(
+    (sum, t) => sum + (ticketCounts.value[t.name] ?? 0) * t.price,
+    0
+  )
+);
+
+// 下一步：寫 Pinia + localStorage → meals
+function saveAndGoNext() {
+  if (!selectedSession.value) return;
+
+  // 1) Pinia
+  booking.setTicketData({
+    movieName: movieName.value,
+    sessionId: selectedSession.value.id,
+    // 把秒去掉
+    sessionTime: `${selectedSession.value.startDate} ${fmtTime(
+      selectedSession.value.startTime
+    )}`,
+    theaterNo: selectedSession.value.theaterNumber,
+    ticketCounts: { ...ticketCounts.value },
+    ticketTypes: TicketTypes.value,
+    selectedSeats: sortedSelectedSeats.value.map((s) => s.row + s.col),
+    ticketTotal: ticketTotalAmount.value,
+    movieDuration: movieDuration.value,
+  });
+
+  // 2) localStorage
   localStorage.setItem(
     "bookingState",
     JSON.stringify({
-      selectedSeats: selectedSeats.value,
+      sessionId: selectedSession.value.id,
       ticketCounts: ticketCounts.value,
-      sessionId: selectedSession.value?.id,
+      selectedSeats: selectedSeats.value,
     })
   );
+
+  // 3) 導頁
+  router.push({ name: "meals" });
 }
 </script>
 
 <template>
   <main class="max-w-screen-lg px-20 py-10 text-white space-y-10 mx-19">
-    <!-- ← 靠左並預留 1rem 內距 -->
     <!-- 日期 -->
     <section>
       <h2 class="text-2xl font-bold mb-4">請選擇日期</h2>
       <p v-if="loadingSess" class="text-gray-400">載入中…</p>
       <p v-else-if="error" class="text-red-400">{{ error }}</p>
-
       <div v-else class="flex flex-wrap justify-start gap-3">
         <button
           v-for="d in dates"
@@ -272,6 +323,7 @@ function saveBookingState() {
         </button>
       </div>
     </section>
+
     <!-- 票種與張數 -->
     <section v-if="selectedSession">
       <h2 class="text-2xl font-bold mb-4">請選擇票種&張數</h2>
@@ -303,14 +355,12 @@ function saveBookingState() {
           </div>
         </div>
         <p v-if="!isTicketCountValid" class="text-red-400">
-          票數總和不可超過場次可用座位數 ({{
-            selectedSession.availableSeats
-          }})！
+          票數總和不可超過可用座位數 ({{ selectedSession.availableSeats }})！
         </p>
       </div>
     </section>
-    <!-- 🎫 座位圖 -->
-    <!-- 已選座位 & 圖例 -->
+
+    <!-- 座位圖 & 下一步 -->
     <section v-if="selectedSession" class="space-y-6 px-8">
       <p class="mt-4">
         已選座位：
@@ -320,22 +370,15 @@ function saveBookingState() {
         <span v-else class="text-gray-400">無</span>
       </p>
 
-      <RouterLink
+      <button
         v-if="selectedSeats.length === totalTickets"
-        :to="{
-          name: 'meals',
-          state: {
-            selectedSeats,
-            ticketCounts,
-            sessionId: selectedSession?.id,
-          },
-        }"
-        @click="saveBookingState()"
+        @click="saveAndGoNext"
         class="rounded bg-red-600 hover:bg-red-700 text-white p-2 px-3 inline-block"
       >
         下一步
-      </RouterLink>
+      </button>
 
+      <!-- 座位格子略…（保持原樣） -->
       <!-- ① 包一層 inline-block，讓內容寬度可被 w-full 捕捉 -->
       <div class="inline-block ml-20">
         <!-- 螢幕文字＋條，直接用 w-full 置中 -->
