@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useBookingStore } from "@/stores/booking";
+import Breadcrumb from "@/components/Breadcrumb.vue";
 
 // Pinia & router
 const booking = useBookingStore();
@@ -41,6 +42,7 @@ async function pay(method: "credit" | "linepay") {
 </script>
 
 <template>
+  <Breadcrumb></Breadcrumb>
   <main
     class="max-w-screen-lg mx-auto py-10 px-6 grid md:grid-cols-2 gap-8 text-white"
   >

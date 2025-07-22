@@ -5,6 +5,7 @@ import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import PopcornBackground from "@/components/PopcornBackground.vue";
 import { useBookingStore } from "@/stores/booking";
+import Breadcrumb from "@/components/Breadcrumb.vue";
 
 /* ------------ Pinia -------------- */
 const booking = useBookingStore();
@@ -115,7 +116,7 @@ function goCheckout() {
 
 <template>
   <PopcornBackground />
-
+  <Breadcrumb></Breadcrumb>
   <main
     class="relative z-10 max-w-screen-xl mx-auto py-10 px-6 grid gap-10 md:grid-cols-[1fr_320px] text-white"
   >

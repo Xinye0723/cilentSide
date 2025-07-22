@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import { useBookingStore } from "@/stores/booking";
+import Breadcrumb from "./Breadcrumb.vue";
 
 // Pinia & router
 const booking = useBookingStore();
@@ -274,6 +275,7 @@ function saveAndGoNext() {
 </script>
 
 <template>
+  <Breadcrumb></Breadcrumb>
   <main class="max-w-screen-lg px-20 py-10 text-white space-y-10 mx-19">
     <!-- 日期 -->
     <section>
