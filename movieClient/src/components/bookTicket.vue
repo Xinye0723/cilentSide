@@ -43,7 +43,7 @@ const TicketTypes = ref<TicketType[]>([
   { name: "會員票", price: 300 },
   { name: "敬老票", price: 200 },
   { name: "愛心票", price: 200 },
-  { name: "早場票", price: 260 },
+  // { name: "早場票", price: 260 },
 ]);
 const ticketCounts = ref<Record<string, number>>(
   TicketTypes.value.reduce((acc, t) => ({ ...acc, [t.name]: 0 }), {})
@@ -245,6 +245,7 @@ function saveAndGoNext() {
 
   // 1) Pinia
   booking.setTicketData({
+    movieId,
     movieName: movieName.value,
     sessionId: selectedSession.value.id,
     // 把秒去掉
@@ -329,15 +330,15 @@ function saveAndGoNext() {
     <!-- 票種與張數 -->
     <section v-if="selectedSession">
       <h2 class="text-2xl font-bold mb-4">請選擇票種&張數</h2>
-      <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
         <div
           v-for="type in TicketTypes"
           :key="type.name"
           class="flex items-center justify-between bg-gray-800 p-4 rounded"
         >
-          <span class="text-lg font-semibold"
-            >{{ type.name }} (NT${{ type.price }})</span
-          >
+          <span class="text-lg font-semibold">
+            {{ type.name }} (NT${{ type.price }})
+          </span>
           <div class="flex items-center gap-2">
             <button
               @click="decrementTicket(type.name)"
@@ -356,10 +357,10 @@ function saveAndGoNext() {
             </button>
           </div>
         </div>
-        <p v-if="!isTicketCountValid" class="text-red-400">
-          票數總和不可超過可用座位數 ({{ selectedSession.availableSeats }})！
-        </p>
       </div>
+      <p v-if="!isTicketCountValid" class="text-red-400 mt-4">
+        票數總和不可超過可用座位數 ({{ selectedSession.availableSeats }})！
+      </p>
     </section>
 
     <!-- 座位圖 & 下一步 -->
@@ -373,7 +374,9 @@ function saveAndGoNext() {
       </p>
 
       <button
-        v-if="selectedSeats.length === totalTickets"
+        v-if="
+          selectedSeats.length === totalTickets && selectedSeats.length != 0
+        "
         @click="saveAndGoNext"
         class="rounded bg-red-600 hover:bg-red-700 text-white p-2 px-3 inline-block"
       >

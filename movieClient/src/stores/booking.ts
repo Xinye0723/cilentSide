@@ -50,6 +50,7 @@ export const useBookingStore = defineStore("booking", {
   actions: {
     /** ① 票券 → 座位 → 附餐 */
     setTicketData(payload: {
+      movieId: number;
       movieName: string;
       sessionId: number;
       sessionTime: string;
@@ -82,6 +83,7 @@ export const useBookingStore = defineStore("booking", {
     paths: [
       "ticketCounts",
       "ticketTypes",
+      "movieId",
       "movieName",
       "sessionId",
       "sessionTime",

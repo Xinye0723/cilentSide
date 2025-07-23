@@ -112,12 +112,6 @@ async function pay(method: "credit" | "linepay") {
       >
         LINE&nbsp;Pay
       </button>
-      <button
-        class="w-full py-3 text-gray-300 underline"
-        @click="router.back()"
-      >
-        ← 返回修改
-      </button>
     </aside>
   </main>
 </template>

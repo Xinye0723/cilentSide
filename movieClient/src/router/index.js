@@ -37,12 +37,7 @@ const routes = [
   },
   { path: "/movies/:movieId", component: MovieDetail, name: "movieDetail" },
 
-  {
-    path: "/ticket",
-    component: TicketView,
-    name: "ticket",
-    meta: { breadcrumb: "首頁" },
-  },
+  { path: "/ticket", component: TicketView, name: "ticket" },
   {
     path: "/event",
     redirect: "/cinemaEvent",
