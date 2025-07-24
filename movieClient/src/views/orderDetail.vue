@@ -1,43 +1,60 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed } from "vue";
 import { useBookingStore } from "@/stores/booking";
-import Breadcrumb from "@/components/Breadcrumb.vue";
 
-// Pinia & router
 const booking = useBookingStore();
-const router = useRouter();
-
-// 計算總金額
+const email = ref(booking.email || "test@example.com");
+const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
+const ngrokBaseUrl = "https://585a64dc3eba.ngrok-free.app";
 
-// 票券明細
-type TicketEntry = [string, number];
-const tickets = computed<TicketEntry[]>(() =>
-  (Object.entries(booking.ticketCounts) as TicketEntry[]).filter(
-    ([, c]) => c > 0
-  )
-);
+const itemName = computed(() => {
+  const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
+    .filter(([, c]) => c > 0)
+    .map(([t, c]) => `${t}x${c}`);
+  const snacks = booking.snacks
+    .filter((s) => s.qty > 0)
+    .map((s) => `${s.name}x${s.qty}`);
+  return [...tickets, ...snacks].join("#");
+});
 
-// 金流
 async function pay(method: "credit" | "linepay") {
-  const res = await fetch("/api/orders", {
+  const order = {
+    movieName: booking.movieName,
+    sessionId: booking.sessionId,
+    sessionTime: booking.sessionTime,
+    theaterNo: booking.theaterNo,
+    seats: booking.selectedSeats,
+    tickets: booking.ticketCounts,
+    snacks: booking.snacks,
+    amount: grandTotal.value,
+    email: email.value,
+    payMethod: method,
+    desc: desc.value,
+    itemName: itemName.value,
+    userId: booking.userId || "",
+    orderSource: "web",
+    returnUrl: `${ngrokBaseUrl}/api/ecpay/Notify`,
+    clientBackUrl: `${ngrokBaseUrl}/thankyou`,
+  };
+  const res = await fetch("https://localhost:7181/api/Ecpay/CreateOrder", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      movieName: booking.movieName,
-      sessionId: booking.sessionId,
-      sessionTime: booking.sessionTime,
-      theaterNo: booking.theaterNo,
-      seats: booking.selectedSeats,
-      tickets: booking.ticketCounts,
-      snacks: booking.snacks,
-      amount: grandTotal.value,
-      payMethod: method,
-    }),
+    body: JSON.stringify(order),
   });
-  const { payUrl } = await res.json();
-  window.location.href = payUrl;
+  if (!res.ok) {
+    alert(await res.text());
+    return;
+  }
+  const { formHtml } = await res.json();
+  const doc = new DOMParser().parseFromString(formHtml, "text/html");
+  const form = doc.querySelector("form");
+  if (form) {
+    document.body.appendChild(form);
+    form.submit();
+  } else {
+    alert("表單解析失敗");
+  }
 }
 </script>
 

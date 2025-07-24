@@ -15,6 +15,7 @@ import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
 import OrderDetail from "@/views/orderDetail.vue";
 import { createRouter, createWebHistory } from "vue-router";
+import ThankYou from "@/views/thankYou.vue";
 const routes = [
   {
     path: "/",
@@ -59,6 +60,7 @@ const routes = [
   },
   { path: "/meals", component: MealsView, name: "meals" },
   { path: "/orderDetail", component: OrderDetail, name: "orderDetail" },
+  { path: "/thankyou", component: ThankYou, name: "thankyou" },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
