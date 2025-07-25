@@ -6,8 +6,8 @@ const booking = useBookingStore();
 const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
-const ngrokBaseUrl = "https://585a64dc3eba.ngrok-free.app";
-
+const ngrokBaseUrl = "https://182dadae3d96.ngrok-free.app";
+const frontendUrl = "https://spotty-streets-sniff.loca.lt";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
@@ -35,7 +35,7 @@ async function pay(method: "credit" | "linepay") {
     userId: booking.userId || "",
     orderSource: "web",
     returnUrl: `${ngrokBaseUrl}/api/ecpay/Notify`,
-    clientBackUrl: `${ngrokBaseUrl}/thankyou`,
+    clientBackUrl: `https://internet-maker-assists-presence.trycloudflare.com/home`,
   };
   const res = await fetch("https://localhost:7181/api/Ecpay/CreateOrder", {
     method: "POST",
@@ -47,6 +47,7 @@ async function pay(method: "credit" | "linepay") {
     return;
   }
   const { formHtml } = await res.json();
+  console.log("ECPay 回傳的表單:", formHtml); // 記錄表單內容以便調試
   const doc = new DOMParser().parseFromString(formHtml, "text/html");
   const form = doc.querySelector("form");
   if (form) {
@@ -59,7 +60,7 @@ async function pay(method: "credit" | "linepay") {
 </script>
 
 <template>
-  <Breadcrumb></Breadcrumb>
+  <!-- <Breadcrumb></Breadcrumb> -->
   <main
     class="max-w-screen-lg mx-auto py-10 px-6 grid md:grid-cols-2 gap-8 text-white"
   >
@@ -122,12 +123,6 @@ async function pay(method: "credit" | "linepay") {
         @click="pay('credit')"
       >
         信用卡付款
-      </button>
-      <button
-        class="w-full py-4 rounded-lg bg-green-600 hover:bg-green-500 font-semibold"
-        @click="pay('linepay')"
-      >
-        LINE&nbsp;Pay
       </button>
     </aside>
   </main>

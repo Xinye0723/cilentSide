@@ -261,14 +261,14 @@ function saveAndGoNext() {
   });
 
   // 2) localStorage
-  localStorage.setItem(
-    "bookingState",
-    JSON.stringify({
-      sessionId: selectedSession.value.id,
-      ticketCounts: ticketCounts.value,
-      selectedSeats: selectedSeats.value,
-    })
-  );
+  // localStorage.setItem(
+  //   "bookingState",
+  //   JSON.stringify({
+  //     sessionId: selectedSession.value.id,
+  //     ticketCounts: ticketCounts.value,
+  //     selectedSeats: selectedSeats.value,
+  //   })
+  // );
 
   // 3) 導頁
   router.push({ name: "meals" });

@@ -13,11 +13,19 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
+    port: 5173,
+    allowedHosts: [".trycloudflare.com"],
     proxy: {
       "/api": {
-        target: "https://localhost:7181/", // 後端實際位址
+        target: "https://localhost:7181/",
         changeOrigin: true,
-        secure: false, // 若是自簽憑證要設 false
+        secure: false,
+      },
+      hmr: {
+        host: "index-assessments-tales-stockholm.trycloudflare.com", // 換成你那串子網域
+        protocol: "wss",
+        clientPort: 443,
       },
     },
   },
