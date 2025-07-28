@@ -20,7 +20,7 @@ import OrderDetail from "@/views/orderDetail.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ThankYou from "@/views/thankYou.vue";
 import QrcodeView from "@/views/qrcodeView.vue";
-import MemberInform from "@/views/MemberInform.vue";
+
 import LoginView from "@/components/loginView.vue";
 import RegisterView from "@/components/registerView.vue";
 

@@ -32,7 +32,7 @@ async function login() {
     });
 
     console.log("API 回應狀態:", res.status);
-    
+
     if (!res.ok) {
       const errorText = await res.text();
       console.error("登入失敗:", errorText);
@@ -42,7 +42,7 @@ async function login() {
 
     const data = await res.json();
     console.log("登入成功，接收到的資料:", data);
-    
+
     localStorage.setItem("memberId", data.id);
     localStorage.setItem("token", data.token); // 儲存 JWT Token
     localStorage.setItem("memberName", data.name);
@@ -72,13 +72,16 @@ async function sendCode() {
   }
   loading.value = true;
   try {
-    const res = await fetch("https://localhost:7181/api/Members/SendResetCode", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.value
-      }),
-    });
+    const res = await fetch(
+      "https://localhost:7181/api/Members/SendResetCode",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.value,
+        }),
+      }
+    );
 
     if (!res.ok) {
       let errorMsg = "寄送認證碼失敗";
@@ -110,14 +113,17 @@ async function verifyResetCode() {
   }
   loading.value = true;
   try {
-    const res = await fetch("https://localhost:7181/api/Members/VerifyResetCode", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.value,
-        code: verifyCode.value
-      }),
-    });
+    const res = await fetch(
+      "https://localhost:7181/api/Members/VerifyResetCode",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.value,
+          code: verifyCode.value,
+        }),
+      }
+    );
 
     if (!res.ok) {
       let errorMsg = "驗證失敗";
@@ -153,14 +159,17 @@ async function resetPassword() {
   }
   loading.value = true;
   try {
-    const res = await fetch("https://localhost:7181/api/Members/ResetPassword", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.value,
-        newPassword: newPassword.value
-      }),
-    });
+    const res = await fetch(
+      "https://localhost:7181/api/Members/ResetPassword",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.value,
+          newPassword: newPassword.value,
+        }),
+      }
+    );
 
     if (!res.ok) {
       let errorMsg = "重設密碼失敗";
@@ -193,23 +202,28 @@ async function resetPassword() {
 }
 
 function loginWithLine() {
-  const clientId = '2007794102';
-  const redirectUri = encodeURIComponent('http://localhost:5173/line-callback');
+  const clientId = "2007794102";
+  const redirectUri = encodeURIComponent(
+    "https://localhost:5173/line-callback"
+  );
   const state = Math.random().toString(36).substring(2);
   const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`;
   window.location.href = lineAuthUrl;
 }
 
 function loginWithGoogle() {
-  const clientId = '322146887203-gv50tarc1a5t2enjv1of3tpt045u8jj5.apps.googleusercontent.com';
-  const redirectUri = encodeURIComponent('http://localhost:5173/google-callback');
+  const clientId =
+    "322146887203-gv50tarc1a5t2enjv1of3tpt045u8jj5.apps.googleusercontent.com";
+  const redirectUri = encodeURIComponent(
+    "https://localhost:5173/google-callback"
+  );
   const state = Math.random().toString(36).substring(2);
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20email%20profile&state=${state}`;
   window.location.href = googleAuthUrl;
 }
 
 function openYoutube() {
-  window.open('https://www.youtube.com/watch?v=vKB2Lg-IM3I', '_blank');
+  window.open("https://www.youtube.com/watch?v=vKB2Lg-IM3I", "_blank");
 }
 </script>
 
@@ -232,7 +246,13 @@ function openYoutube() {
     <div class="container-fluid h-custom">
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-9 col-lg-6 col-xl-5">
-          <img src="../images/IMG1123.jpg" class="img-fluid" alt="logo" style="cursor:pointer" @click="openYoutube" />
+          <img
+            src="../images/IMG1123.jpg"
+            class="img-fluid"
+            alt="logo"
+            style="cursor: pointer"
+            @click="openYoutube"
+          />
         </div>
 
         <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
@@ -269,7 +289,7 @@ function openYoutube() {
             </div>
 
             <!-- Email -->
-            <div v-if="mode==='login'">
+            <div v-if="mode === 'login'">
               <div class="form-outline mb-4">
                 <label class="form-label text-white">Email</label>
                 <input
@@ -291,13 +311,18 @@ function openYoutube() {
                   @keyup.enter="login"
                 />
                 <div class="text-end mt-1 fw-bold">
-                  <a href="#" class="small link-danger" @click.prevent="goToForgot">忘記密碼？</a>
+                  <a
+                    href="#"
+                    class="small link-danger"
+                    @click.prevent="goToForgot"
+                    >忘記密碼？</a
+                  >
                 </div>
               </div>
             </div>
 
             <!-- 忘記密碼：信箱與認證碼 -->
-            <div v-if="mode==='forgot'">
+            <div v-if="mode === 'forgot'">
               <div class="form-outline mb-4">
                 <label class="form-label text-white">Email</label>
                 <div class="input-group">
@@ -307,8 +332,13 @@ function openYoutube() {
                     class="form-control form-control-lg"
                     placeholder="輸入電子信箱"
                   />
-                  <button class="btn btn-outline-warning" type="button" @click="sendCode" :disabled="loading || codeSent">
-                    {{ codeSent ? '已寄出' : '寄出認證碼' }}
+                  <button
+                    class="btn btn-outline-warning"
+                    type="button"
+                    @click="sendCode"
+                    :disabled="loading || codeSent"
+                  >
+                    {{ codeSent ? "已寄出" : "寄出認證碼" }}
                   </button>
                 </div>
               </div>
@@ -322,13 +352,24 @@ function openYoutube() {
                 />
               </div>
               <div class="text-end mt-1 fw-bold">
-                <button class="btn btn-danger" type="button" @click="verifyResetCode">驗證</button>
-                <a href="#" class="small link-secondary ms-3" @click.prevent="mode='login'">返回登入</a>
+                <button
+                  class="btn btn-danger"
+                  type="button"
+                  @click="verifyResetCode"
+                >
+                  驗證
+                </button>
+                <a
+                  href="#"
+                  class="small link-secondary ms-3"
+                  @click.prevent="mode = 'login'"
+                  >返回登入</a
+                >
               </div>
             </div>
 
             <!-- 重設密碼 -->
-            <div v-if="mode==='reset'">
+            <div v-if="mode === 'reset'">
               <div class="form-outline mb-4">
                 <label class="form-label text-white">新密碼</label>
                 <input
@@ -348,8 +389,19 @@ function openYoutube() {
                 />
               </div>
               <div class="text-end mt-1 fw-bold">
-                <button class="btn btn-danger" type="button" @click="resetPassword">重設密碼</button>
-                <a href="#" class="small link-secondary ms-3" @click.prevent="mode='login'">返回登入</a>
+                <button
+                  class="btn btn-danger"
+                  type="button"
+                  @click="resetPassword"
+                >
+                  重設密碼
+                </button>
+                <a
+                  href="#"
+                  class="small link-secondary ms-3"
+                  @click.prevent="mode = 'login'"
+                  >返回登入</a
+                >
               </div>
             </div>
 
@@ -365,7 +417,10 @@ function openYoutube() {
               </button>
               <!-- router-link按鈕移除，恢復自動跳轉 -->
               <p class="small fw-bold mt-2 pt-1 mb-0 text-white">
-                還沒有帳號? <router-link to="/register" class="link-danger">點此註冊</router-link>
+                還沒有帳號?
+                <router-link to="/register" class="link-danger"
+                  >點此註冊</router-link
+                >
               </p>
             </div>
 
