@@ -183,6 +183,26 @@ async function resetPassword() {
     loading.value = false;
   }
 }
+
+function loginWithLine() {
+  const clientId = '2007794102';
+  const redirectUri = encodeURIComponent('http://localhost:5173/line-callback');
+  const state = Math.random().toString(36).substring(2);
+  const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`;
+  window.location.href = lineAuthUrl;
+}
+
+function loginWithGoogle() {
+  const clientId = '322146887203-gv50tarc1a5t2enjv1of3tpt045u8jj5.apps.googleusercontent.com';
+  const redirectUri = encodeURIComponent('http://localhost:5173/google-callback');
+  const state = Math.random().toString(36).substring(2);
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20email%20profile&state=${state}`;
+  window.location.href = googleAuthUrl;
+}
+
+function openYoutube() {
+  window.open('https://www.youtube.com/watch?v=vKB2Lg-IM3I', '_blank');
+}
 </script>
 
 <template>
@@ -204,7 +224,7 @@ async function resetPassword() {
     <div class="container-fluid h-custom">
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-9 col-lg-6 col-xl-5">
-          <img src="../images/LOGO1.png" class="img-fluid" alt="logo" />
+          <img src="../images/IMG1123.jpg" class="img-fluid" alt="logo" style="cursor:pointer" @click="openYoutube" />
         </div>
 
         <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
@@ -212,12 +232,13 @@ async function resetPassword() {
             <div
               class="d-flex flex-row align-items-center justify-content-center justify-content-lg-start"
             >
-              <p class="lead fw-normal mb-0 me-3">會員登入</p>
+              <p class="lead fw-normal mb-0 me-3 fw-bold">會員登入</p>
               <button
                 type="button"
                 data-mdb-button-init
                 data-mdb-ripple-init
                 class="btn btn-light btn-floating mx-1"
+                @click="loginWithLine"
               >
                 <i
                   class="fa-brands fa-line fa-bounce fa-xl"
@@ -225,7 +246,7 @@ async function resetPassword() {
                 ></i>
               </button>
 
-              <button class="animated-button">
+              <button class="animated-button" @click="loginWithGoogle">
                 <img
                   src="../images/g-logo1.png"
                   alt="Google"

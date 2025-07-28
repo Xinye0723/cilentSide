@@ -13,6 +13,9 @@ import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 import RegisterView from "@/components/registerView.vue";
 import LoginView from "@/components/loginView.vue";
+import LineCallback from "@/components/LineCallback.vue";
+import GoogleCallback from "@/components/GoogleCallback.vue";
+import MemberInform from "@/views/MemberInform.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
@@ -60,6 +63,9 @@ const routes = [
     component: CreatMemberEvent,
     name: "createMemberEvent",
   },
+  { path: "/line-callback", component: LineCallback, name: "lineCallback" },
+  { path: "/google-callback", component: GoogleCallback, name: "googleCallback" },
+  { path: "/memberInform", component: MemberInform, name: "memberInform" },
 ];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
