@@ -11,22 +11,22 @@ onMounted(async () => {
   try {
     const res = await fetch("http://localhost:5276/api/CinemaEvent");
     const data = await res.json();
-    console.log('API 原始資料:', data); // 加這行
-    
-    events.value = data.map(item => ({
+    console.log("API 原始資料:", data); // 加這行
+
+    events.value = data.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
       theaterNumber: item.theaterNumber,
       price: item.price,
-      startTime: new Date(item.startTime).toLocaleString('zh-TW'), // 這樣會自動格式化
+      startTime: new Date(item.startTime).toLocaleString("zh-TW"), // 這樣會自動格式化
       img: item.img,
-      status: item.status || '進行中'
+      status: item.status || "進行中",
     }));
-    
-    console.log('處理後的活動資料:', events.value); // 加這行
+
+    console.log("處理後的活動資料:", events.value); // 加這行
   } catch (error) {
-    console.error('載入活動失敗:', error);
+    console.error("載入活動失敗:", error);
   } finally {
     loading.value = false;
   }
@@ -38,10 +38,14 @@ const goToDetail = (id) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case '進行中': return '#4CAF50';
-    case '即將開始': return '#FF9800';
-    case '已結束': return '#9E9E9E';
-    default: return '#2196F3';
+    case "進行中":
+      return "#4CAF50";
+    case "即將開始":
+      return "#FF9800";
+    case "已結束":
+      return "#9E9E9E";
+    default:
+      return "#2196F3";
   }
 };
 
@@ -49,16 +53,16 @@ const filteredEvents = computed(() => {
   if (filterStatus.value === "全部") {
     return events.value;
   } else if (filterStatus.value === "進行中") {
-    return events.value.filter(event => event.status === "進行中");
+    return events.value.filter((event) => event.status === "進行中");
   } else if (filterStatus.value === "即將開始") {
-    return events.value.filter(event => event.status === "即將開始");
+    return events.value.filter((event) => event.status === "即將開始");
   }
   return events.value;
 });
 
-console.log('所有活動:', events.value);
-console.log('目前篩選狀態:', filterStatus.value);
-console.log('篩選後活動:', filteredEvents.value);
+console.log("所有活動:", events.value);
+console.log("目前篩選狀態:", filterStatus.value);
+console.log("篩選後活動:", filteredEvents.value);
 </script>
 
 <template>
@@ -71,17 +75,23 @@ console.log('篩選後活動:', filteredEvents.value);
           class="filter-btn"
           :class="{ active: filterStatus === '進行中' }"
           @click="filterStatus = '進行中'"
-        >進行中</button>
+        >
+          進行中
+        </button>
         <button
           class="filter-btn"
           :class="{ active: filterStatus === '即將開始' }"
           @click="filterStatus = '即將開始'"
-        >即將開始</button>
+        >
+          即將開始
+        </button>
         <button
           class="filter-btn"
           :class="{ active: filterStatus === '全部' }"
           @click="filterStatus = '全部'"
-        >全部活動</button>
+        >
+          全部活動
+        </button>
       </div>
     </div>
 
@@ -91,31 +101,34 @@ console.log('篩選後活動:', filteredEvents.value);
     </div>
 
     <div v-else class="event-grid">
-      <div 
-        v-for="event in filteredEvents" 
-        :key="event.id" 
+      <div
+        v-for="event in filteredEvents"
+        :key="event.id"
         class="event-card event-hover"
         @click="goToDetail(event.id)"
       >
         <div class="event-image-container">
-          <img 
-            v-if="event.img" 
-            :src="event.img" 
-            class="event-image" 
+          <img
+            v-if="event.img"
+            :src="event.img"
+            class="event-image"
             :alt="event.title"
           />
           <div v-else class="event-image-placeholder">
             <i class="bi bi-film"></i>
           </div>
-          <div class="event-status" :style="{ backgroundColor: getStatusColor(event.status) }">
+          <div
+            class="event-status"
+            :style="{ backgroundColor: getStatusColor(event.status) }"
+          >
             {{ event.status }}
           </div>
         </div>
-        
+
         <div class="event-content">
           <h3 class="event-title">{{ event.title }}</h3>
           <p class="event-description">{{ event.description }}</p>
-          
+
           <div class="event-details">
             <div class="detail-item">
               <i class="bi bi-camera-video"></i>
@@ -131,7 +144,7 @@ console.log('篩選後活動:', filteredEvents.value);
             </div>
           </div>
         </div>
-        
+
         <div class="event-actions">
           <button class="detail-btn">查看詳情</button>
         </div>
@@ -219,8 +232,12 @@ console.log('篩選後活動:', filteredEvents.value);
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .event-grid {
@@ -312,8 +329,14 @@ console.log('篩選後活動:', filteredEvents.value);
   margin-bottom: 0.8rem;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+
+  /* 先寫標準屬性 */
+  line-clamp: 2;
+
+  /* 再寫前綴屬性，給目前主流瀏覽器 */
+  -webkit-line-clamp: 2;
+
   overflow: hidden;
   flex: 1;
   font-size: 0.9rem;
@@ -380,8 +403,13 @@ console.log('篩選後活動:', filteredEvents.value);
 }
 
 @keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @media (max-width: 768px) {
@@ -389,16 +417,16 @@ console.log('篩選後活動:', filteredEvents.value);
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .event-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .title {
     font-size: 2.2rem;
   }
-  
+
   .event-image-container {
     height: 140px;
   }
