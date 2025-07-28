@@ -29,11 +29,16 @@ onMounted(async () => {
       loading.value = false;
       return;
     }
-    // 假設回傳 { name, id }
+    
+    // 儲存會員資訊和 JWT Token
     localStorage.setItem('memberId', data.id);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('memberName', data.name);
+    
     loading.value = false;
     router.push('/memberIn');
   } catch (e) {
+    console.error('Line 登入錯誤:', e);
     error.value = 'Line 登入失敗，請稍後再試';
     loading.value = false;
   }

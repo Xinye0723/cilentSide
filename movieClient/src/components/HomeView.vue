@@ -1,7 +1,6 @@
 <script setup>
 import Status1View from "@/movies/Status1View.vue";
-
-import { ref } from "vue";
+import { ref, markRaw } from "vue";
 
 const apiUrl = "https://localhost:7181/api/Movies";
 const movies = ref([]);
@@ -24,7 +23,8 @@ fetch(apiUrl)
       .slice(0, 7);
   });
 
-const tabs = ref([{ name: "現正熱映", component: Status1View }]);
+// 使用 markRaw 避免組件被設為響應式物件
+const tabs = ref([{ name: "現正熱映", component: markRaw(Status1View) }]);
 const activedIndex = ref(0);
 const setActive = (index) => {
   activedIndex.value = index;

@@ -29,7 +29,13 @@ const validateError = ref("");
 async function loadMember() {
   try {
     // ❹ 字串要用反引號 `...` 才能插值 ${}
-    const res = await fetch(`${apiBase}/Members/${memberId}`);
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${apiBase}/Members/${memberId}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
 
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`); // ❺ 同樣要用反引號或字串拼接
@@ -46,7 +52,16 @@ async function loadMember() {
     member.value = data;
   } catch (err) {
     console.error("取會員失敗：", err);
-    error.value = "讀取會員資料失敗，請稍後再試";
+    if (err.message?.includes('401')) {
+      error.value = "登入已過期，請重新登入";
+      // 清除過期的 token 並導向登入頁
+      localStorage.removeItem("memberId");
+      localStorage.removeItem("token");
+      localStorage.removeItem("memberName");
+      router.push("/login");
+    } else {
+      error.value = "讀取會員資料失敗，請稍後再試";
+    }
   }
 }
 
@@ -67,6 +82,8 @@ const birthDate = computed(() => {
 
 function logout() {
   localStorage.removeItem("memberId");
+  localStorage.removeItem("token");
+  localStorage.removeItem("memberName");
   router.push("/memberCenter");
 }
 
@@ -135,9 +152,13 @@ async function saveMember() {
     }
     console.log("即將送出 PUT 請求", member.value);
     // 2. 再送出會員資料
+    const token = localStorage.getItem("token");
     const res = await fetch(`${apiBase}/Members/${member.value.memberId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
       body: JSON.stringify({
         memberId: member.value.memberId,
         memberName: member.value.memberName,
@@ -151,9 +172,20 @@ async function saveMember() {
         memberBio: member.value.memberBio,
       }),
     });
-    if (!res.ok) throw new Error("更新失敗");
+    if (!res.ok) {
+      if (res.status === 401) {
+        alert("登入已過期，請重新登入");
+        localStorage.removeItem("memberId");
+        localStorage.removeItem("token");
+        localStorage.removeItem("memberName");
+        router.push("/login");
+        return;
+      }
+      throw new Error("更新失敗");
+    }
     alert("會員資料已更新！");
   } catch (err) {
+    console.error("更新會員資料失敗：", err);
     alert("更新失敗，請稍後再試");
   }
 }

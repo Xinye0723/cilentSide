@@ -18,6 +18,24 @@ import { computed, ref } from 'vue';
   // 拿到主圖的 movie
   const mainMovie = computed(() => props.movies[activeIndex.value] || {})
 
+  // 動態計算 Swiper 設定，避免迴圈警告
+  const swiperOptions = computed(() => {
+    const slidesCount = props.movies?.length || 0;
+    const slidesPerView = 5;
+    
+    // 如果幻燈片數量不足以支援迴圈，則關閉迴圈
+    const shouldLoop = slidesCount > slidesPerView;
+    
+    return {
+      slidesPerView: Math.min(slidesPerView, slidesCount),
+      centeredSlides: true,
+      spaceBetween: 0,
+      initialSlide: Math.min(2, slidesCount - 1),
+      loop: shouldLoop,
+      navigation: true
+    };
+  });
+
 //   function goToBuy(slug) {
 //   // 跳轉購票頁（假設你有 /buy/:slug 頁面）
 //   window.location.href = `/buy/${slug}`
@@ -26,8 +44,7 @@ import { computed, ref } from 'vue';
 </script>
 
 <template>
-  <swiper :slides-per-view="5" :centered-slides="true" :space-between="0" :initial-slide="2" :loop="true" navigation 
-            @slideChange="onSlideChange" class="movie-swiper">
+  <swiper v-bind="swiperOptions" @slideChange="onSlideChange" class="movie-swiper">
     <swiper-slide v-for="(movie, idx) in movies" :key="movie.movieId">
         <!-- 主圖＋詳情 -->
         <div v-if="activeIndex === idx" class="main-slide-wrap">
