@@ -20,6 +20,9 @@ import OrderDetail from "@/views/orderDetail.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ThankYou from "@/views/thankYou.vue";
 import QrcodeView from "@/views/qrcodeView.vue";
+import MemberInform from "@/views/MemberInform.vue";
+import LoginView from "@/components/loginView.vue";
+import RegisterView from "@/components/registerView.vue";
 
 const routes = [
   {
@@ -72,6 +75,9 @@ const routes = [
     name: "createMemberEvent",
   },
   { path: "/memberEventDetail/:id", component: MemberEventDetail, name: "te" },
+  { path: "/memberInform", component: MemberInform, name: "memberInform" },
+  { path: "/login", component: LoginView, name: "login" },
+  { path: "/register", component: RegisterView, name: "register" },
 ];
 
 const router = createRouter({
