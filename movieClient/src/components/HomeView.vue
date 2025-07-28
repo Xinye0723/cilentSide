@@ -16,8 +16,8 @@ fetch(apiUrl)
     const sorted = datas.sort((a, b) => a.displayOrder - b.displayOrder);
     movies.value = datas;
     // 依照 DisplayOrder 排序
-    nowShowing.value = sorted.filter(movie => movie.movieStatusId === 2).slice(11, 20);
-    comingSoon.value = sorted.filter(movie => movie.movieStatusId === 1).slice(0, 8);
+    nowShowing.value = sorted.filter(movie => movie.movieStatusId === 2).slice(0, 10);
+    comingSoon.value = sorted.filter(movie => movie.movieStatusId === 1).slice(0, 10);
   });
 
 const tabs = ref([
