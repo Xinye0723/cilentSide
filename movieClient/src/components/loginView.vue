@@ -21,7 +21,7 @@ async function login() {
   if (mode.value !== "login") return;
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log("開始登入請求...");
     const res = await fetch("https://localhost:7181/api/Members/Login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -31,17 +31,25 @@ async function login() {
       }),
     });
 
+    console.log("API 回應狀態:", res.status);
+    
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error("登入失敗:", errorText);
       message.value = "帳號或密碼錯誤";
       return;
     }
 
     const data = await res.json();
+    console.log("登入成功，接收到的資料:", data);
+    
     localStorage.setItem("memberId", data.id);
+    localStorage.setItem("token", data.token); // 儲存 JWT Token
+    localStorage.setItem("memberName", data.name);
     message.value = `歡迎回來，${data.name}!`;
     router.push("/memberIn");
   } catch (err) {
-    console.error(err);
+    console.error("登入過程中發生錯誤:", err);
     message.value = "登入失敗，請稍後再試";
   } finally {
     loading.value = false;
