@@ -10,7 +10,7 @@ const hasSignedUp = ref(false);
 onMounted(async () => {
   const id = route.params.id;
   try {
-    const res = await fetch(`http://localhost:5276/api/MemberEvent/${id}`);
+    const res = await fetch(`http://localhost:7181/api/MemberEvent/${id}`);
     if (res.ok) {
       event.value = await res.json();
     } else {
@@ -41,17 +41,27 @@ function signupOrCancel() {
 <template>
   <div class="event-detail" v-if="event">
     <h1>{{ event.title }}</h1>
-    <p class="desc">{{ event.description || '無活動說明' }}</p>
+    <p class="desc">{{ event.description || "無活動說明" }}</p>
     <div class="info-list">
-      <div class="info-item"><span class="label">時間：</span>{{ event.startTime }}</div>
-      <div class="info-item"><span class="label">地點：</span>影廳 {{ event.theaterNumber }} 號</div>
-      <div class="info-item"><span class="label">報名人數：</span>{{ event.registered }}/{{ event.maxCapacity }}</div>
-      <div class="info-item"><span class="label">狀態：</span>{{ event.status || '無' }}</div>
+      <div class="info-item">
+        <span class="label">時間：</span>{{ event.startTime }}
+      </div>
+      <div class="info-item">
+        <span class="label">地點：</span>影廳 {{ event.theaterNumber }} 號
+      </div>
+      <div class="info-item">
+        <span class="label">報名人數：</span>{{ event.registered }}/{{
+          event.maxCapacity
+        }}
+      </div>
+      <div class="info-item">
+        <span class="label">狀態：</span>{{ event.status || "無" }}
+      </div>
     </div>
     <div class="btn-row">
       <button class="back-btn" @click="goBack">返回上一頁</button>
       <button class="signup-btn" @click="signupOrCancel">
-        {{ hasSignedUp ? '取消報名' : '我要報名' }}
+        {{ hasSignedUp ? "取消報名" : "我要報名" }}
       </button>
     </div>
   </div>
@@ -106,7 +116,8 @@ h1 {
   gap: 1.5rem;
   margin-top: 2rem;
 }
-.back-btn, .signup-btn {
+.back-btn,
+.signup-btn {
   background: #a387ff;
   color: #fff;
   border: none;
@@ -116,7 +127,8 @@ h1 {
   cursor: pointer;
   transition: background 0.2s;
 }
-.back-btn:hover, .signup-btn:hover {
+.back-btn:hover,
+.signup-btn:hover {
   background: #7e5de4;
 }
 .signup-msg {

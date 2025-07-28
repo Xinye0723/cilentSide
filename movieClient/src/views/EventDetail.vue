@@ -9,7 +9,7 @@ const event = ref(null);
 
 onMounted(async () => {
   try {
-    const res = await fetch(`http://localhost:5276/api/CinemaEvent/${id}`);
+    const res = await fetch(`http://localhost:7181/api/CinemaEvent/${id}`);
     if (!res.ok) throw new Error("找不到活動");
     const data = await res.json();
     event.value = data;

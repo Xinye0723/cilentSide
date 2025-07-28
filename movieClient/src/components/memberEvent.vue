@@ -7,16 +7,16 @@ const router = useRouter();
 const events = ref([]);
 
 onMounted(async () => {
-  const res = await fetch("http://localhost:5276/api/MemberEvent");
+  const res = await fetch("https://localhost:7181/api/MemberEvent");
   const data = await res.json();
-  events.value = data.map(item => ({
+  events.value = data.map((item) => ({
     id: item.memberEventId,
     title: item.title,
     organizer: item.organizerName,
     registered: item.registered,
     maxCapacity: item.maxCapacity,
     startTime: item.startTime,
-    status: item.status
+    status: item.status,
   }));
 });
 
@@ -49,7 +49,7 @@ const goToCreateEvent = () => {
           <div class="event-title">{{ event.title }}</div>
           <div class="event-meta">
             <span>報名：{{ event.registered }}/{{ event.maxCapacity }}</span>
-            <span>狀態：{{ event.status || '無' }}</span>
+            <span>狀態：{{ event.status || "無" }}</span>
           </div>
           <div class="event-time">時間：{{ event.startTime }}</div>
         </div>
@@ -60,7 +60,6 @@ const goToCreateEvent = () => {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .group-event {
@@ -166,7 +165,8 @@ const goToCreateEvent = () => {
   box-shadow: 0 0 14px #5a3fa799;
 }
 @keyframes flicker {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     text-shadow: 0 0 10px #b388ff, 0 0 20px #7c7cfb;
   }

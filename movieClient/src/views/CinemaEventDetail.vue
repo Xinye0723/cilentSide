@@ -11,8 +11,10 @@ const showShareMenu = ref(false);
 
 onMounted(async () => {
   try {
-    const res = await fetch(`http://localhost:5276/api/CinemaEvent/${route.params.id}`);
-    if (!res.ok) throw new Error('活動不存在');
+    const res = await fetch(
+      `http://localhost:7181/api/CinemaEvent/${route.params.id}`
+    );
+    if (!res.ok) throw new Error("活動不存在");
     const data = await res.json();
     event.value = {
       id: data.id,
@@ -20,43 +22,49 @@ onMounted(async () => {
       description: data.description,
       theaterNumber: data.theaterNumber,
       price: data.price,
-      startTime: new Date(data.startTime).toLocaleString('zh-TW'),
-      endTime: data.endTime ? new Date(data.endTime).toLocaleString('zh-TW') : null,
+      startTime: new Date(data.startTime).toLocaleString("zh-TW"),
+      endTime: data.endTime
+        ? new Date(data.endTime).toLocaleString("zh-TW")
+        : null,
       img: data.img,
-      status: data.status || '進行中'
+      status: data.status || "進行中",
     };
   } catch (err) {
-    error.value = err.message || '載入失敗';
+    error.value = err.message || "載入失敗";
   } finally {
     loading.value = false;
   }
 });
 
 const goBack = () => {
-  router.push('/cinemaEvent');
+  router.push("/cinemaEvent");
 };
 
 const getStatusColor = (status) => {
   switch (status) {
-    case '進行中': return '#4CAF50';
-    case '即將開始': return '#FF9800';
-    case '已結束': return '#9E9E9E';
-    default: return '#2196F3';
+    case "進行中":
+      return "#4CAF50";
+    case "即將開始":
+      return "#FF9800";
+    case "已結束":
+      return "#9E9E9E";
+    default:
+      return "#2196F3";
   }
 };
 
 const showSuccessMessage = (message) => {
-  const toast = document.createElement('div');
-  toast.style.position = 'fixed';
-  toast.style.top = '20px';
-  toast.style.right = '20px';
-  toast.style.background = 'rgba(76, 175, 80, 0.95)';
-  toast.style.color = 'white';
-  toast.style.padding = '0.8rem 1.2rem';
-  toast.style.borderRadius = '8px';
-  toast.style.zIndex = '99999';
-  toast.style.fontSize = '1rem';
-  toast.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.top = "20px";
+  toast.style.right = "20px";
+  toast.style.background = "rgba(76, 175, 80, 0.95)";
+  toast.style.color = "white";
+  toast.style.padding = "0.8rem 1.2rem";
+  toast.style.borderRadius = "8px";
+  toast.style.zIndex = "99999";
+  toast.style.fontSize = "1rem";
+  toast.style.boxShadow = "0 2px 12px rgba(0,0,0,0.15)";
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => {
@@ -67,27 +75,30 @@ const showSuccessMessage = (message) => {
 const shareEvent = async () => {
   try {
     await navigator.clipboard.writeText(window.location.href);
-    showSuccessMessage('活動連結已複製到剪貼簿！');
+    showSuccessMessage("活動連結已複製到剪貼簿！");
   } catch (err) {
-    const textArea = document.createElement('textarea');
+    const textArea = document.createElement("textarea");
     textArea.value = window.location.href;
     document.body.appendChild(textArea);
     textArea.select();
-    document.execCommand('copy');
+    document.execCommand("copy");
     document.body.removeChild(textArea);
-    showSuccessMessage('活動連結已複製到剪貼簿！');
+    showSuccessMessage("活動連結已複製到剪貼簿！");
   }
 };
 
 const shareToFacebook = () => {
   const url = encodeURIComponent(window.location.href);
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
   showShareMenu.value = false;
 };
 
 const shareToLine = () => {
   const url = encodeURIComponent(window.location.href);
-  window.open(`https://social-plugins.line.me/lineit/share?url=${url}`, '_blank');
+  window.open(
+    `https://social-plugins.line.me/lineit/share?url=${url}`,
+    "_blank"
+  );
   showShareMenu.value = false;
 };
 
@@ -114,15 +125,18 @@ const toggleShareMenu = () => {
       <div class="content-container">
         <div class="event-header">
           <h1 class="event-title">{{ event.title }}</h1>
-          <div class="event-status" :style="{ backgroundColor: getStatusColor(event.status) }">
+          <div
+            class="event-status"
+            :style="{ backgroundColor: getStatusColor(event.status) }"
+          >
             {{ event.status }}
           </div>
         </div>
 
         <div class="event-image-section">
-          <img 
-            v-if="event.img" 
-            :src="event.img" 
+          <img
+            v-if="event.img"
+            :src="event.img"
             :alt="event.title"
             class="event-image"
           />
@@ -219,7 +233,8 @@ const toggleShareMenu = () => {
   font-family: "Poppins", "Noto Sans TC", sans-serif;
 }
 
-.loading, .error {
+.loading,
+.error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -240,8 +255,12 @@ const toggleShareMenu = () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error i {
@@ -316,7 +335,8 @@ const toggleShareMenu = () => {
   margin-bottom: 1.5rem;
 }
 
-.info-section, .description-section {
+.info-section,
+.description-section {
   background: rgba(26, 26, 46, 0.8);
   border-radius: 12px;
   padding: 1.2rem;
@@ -389,7 +409,8 @@ const toggleShareMenu = () => {
   flex-wrap: wrap;
 }
 
-.back-btn, .share-btn {
+.back-btn,
+.share-btn {
   padding: 0.8rem 1.5rem;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -436,7 +457,7 @@ const toggleShareMenu = () => {
   margin-bottom: 0.5rem;
   min-width: 150px;
   z-index: 1000;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .share-option {
@@ -467,29 +488,30 @@ const toggleShareMenu = () => {
   .cinema-event-detail {
     padding: 1rem;
   }
-  
+
   .event-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .event-title {
     font-size: 1.6rem;
   }
-  
+
   .content-container {
     max-width: 100%;
   }
-  
+
   .action-section {
     flex-direction: column;
     align-items: center;
   }
-  
-  .back-btn, .share-btn {
+
+  .back-btn,
+  .share-btn {
     width: 100%;
     max-width: 200px;
     justify-content: center;
   }
 }
-</style> 
+</style>

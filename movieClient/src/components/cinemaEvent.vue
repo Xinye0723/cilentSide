@@ -9,7 +9,7 @@ const filterStatus = ref("進行中");
 
 onMounted(async () => {
   try {
-    const res = await fetch("http://localhost:5276/api/CinemaEvent");
+    const res = await fetch("https://localhost:7181/api/CinemaEvent");
     const data = await res.json();
     console.log("API 原始資料:", data); // 加這行
 
