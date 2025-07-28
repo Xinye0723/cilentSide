@@ -14,12 +14,8 @@
         <div class="event-info">
           報名：{{ event.registered }}/{{ event.maxCapacity }}
         </div>
-        <div class="event-time">
-          時間：{{ event.startTime }}
-        </div>
-        <div class="event-status">
-          狀態：{{ event.status }}
-        </div>
+        <div class="event-time">時間：{{ event.startTime }}</div>
+        <div class="event-status">狀態：{{ event.status }}</div>
         <RouterLink :to="`/memberEventDetail/${event.id}`">
           <button class="detail-btn">查看詳情</button>
         </RouterLink>
@@ -32,32 +28,34 @@
 import { ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 
-console.log('memberEvent.vue 已載入'); // 這行應該要顯示
+console.log("memberEvent.vue 已載入"); // 這行應該要顯示
 
 const events = ref([]);
 
 onMounted(async () => {
-  console.log('onMounted 開始執行'); // 這行應該要顯示
-  
-  const res = await fetch("http://localhost:5276/api/MemberEvent");
+  console.log("onMounted 開始執行"); // 這行應該要顯示
+
+  const res = await fetch("http://localhost:7181/api/MemberEvent");
   const data = await res.json();
-  console.log('API 原始資料:', data); // 這行應該要顯示
-  
-  events.value = data.map(item => {
-    console.log('item.startTime 原始值:', item.startTime); // 這行應該要顯示
+  console.log("API 原始資料:", data); // 這行應該要顯示
+
+  events.value = data.map((item) => {
+    console.log("item.startTime 原始值:", item.startTime); // 這行應該要顯示
     return {
       id: item.memberEventId,
       title: item.title,
-      organizer: item.organizerName || '',
+      organizer: item.organizerName || "",
       registered: item.registered,
       maxCapacity: item.maxCapacity,
-      startTime: item.startTime ? 
-        new Date(item.startTime).toLocaleDateString('zh-TW') + ' ' + 
-        new Date(item.startTime).toLocaleTimeString('zh-TW', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }) : '時間未定',
-      status: item.status
+      startTime: item.startTime
+        ? new Date(item.startTime).toLocaleDateString("zh-TW") +
+          " " +
+          new Date(item.startTime).toLocaleTimeString("zh-TW", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "時間未定",
+      status: item.status,
     };
   });
 });
@@ -150,4 +148,4 @@ onMounted(async () => {
 .detail-btn:hover {
   background: #7e5de4;
 }
-</style> 
+</style>

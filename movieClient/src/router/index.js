@@ -13,7 +13,7 @@ import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 import MemberEventDetail from "@/views/MemberEventDetail.vue";
 import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
-
+import MemberInform from "@/views/MemberInform.vue";
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
 import OrderDetail from "@/views/orderDetail.vue";
@@ -72,6 +72,7 @@ const routes = [
     name: "createMemberEvent",
   },
   { path: "/memberEventDetail/:id", component: MemberEventDetail, name: "te" },
+  { path: "/memberInform", component: MemberInform, name: "memberInform" },
 ];
 
 const router = createRouter({
