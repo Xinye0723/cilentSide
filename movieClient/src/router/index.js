@@ -11,11 +11,8 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
-import RegisterView from "@/components/registerView.vue";
-import LoginView from "@/components/loginView.vue";
-import LineCallback from "@/components/LineCallback.vue";
-import GoogleCallback from "@/components/GoogleCallback.vue";
-import MemberInform from "@/views/MemberInform.vue";
+import MemberEventDetail from "@/views/MemberEventDetail.vue";
+import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
 
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
@@ -23,13 +20,13 @@ import OrderDetail from "@/views/orderDetail.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ThankYou from "@/views/thankYou.vue";
 import QrcodeView from "@/views/qrcodeView.vue";
+
 const routes = [
   {
     path: "/",
     redirect: "/home",
   },
   { path: "/home", component: HomeView, name: "home" },
-  // { path: "/about", component: AboutView, name: "about" },
 
   {
     path: "/movie",
@@ -53,37 +50,34 @@ const routes = [
     name: "event",
   },
   { path: "/cinemaEvent", component: CinemaEvent, name: "cinemaEvent" },
+  {
+    path: "/cinemaEvent/:id",
+    component: CinemaEventDetail,
+    name: "cinemaEventDetail",
+  },
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/socialArea", component: SocialArea, name: "socialArea" },
   { path: "/memberCenter", component: MemberCenter, name: "memberCenter" },
   { path: "/event/:id", component: EventDetail, name: "EventDetail" },
-  { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
   { path: "/memberIn", component: memberIn, name: "memberIn" },
-  { path: "/login", component: LoginView, name: "login" },
-  { path: "/register", component: RegisterView, name: "register" },
+  {
+    path: "/memberEvent/:id",
+    component: EventDetail,
+    name: "memberEventDetail",
+  },
   {
     path: "/createMemberEvent",
     component: CreatMemberEvent,
     name: "createMemberEvent",
   },
-  { path: "/line-callback", component: LineCallback, name: "lineCallback" },
-  {
-    path: "/google-callback",
-    component: GoogleCallback,
-    name: "googleCallback",
-  },
-  { path: "/memberInform", component: MemberInform, name: "memberInform" },
-  { path: "/meals", component: MealsView, name: "meals" },
-  { path: "/orderDetail", component: OrderDetail, name: "orderDetail" },
-  { path: "/thankyou", component: ThankYou, name: "thankyou" },
-  { path: "/qrcode", component: QrcodeView, name: "qrcode" },
+  { path: "/memberEventDetail/:id", component: MemberEventDetail, name: "te" },
 ];
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    // 切換頁面自動捲到最上方
     return { top: 0 };
   },
 });

@@ -30,7 +30,10 @@
         placeholder="請輸入說明..."
       ></textarea>
 
-      <button type="submit">送出活動</button>
+      <div class="btn-row">
+        <button class="back-btn" @click="goBack">返回上一頁</button>
+        <button class="submit-btn">送出活動</button>
+      </div>
     </form>
   </div>
 </template>
@@ -40,6 +43,10 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+
+function goBack() {
+  router.back();
+}
 
 const title = ref("");
 const movieId = ref("");
@@ -60,18 +67,22 @@ const increaseCapacity = () => {
 const decreaseCapacity = () => {
   if (maxCapacity.value > 1) maxCapacity.value--;
 };
-
 const submitForm = async () => {
-  const deadline = new Date(startTime.value);
-  deadline.setDate(deadline.getDate() - 1);
+  const start = new Date(startTime.value);
+  const end = new Date(start);
+  end.setHours(start.getHours() + 2); // 結束時間 = 開始時間 + 2 小時
 
   const newEvent = {
     title: title.value,
-    movieId: movieId.value,
-    startTime: startTime.value,
-    maxCapacity: maxCapacity.value,
+    movieId: Number(movieId.value),
+    theaterNumber: 1,           // ✅ 先寫死，之後可改選擇
+    startTime: start.toISOString(),
+    endTime: end.toISOString(), // ✅ 必填欄位
+    showTimeId: 1,              // ✅ 先寫死，之後接後端資料
+    price: 300,                 // ✅ 先固定票價
     description: description.value,
-    updatedAt: deadline.toISOString(), // 作為報名截止時間
+    maxCapacity: maxCapacity.value,
+    organizerId: 1              // ✅ 寫死主辦人 ID，登入後可綁會員
   };
 
   try {
@@ -91,6 +102,7 @@ const submitForm = async () => {
     console.error("錯誤：", err);
   }
 };
+
 </script>
 
 <style scoped>
@@ -102,6 +114,7 @@ const submitForm = async () => {
   border-radius: 12px;
   color: white;
   font-family: "Poppins", "Noto Sans TC", sans-serif;
+  margin-bottom: 1rem;
 }
 
 h1 {
@@ -133,6 +146,11 @@ input[type="text"],
 textarea {
   background-color: white;
   color: black;
+}
+
+input[type="datetime-local"] {
+  color: #23234a;         /* 深色字體 */
+  background-color: #fff; /* 白色背景 */
 }
 
 .capacity-control {
@@ -184,5 +202,29 @@ select {
 option {
   background-color: #1a1a2e;
   color: white;
+}
+
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.back-btn, .submit-btn {
+  background: #a387ff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.back-btn:hover, .submit-btn:hover {
+  background: #7e5de4;
+}
+.submit-btn {
+  font-weight: bold;
+  min-width: 160px;
 }
 </style>
