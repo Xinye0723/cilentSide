@@ -2,41 +2,66 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
-const months = ["8月", "9月", "10月", "11月", "12月"];
-const activeMonth = ref(0);
-const comingMovies = ref([]);
-const imgBaseUrl = 'https://localhost:7181/';
-const router = useRouter();
+  const months = ["8月", "9月", "10月", "11月", "12月"];
+  const activeMonth = ref(0);
+  const comingMovies = ref([]);
+  const imgBaseUrl = 'https://localhost:7181/';
+  const router = useRouter();
 
-// 1. 取得「即將上映」電影
-function fetchComingMovies() {
-  fetch('https://localhost:7181/api/Movies')
-    .then(res => res.json())
-    .then(data => {
-      // 只留 movieStatusId === 1 的
-      comingMovies.value = data.filter(m => m.movieStatusId === 1);
+  const page = ref(1)
+  const pageSize = 10
+
+  // 1. 取得「即將上映」電影
+  function fetchComingMovies() {
+    fetch('https://localhost:7181/api/Movies')
+      .then(res => res.json())
+      .then(data => {
+        // 只留 movieStatusId === 1 的
+        comingMovies.value = data.filter(m => m.movieStatusId === 1);
+      });
+  }
+  // 2. 按月份篩選
+  const filteredMovies = computed(() => {
+    // 先抓出使用者選擇的月份（例如 8月=>8）
+    const thisMonth = parseInt(months[activeMonth.value]);
+    return comingMovies.value.filter(m => {
+      if (!m.releaseDate) return false;
+      const mMonth = new Date(m.releaseDate).getMonth() + 1;
+      return mMonth === thisMonth;
     });
-}
-// 2. 按月份篩選
-const filteredMovies = computed(() => {
-  // 先抓出使用者選擇的月份（例如 8月=>8）
-  const thisMonth = parseInt(months[activeMonth.value]);
-  return comingMovies.value.filter(m => {
-    if (!m.releaseDate) return false;
-    const mMonth = new Date(m.releaseDate).getMonth() + 1;
-    return mMonth === thisMonth;
   });
-});
+  // 3. 分頁（針對篩選後資料）
+  const totalPages = computed(() =>
+    Math.ceil(filteredMovies.value.length / pageSize)
+  )
+  const pagedMovies = computed(() =>
+    filteredMovies.value.slice((page.value - 1) * pageSize, page.value * pageSize)
+  )
+  // 換頁時自動滾到頂
+  function goToPage(p) {
+    page.value = p;
+    nextTick(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+  function prevPage() {
+    if (page.value > 1) goToPage(page.value - 1);
+  }
+  function nextPage() {
+    if (page.value < totalPages.value) goToPage(page.value + 1);
+  }
 
-function setActiveTag(idx) {
-  activeMonth.value = idx;
-}
+  // 選擇月份時，重設分頁
+  function setActiveTag(idx) {
+    activeMonth.value = idx;
+    page.value = 1;
+  }
 
-function goToDetail(movieId) {
-  router.push(`/movies/${movieId}`);
-}
+  function goToDetail(movieId) {
+    router.push(`/movies/${movieId}`);
+  }
 
-onMounted(fetchComingMovies);
+  onMounted(fetchComingMovies);
 </script>
 
 <template>
@@ -44,12 +69,12 @@ onMounted(fetchComingMovies);
     <!-- 篩選 chips -->
     <div class="chips-row">
       <button v-for="(month, idx) in months" :key="month" class="chip" :class="{ active: activeMonth === idx }" 
-            @mouseover="setActiveTag(idx)">{{ month }}</button>
+            @click="setActiveTag(idx)">{{ month }}</button>
     </div>
     <!-- 電影列表 -->
     <div class="movie-row d-flex flex-wrap justify-content-center fade-in">
-      <div class="movie-card" v-for="(movie, idx) in filteredMovies" :key="movie.movieId" @click="goToDetail(movie.movieId)" 
-          :class="{ 'fade-in': true }" :style="{ animationDelay: (idx * 0.08) + 's' }">
+      <div class="movie-card fade-in" v-for="(movie, idx) in pagedMovies" :key="movie.movieId" @click="goToDetail(movie.movieId)" 
+          style="cursor: pointer;" :style="{ animationDelay: (idx * 0.08) + 's' }">
         <div class="movie-poster-wrap" style="position: relative;">
           <img :src="imgBaseUrl + movie.posterPicture" class="movie-poster-img" :alt="movie.movieNameChinese" />
           <img v-if="movie.ratingIcon" :src="imgBaseUrl + movie.ratingIcon" class="rating-icon" :alt="movie.ratingDescription" 
@@ -62,12 +87,18 @@ onMounted(fetchComingMovies);
         </div>
       </div>
     </div>
+    <!-- 分頁按鈕 -->
+    <div class="pagination">
+      <button @click="prevPage" :disabled="page <= 1" class="page-arrow">«</button>
+      <button v-for="p in totalPages" :key="p" @click="goToPage(p)" :class="['page-btn', { active: page === p }]">{{ p }}</button>
+      <button @click="nextPage" :disabled="page >= totalPages" class="page-arrow">»</button>
+    </div>
   </div>
 </template>
 
 <style lang="css" scoped>
   .chips-row {
-    max-width: 500px;
+    max-width: 430px;
     margin: 0 auto;
     padding-left: 10px;
     padding-right: 10px;
@@ -96,7 +127,7 @@ onMounted(fetchComingMovies);
     position: relative;
   }
   .movie-row {
-    max-width: 1400px;      /* 整個區塊最多不超過1200px，居中 */
+    max-width: 1600px;      /* 整個區塊最多不超過1600px，居中 */
     margin: 0 auto 2rem auto; /* 自動左右留白+下方空間 */
     padding-left: 10px;
     padding-right: 10px;
@@ -106,8 +137,8 @@ onMounted(fetchComingMovies);
     gap: 18px;   /* 卡片間距，可調整 */
   }
   .movie-card {
-    width: 220px;
-    margin: 20px 16px 28px 16px;
+    width: 260px;
+    margin: 25px 1px 1px 11px;
     border-radius: 18px;
     background: #202125;
     box-shadow: 0 4px 14px #0008;
@@ -121,7 +152,7 @@ onMounted(fetchComingMovies);
   }
   .movie-poster-img {
     width: 100%;
-    height: 320px;
+    height: 370px;
     object-fit: cover;
     border-radius: 18px 18px 0 0;
     background: #191a1f;
@@ -171,10 +202,38 @@ onMounted(fetchComingMovies);
     opacity: 0;
     animation: fadeInList 0.7s cubic-bezier(.6,.8,.2,1) forwards;
   }
-
   @keyframes fadeInList {
     to {
       opacity: 1;
     }
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+  }
+  .page-btn, .page-arrow {
+    background: none;
+    border: none;
+    color: #b9c7e2;
+    font-weight: bold;
+    font-size: 1.06em;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s;
+  }
+  .page-btn.active, .page-btn:hover {
+    background: #7be6fa;
+    color: #17181b;
+  }
+  .page-arrow[disabled],
+  .page-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>

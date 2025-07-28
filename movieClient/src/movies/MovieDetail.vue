@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router';
     const movie = ref([]);
     const imgBaseUrl = 'https://localhost:7181/';
     // 幾個一行
-    const starsPerRow = 3;
+    const starsPerRow = 4;
 
     // 產生分好行的主演陣列
     const starringChunks = computed(() => {
@@ -37,7 +37,7 @@ import { useRoute } from 'vue-router';
         <h2 class="movie-title-ch">{{ movie.movieNameChinese }}</h2>
         <div class="movie-title-en">{{ movie.movieNameEnglish }}</div>
         <div class="movie-detail-meta">
-          <div>類型：</div>
+          <!-- <div >類型：</div> -->
           <div>分級：{{ movie.ratingDescription }}{{ movie.ratingCode ? `(${movie.ratingCode})` : '' }}</div>
           <div>片長：{{ movie.duration }} 分鐘</div>
           <div>上映日期：{{ movie.releaseDate ? movie.releaseDate.slice(0,10) : '-' }}</div>
@@ -50,7 +50,7 @@ import { useRoute } from 'vue-router';
           </div>
           <div>製作商：{{ movie.production }}</div>
           <div>發行商：{{ movie.distributor }}</div>
-          <div>國家：{{ movie.country }}</div>
+          <div>產地：{{ movie.country }}</div>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@ import { useRoute } from 'vue-router';
     </div>
 
     <div class="movie-detail-bottom">
-      <button @click="$router.back()" class="btn btn-outline-secondary">電影清單</button>
+      <button @click="$router.back()" class="btn btn-outline-secondary">電影單</button>
       <span class="movie-view-count">點閱：{{ movie.viewCount || 0 }}</span>
     </div>
   </div>

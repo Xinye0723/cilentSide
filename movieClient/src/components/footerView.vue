@@ -1,3 +1,28 @@
+<script setup>
+  import { ref, onMounted, onBeforeUnmount } from "vue";
+
+/* ➊ 是否顯示按鈕 */
+const showBackTop = ref(false);
+
+/* ➋ 滑動監聽：超過 多少 才顯示 */
+const onScroll = () => {
+  showBackTop.value = window.scrollY > 100;
+};
+
+/* ➌ 平滑回頂 */
+const scrollTop = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+onMounted(() => {
+  onScroll(); // 進頁面先判斷一次
+  window.addEventListener("scroll", onScroll);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", onScroll);
+});
+</script>
+
 <template>
   <footer id="footer">
     <div class="container">
@@ -40,33 +65,8 @@
   </footer>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
-
-/* ➊ 是否顯示按鈕 */
-const showBackTop = ref(false);
-
-/* ➋ 滑動監聽：超過 多少 才顯示 */
-const onScroll = () => {
-  showBackTop.value = window.scrollY > 100;
-};
-
-/* ➌ 平滑回頂 */
-const scrollTop = () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
-
-onMounted(() => {
-  onScroll(); // 進頁面先判斷一次
-  window.addEventListener("scroll", onScroll);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", onScroll);
-});
-</script>
-
-<style scoped>
-/* 讓按鈕淡入淡出、避免點擊到隱形區域 */
+<style lang="css" scoped>
+  /* 讓按鈕淡入淡出、避免點擊到隱形區域 */
 .back-top {
   opacity: 0;
   transition: opacity 0.4s;

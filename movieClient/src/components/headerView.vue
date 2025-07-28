@@ -91,7 +91,7 @@ function scrollToFooter() {
           <RouterLink
             :to="{ name: 'movie' }"
             @click.prevent="handleLinkClick({ name: 'movie' })"
-            >電影介紹</RouterLink
+            >電影清單</RouterLink
           >
           <ul class="submenu mt-2" v-show="showMovieSubmenu">
             <li>
