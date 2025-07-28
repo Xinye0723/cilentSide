@@ -1,210 +1,134 @@
-<template>
-  <div v-if="event && event.title" class="event-detail">
-    <h1 class="title">{{ event.title }}</h1>
-
-    <div class="info">
-      <p>
-        <i class="fa fa-calendar"></i> 日期：{{ formatDate(event.startTime) }}
-      </p>
-      <p><i class="fa fa-clock"></i> 時間：{{ formatTime(event.startTime) }}</p>
-      <p>
-        <i class="fa fa-map-marker"></i> 地點：影廳 {{ event.theaterNumber }} 號
-      </p>
-      <p>
-        <i class="fa fa-user-friends"></i> 已報名人數：{{ event.registered }} /
-        {{ event.maxCapacity }} 人
-      </p>
-    </div>
-
-    <div class="actions">
-      <button
-        class="register-btn"
-        @click="register"
-        :disabled="isRegistered || event.registered >= event.maxCapacity"
-      >
-        {{ isRegistered ? "已報名" : "我要報名" }}
-      </button>
-
-      <button
-        class="cancel-btn"
-        @click="cancelRegister"
-        :disabled="!isRegistered"
-      >
-        取消報名
-      </button>
-      <button class="back-btn" @click="goBack">返回上一頁</button>
-    </div>
-  </div>
-
-  <div v-else class="event-detail event-error">
-    <h2 class="error-title">❌ 活動資料載入失敗或不存在</h2>
-    <button class="back-btn" @click="goBack">返回上一頁</button>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
-
-const event = ref({});
-const isRegistered = ref(false);
+const event = ref(null);
+const hasSignedUp = ref(false);
 
 onMounted(async () => {
   const id = route.params.id;
   try {
-    const memberId = 1; // ⚠️ 暫時寫死，等串會員系統可改成登入者 ID
-    const res = await fetch(
-      `https://localhost:7181/api/MemberEvent/WithMember?id=${id}&memberId=${memberId}`
-    );
-
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data = await res.json();
-    console.log("✅ 抓到活動資料", data);
-    event.value = data;
-    isRegistered.value = data.isRegistered; // 如果後端有回傳這個欄位
+    const res = await fetch(`http://localhost:5276/api/MemberEvent/${id}`);
+    if (res.ok) {
+      event.value = await res.json();
+    } else {
+      event.value = null;
+    }
   } catch (err) {
-    console.error("❌ 抓資料錯誤", err);
+    event.value = null;
   }
 });
 
-const formatDate = (datetime) => {
-  if (!datetime) return "";
-  return new Date(datetime).toLocaleDateString("zh-TW");
-};
+function goBack() {
+  router.back();
+}
 
-const formatTime = (datetime) => {
-  if (!datetime) return "";
-  return new Date(datetime).toLocaleTimeString("zh-TW", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
-const goBack = () => {
-  router.push("/memberEvent");
-};
-
-const register = () => {
-  if (isRegistered.value) {
-    alert("⚠️ 你已報名過了！");
-    return;
+function signupOrCancel() {
+  if (!event.value) return;
+  if (!hasSignedUp.value) {
+    event.value.registered += 1;
+    hasSignedUp.value = true;
+  } else {
+    // 不能小於0
+    if (event.value.registered > 0) event.value.registered -= 1;
+    hasSignedUp.value = false;
   }
-
-  if (event.value.registered >= event.value.maxCapacity) {
-    alert("已達報名上限！");
-    return;
-  }
-
-  alert("報名成功！期待與你一同觀影 🍿");
-  event.value.registered++;
-  isRegistered.value = true;
-};
-
-const cancelRegister = () => {
-  if (!isRegistered.value) return;
-
-  const confirmCancel = confirm("確定要取消報名嗎？");
-  if (confirmCancel) {
-    alert("取消成功");
-    event.value.registered--;
-    isRegistered.value = false;
-  }
-};
+}
 </script>
 
+<template>
+  <div class="event-detail" v-if="event">
+    <h1>{{ event.title }}</h1>
+    <p class="desc">{{ event.description || '無活動說明' }}</p>
+    <div class="info-list">
+      <div class="info-item"><span class="label">時間：</span>{{ event.startTime }}</div>
+      <div class="info-item"><span class="label">地點：</span>影廳 {{ event.theaterNumber }} 號</div>
+      <div class="info-item"><span class="label">報名人數：</span>{{ event.registered }}/{{ event.maxCapacity }}</div>
+      <div class="info-item"><span class="label">狀態：</span>{{ event.status || '無' }}</div>
+    </div>
+    <div class="btn-row">
+      <button class="back-btn" @click="goBack">返回上一頁</button>
+      <button class="signup-btn" @click="signupOrCancel">
+        {{ hasSignedUp ? '取消報名' : '我要報名' }}
+      </button>
+    </div>
+  </div>
+  <div v-else class="not-found">
+    <p>找不到這個活動</p>
+  </div>
+</template>
+
 <style scoped>
-/* 🎨（保留你的原樣式） */
 .event-detail {
-  padding: 3rem;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a23, #141433);
-  color: white;
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #18182c;
+  border-radius: 16px;
+  box-shadow: 0 0 18px #a387ff33;
+  padding: 2.5rem 2rem;
+  color: #fff;
   font-family: "Poppins", "Noto Sans TC", sans-serif;
 }
-
-.title {
-  font-size: 2.5rem;
+h1 {
   color: #a387ff;
-  text-shadow: 0 0 10px #a387ff;
-  margin-bottom: 2rem;
-  animation: flicker 2s infinite;
+  margin-bottom: 1.2rem;
+  font-size: 2rem;
+  text-align: center;
 }
-
-.info p {
-  font-size: 1.2rem;
-  margin: 1rem 0;
+.desc {
   color: #ccc;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
-
-.info i {
-  margin-right: 0.5rem;
-  color: #ff99cc;
-}
-
-.actions {
-  margin-top: 2.5rem;
+.info-list {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  flex-wrap: wrap;
+  font-size: 1.1rem;
 }
-
-.register-btn,
-.cancel-btn,
-.back-btn {
-  background: transparent;
-  border: 1px solid #a387ff;
+.info-item {
+  background: #23234a;
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  display: flex;
+  align-items: center;
+}
+.label {
   color: #a387ff;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.back-btn, .signup-btn {
+  background: #a387ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
   padding: 0.6rem 1.5rem;
-  border-radius: 12px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 8px #7c7cfb;
+  transition: background 0.2s;
 }
-
-.register-btn:hover {
-  background-color: #66d9ff;
-  color: #000;
-  box-shadow: 0 0 16px #66d9ff;
+.back-btn:hover, .signup-btn:hover {
+  background: #7e5de4;
 }
-
-.cancel-btn:hover {
-  background-color: #ff9999;
-  color: #000;
-  box-shadow: 0 0 16px #ff9999;
+.signup-msg {
+  margin-top: 1.2rem;
+  color: #66ff99;
+  text-align: center;
+  font-size: 1.1rem;
 }
-
-.cancel-btn:disabled,
-.register-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.back-btn:hover {
-  background-color: #a387ff;
-  color: #000;
-  box-shadow: 0 0 16px #a387ff;
-}
-
-.event-error button {
-  margin-top: 1rem;
-}
-
-@keyframes flicker {
-  0%,
-  100% {
-    opacity: 1;
-    text-shadow: 0 0 10px #a387ff;
-  }
-  50% {
-    opacity: 0.8;
-    text-shadow: 0 0 6px #7c7cfb;
-  }
+.not-found {
+  text-align: center;
+  color: #ff7b7b;
+  margin-top: 3rem;
+  font-size: 1.3rem;
 }
 </style>

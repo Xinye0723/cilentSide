@@ -11,16 +11,18 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
+import MemberEventDetail from "@/views/MemberEventDetail.vue";
+import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
 
 import { createRouter, createWebHistory } from "vue-router";
 import MovieDetail from "@/movies/MovieDetail.vue";
+
 const routes = [
   {
     path: "/",
     redirect: "/home",
   },
   { path: "/home", component: HomeView, name: "home" },
-  // { path: "/about", component: AboutView, name: "about" },
 
   {
     path: "/movie",
@@ -44,24 +46,26 @@ const routes = [
     name: "event",
   },
   { path: "/cinemaEvent", component: CinemaEvent, name: "cinemaEvent" },
+  { path: "/cinemaEvent/:id", component: CinemaEventDetail, name: "cinemaEventDetail" },
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/socialArea", component: SocialArea, name: "socialArea" },
   { path: "/memberCenter", component: MemberCenter, name: "memberCenter" },
   { path: "/event/:id", component: EventDetail, name: "EventDetail" },
-  { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
   { path: "/memberIn", component: memberIn, name: "memberIn" },
+  { path: "/memberEvent/:id", component: EventDetail, name: "memberEventDetail" },
   {
     path: "/createMemberEvent",
     component: CreatMemberEvent,
     name: "createMemberEvent",
   },
+  {path:'/memberEventDetail/:id',component:MemberEventDetail,name:'te'}
 ];
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    // 切換頁面自動捲到最上方
     return { top: 0 };
   },
 });

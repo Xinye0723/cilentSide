@@ -39,3 +39,22 @@ a,
     padding: 0 2rem;
   }
 }
+
+.toast-message {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  background: rgba(76, 175, 80, 0.95) !important;
+  color: white !important;
+  padding: 0.8rem 1.2rem !important;
+  border-radius: 8px !important;
+  z-index: 99999 !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+  animation: slideIn 0.3s ease !important;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
