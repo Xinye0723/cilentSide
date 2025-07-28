@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useBookingStore } from "@/stores/booking";
-
+import { useRouter } from "vue-router";
+const router = useRouter();
 const booking = useBookingStore();
 const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
-const ngrokBaseUrl = "https://182dadae3d96.ngrok-free.app";
-const frontendUrl = "https://spotty-streets-sniff.loca.lt";
+const ngrokBaseUrl = " https://240d3ad36457.ngrok-free.app";
+const frontendUrl =
+  "https://bookmark-database-sean-unemployment.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
@@ -35,7 +37,7 @@ async function pay(method: "credit" | "linepay") {
     userId: booking.userId || "",
     orderSource: "web",
     returnUrl: `${ngrokBaseUrl}/api/ecpay/Notify`,
-    clientBackUrl: `https://internet-maker-assists-presence.trycloudflare.com/home`,
+    clientBackUrl: `${frontendUrl}/qrcode`,
   };
   const res = await fetch("https://localhost:7181/api/Ecpay/CreateOrder", {
     method: "POST",
@@ -119,10 +121,16 @@ async function pay(method: "credit" | "linepay") {
       <h2 class="text-2xl font-bold mb-4">選擇付款方式</h2>
 
       <button
-        class="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold"
+        class="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold"
         @click="pay('credit')"
       >
         信用卡付款
+      </button>
+      <button
+        class="w-full py-4 rounded-lg bg-green-600 hover:bg-green-500 font-bold"
+        @click="router.push({ name: 'qrcode' })"
+      >
+        現場付款
       </button>
     </aside>
   </main>
