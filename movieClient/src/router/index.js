@@ -11,6 +11,12 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import memberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
+import RegisterView from "@/components/registerView.vue";
+import LoginView from "@/components/loginView.vue";
+import LineCallback from "@/components/LineCallback.vue";
+import GoogleCallback from "@/components/GoogleCallback.vue";
+import MemberInform from "@/views/MemberInform.vue";
+
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
 import OrderDetail from "@/views/orderDetail.vue";
@@ -54,11 +60,20 @@ const routes = [
   { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
   { path: "/memberIn", component: memberIn, name: "memberIn" },
+  { path: "/login", component: LoginView, name: "login" },
+  { path: "/register", component: RegisterView, name: "register" },
   {
     path: "/createMemberEvent",
     component: CreatMemberEvent,
     name: "createMemberEvent",
   },
+  { path: "/line-callback", component: LineCallback, name: "lineCallback" },
+  {
+    path: "/google-callback",
+    component: GoogleCallback,
+    name: "googleCallback",
+  },
+  { path: "/memberInform", component: MemberInform, name: "memberInform" },
   { path: "/meals", component: MealsView, name: "meals" },
   { path: "/orderDetail", component: OrderDetail, name: "orderDetail" },
   { path: "/thankyou", component: ThankYou, name: "thankyou" },

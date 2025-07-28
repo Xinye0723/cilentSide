@@ -7,6 +7,7 @@ const isMenuOpen = ref(false);
 const isScrolled = ref(false);
 const showMovieSubmenu = ref(false);
 const showEventSubmenu = ref(false);
+const showMemberSubmenu = ref(false);
 
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -152,12 +153,32 @@ function scrollToFooter() {
           >
         </li>
         <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
-        <li>
+        <li
+          class="dropdown"
+          @mouseenter="showMemberSubmenu = true"
+          @mouseleave="showMemberSubmenu = false"
+        >
           <RouterLink
-            :to="{ name: 'memberCenter' }"
-            @click.prevent="handleLinkClick({ name: 'memberCenter' })"
+            :to="{ name: 'memberIn' }"
+            @click.prevent="handleLinkClick({ name: 'memberIn' })"
             >會員中心</RouterLink
           >
+          <ul class="submenu mt-2" v-show="showMemberSubmenu">
+            <li>
+              <RouterLink
+                :to="{ name: 'memberInform' }"
+                @click.prevent="handleLinkClick({ name: 'memberInform' })"
+                >會員資料</RouterLink
+              >
+            </li>
+            <li>
+              <RouterLink
+                :to="{ name: 'memberIn' }"
+                @click.prevent="handleLinkClick({ name: 'memberIn' })"
+                >修改資料</RouterLink
+              >
+            </li>
+          </ul>
         </li>
       </ul>
     </div>

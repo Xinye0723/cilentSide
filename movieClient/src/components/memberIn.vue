@@ -24,6 +24,7 @@ interface memberUpdateDto {
 
 const member = ref<memberUpdateDto | null>(null);
 const error = ref<string | null>(null);
+const validateError = ref("");
 
 async function loadMember() {
   try {
@@ -35,6 +36,13 @@ async function loadMember() {
     }
 
     const data = (await res.json()) as memberUpdateDto;
+    if (data.memberBirth) {
+      data.memberBirth = data.memberBirth.slice(0, 10); // 只取 yyyy-MM-dd
+    }
+    if (!data.memberGender) data.memberGender = true; // 預設男
+    if (!data.memberBirth) data.memberBirth = "2000-01-01"; // 預設生日
+    if (!data.memberPoint || isNaN(Number(data.memberPoint))) data.memberPoint = "0"; // 預設點數
+    if (!data.memberImg) data.memberImg = "/images/posterPicture/default.jpg";
     member.value = data;
   } catch (err) {
     console.error("取會員失敗：", err);
@@ -64,14 +72,14 @@ function logout() {
 
 function getImgUrl(path: string) {
   if (!path) return "https://via.placeholder.com/120";
-  if (path.startsWith("http")) return path;
+  if (path.startsWith("https")) return path;
   return "/" + path.replace(/^\\+|^\/+/, "");
 }
 
 function getFullImgUrl(path: string) {
   if (!path) return "https://via.placeholder.com/120";
   // 如果已經是 http 開頭就直接回傳
-  if (path.startsWith("http")) return path;
+  if (path.startsWith("https")) return path;
   // 否則加上後端 API 網址
   return "https://localhost:7181" + path;
 }
@@ -103,7 +111,21 @@ async function uploadImage(file: File) {
 }
 
 async function saveMember() {
+  console.log("saveMember 被觸發");
   if (!member.value) return;
+  // 必填欄位檢查
+  if (
+    !member.value.memberImg ||
+    !member.value.memberPhone?.trim() ||
+    !member.value.memberAddress?.trim() ||
+    (member.value.memberGender !== true && member.value.memberGender !== false) ||
+    !member.value.memberBirth?.trim()
+  ) {
+    console.log("必填驗證失敗", member.value);
+    validateError.value = "會員照片、電話、地址、性別、生日為必填欄位";
+    return;
+  }
+  validateError.value = "";
   try {
     // 1. 如果有新圖片，先上傳
     if (newImageFile.value) {
@@ -111,6 +133,7 @@ async function saveMember() {
       member.value.memberImg = imgPath;
       newImageFile.value = null; // 清空暫存
     }
+    console.log("即將送出 PUT 請求", member.value);
     // 2. 再送出會員資料
     const res = await fetch(`${apiBase}/Members/${member.value.memberId}`, {
       method: "PUT",
@@ -121,10 +144,7 @@ async function saveMember() {
         memberImg: member.value.memberImg,
         memberPhone: member.value.memberPhone,
         memberGender: member.value.memberGender,
-        memberBirth:
-          member.value.memberBirth.length === 10
-            ? member.value.memberBirth + "T00:00:00"
-            : member.value.memberBirth,
+        memberBirth: member.value.memberBirth, // 只送 yyyy-MM-dd
         memberEmail: member.value.memberEmail,
         memberPoint: member.value.memberPoint, // ← 一定要 string
         memberAddress: member.value.memberAddress,
@@ -143,6 +163,7 @@ async function saveMember() {
   <div class="container mt-5">
     <!-- 錯誤訊息 -->
     <div v-if="error" class="alert alert-danger text-center">{{ error }}</div>
+    <div v-if="validateError" class="alert alert-warning text-center">{{ validateError }}</div>
 
     <!-- 會員資料 -->
     <div v-if="member" class="card mb-4">
@@ -168,7 +189,7 @@ async function saveMember() {
               style="width: 150px; height: 200px; object-fit: cover"
             />
             <label class="btn btn-secondary mt-2">
-              修改圖片
+              <span class="text-danger">*</span>修改圖片 
               <input
                 type="file"
                 accept="image/*"
@@ -206,9 +227,9 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
-                  ><strong>電話：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end">
+                  <span class="text-danger">*</span><strong>電話：</strong>
+                </label>
                 <div class="col-sm-9">
                   <input
                     v-model="member.memberPhone"
@@ -218,22 +239,20 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
-                  ><strong>性別：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end">
+                  <span class="text-danger">*</span><strong>性別：</strong>
+                </label>
                 <div class="col-sm-9">
-                  <input
-                    class="form-control"
-                    :value="member.memberGender ? '男' : '女'"
-                    type="text"
-                    disabled
-                  />
+                  <select v-model="member.memberGender" class="form-control">
+                    <option :value="true">男</option>
+                    <option :value="false">女</option>
+                  </select>
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
-                  ><strong>地址：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end">
+                  <span class="text-danger">*</span><strong>地址：</strong>
+                </label>
                 <div class="col-sm-9">
                   <input
                     v-model="member.memberAddress"
@@ -243,15 +262,14 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
-                  ><strong>生日：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end">
+                  <span class="text-danger">*</span><strong>生日：</strong>
+                </label>
                 <div class="col-sm-9">
                   <input
+                    v-model="member.memberBirth"
                     class="form-control"
-                    :value="birthDate"
-                    type="text"
-                    disabled
+                    type="date"
                   />
                 </div>
               </div>
