@@ -148,7 +148,7 @@ function scrollToFooter() {
         <li>
           <RouterLink
             :to="{ name: 'socialArea' }"
-            @click.prevent="handleLinkClick({ name: 'socialArea' })"
+            @click.prevent="handleLinkClick({ name: 'chat' })"
             >討論區</RouterLink
           >
         </li>

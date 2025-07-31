@@ -22,8 +22,9 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/hubs": { target: "https://localhost:7181", ws: true, secure: false },
       hmr: {
-        host: "index-assessments-tales-stockholm.trycloudflare.com", // 換成你那串子網域
+        host: "index-assessments-tales-stockholm.trycloudflare.com", // 替換成你那串子網域
         protocol: "wss",
         clientPort: 443,
       },

@@ -35,7 +35,7 @@ const events = ref([]);
 onMounted(async () => {
   console.log("onMounted 開始執行"); // 這行應該要顯示
 
-  const res = await fetch("http://localhost:7181/api/MemberEvent");
+  const res = await fetch("https://localhost:7181/api/MemberEvent");
   const data = await res.json();
   console.log("API 原始資料:", data); // 這行應該要顯示
 

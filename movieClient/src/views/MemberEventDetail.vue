@@ -10,7 +10,7 @@ const hasSignedUp = ref(false);
 onMounted(async () => {
   const id = route.params.id;
   try {
-    const res = await fetch(`http://localhost:7181/api/MemberEvent/${id}`);
+    const res = await fetch(`https://localhost:7181/api/MemberEvent/${id}`);
     if (res.ok) {
       event.value = await res.json();
     } else {

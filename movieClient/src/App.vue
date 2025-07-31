@@ -26,7 +26,7 @@ const route = useRoute();
     </body>
 
     <!-- 頁腳 -->
-    <FooterView />
+    <FooterView v-if="!$route.meta.hideFooter" />
   </div>
 </template>
 

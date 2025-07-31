@@ -1,3 +1,15 @@
+/* ---------------------------------------------------------------
+ *  src/router/index.ts
+ *  -------------------------------------------------------------
+ *  - 登入成功時請在 LoginView 將 token 寫入 localStorage.token
+ *  - 未登入直接打需要驗證的頁 → 會被導向 /login
+ *  - 已登入但手動輸入 /login → 會被導向 /home
+ * -------------------------------------------------------------*/
+
+import { createRouter, createWebHistory } from "vue-router";
+import Swal from "sweetalert2"; // ★ 新增
+import "sweetalert2/dist/sweetalert2.min.css";
+/* ---------- 版面元件 ---------- */
 import BookTicket from "@/components/bookTicket.vue";
 import CinemaEvent from "@/components/cinemaEvent.vue";
 import ComingSoonMovie from "@/movies/comingSoonMovie.vue";
@@ -17,20 +29,19 @@ import MemberInform from "@/views/MemberInform.vue";
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
 import OrderDetail from "@/views/orderDetail.vue";
-import { createRouter, createWebHistory } from "vue-router";
 import ThankYou from "@/views/thankYou.vue";
 import QrcodeView from "@/views/qrcodeView.vue";
 
+/* ---------- Auth / Chat ---------- */
 import LoginView from "@/components/loginView.vue";
 import RegisterView from "@/components/registerView.vue";
+import ChatApp from "@/components/ChatApp.vue";
 
 const routes = [
-  {
-    path: "/",
-    redirect: "/home",
-  },
-  { path: "/home", component: HomeView, name: "home" },
+  { path: "/", redirect: "/home" },
 
+  /* -------- 公開路由 -------- */
+  { path: "/home", component: HomeView, name: "home" },
   {
     path: "/movie",
     redirect: "/onShowMovie",
@@ -58,35 +69,129 @@ const routes = [
     component: CinemaEventDetail,
     name: "cinemaEventDetail",
   },
-  { path: "/memberEvent", component: MemberEvent, name: "memberEvent" },
-  { path: "/socialArea", component: SocialArea, name: "socialArea" },
-  { path: "/memberCenter", component: MemberCenter, name: "memberCenter" },
-  { path: "/event/:id", component: EventDetail, name: "EventDetail" },
+  { path: "/event/:id", component: EventDetail, name: "eventDetail" },
   { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
-  { path: "/memberIn", component: memberIn, name: "memberIn" },
+
+  /* -------- 需要登入的路由 (meta.requiresAuth) -------- */
+  {
+    path: "/chat",
+    component: ChatApp,
+    name: "chat",
+    meta: { requiresAuth: true },
+    meta: { hideFooter: true },
+  },
+  {
+    path: "/memberCenter",
+    component: MemberCenter,
+    name: "memberCenter",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/memberEvent",
+    component: MemberEvent,
+    name: "memberEvent",
+    meta: { requiresAuth: true },
+  },
   {
     path: "/memberEvent/:id",
     component: EventDetail,
     name: "memberEventDetail",
+    meta: { requiresAuth: true },
   },
   {
     path: "/createMemberEvent",
     component: CreatMemberEvent,
     name: "createMemberEvent",
+    meta: { requiresAuth: true },
   },
-  { path: "/memberEventDetail/:id", component: MemberEventDetail, name: "te" },
-  { path: "/memberInform", component: MemberInform, name: "memberInform" },
+  {
+    path: "/memberEventDetail/:id",
+    component: MemberEventDetail,
+    name: "memberEventDetailView",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/memberInform",
+    component: MemberInform,
+    name: "memberInform",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/socialArea",
+    component: SocialArea,
+    name: "socialArea",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/memberIn",
+    component: memberIn,
+    name: "memberIn",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/meals",
+    component: MealsView,
+    name: "meals",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/orderDetail",
+    component: OrderDetail,
+    name: "orderDetail",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/qrcode",
+    component: QrcodeView,
+    name: "qrcode",
+    meta: { requiresAuth: true },
+  },
+
+  /* -------- Auth -------- */
   { path: "/login", component: LoginView, name: "login" },
   { path: "/register", component: RegisterView, name: "register" },
-  { path: "/memberInform", component: MemberInform, name: "memberInform" },
+
+  /* -------- 404 -------- */
+  { path: "/:pathMatch(.*)*", redirect: "/home" },
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior() {
     return { top: 0 };
   },
+});
+
+/* ================================================================
+ *  全域守衛：檢查 JWT
+ * ----------------------------------------------------------------
+ *  1. 有 requiresAuth 而 localStorage.token 不存在 → 去 /login
+ *  2. 已登入還想進 /login 或 /register → 轉回 /home
+ * ================================================================*/
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem("token");
+
+  /* 1️⃣ 尚未登入卻訪問需要驗證的頁 */
+  if (to.meta.requiresAuth && !token) {
+    Swal.fire({
+      icon: "warning",
+      title: "請先登入",
+      confirmButtonText: "前往登入",
+      allowOutsideClick: false,
+    }).then(() => {
+      // 帶上一個 redirect query，登入後可跳回原路徑
+      next({ path: "/login", query: { redirect: to.fullPath } });
+    });
+    return; // 必須 return，否則 guard 會繼續往下跑
+  }
+
+  /* 2️⃣ 已登入卻想再去 /login 或 /register → 直接回首頁 */
+  if (token && (to.path === "/login" || to.path === "/register")) {
+    return next("/home");
+  }
+
+  next();
 });
 
 export default router;
