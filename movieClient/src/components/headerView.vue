@@ -70,8 +70,10 @@ function scrollToFooter() {
 
 <template>
   <nav class="navbar fixed-top" :class="{ scrolled: isScrolled }">
-    <div class="logo">
-      <RouterLink :to="{ name: 'home' }">INFINITY CINEMA</RouterLink>
+    <div class="logo pe-12">
+      <RouterLink :to="{ name: 'home' }" class="pe-8"
+        >INFINITY CINEMA</RouterLink
+      >
     </div>
     <div class="navbar-container">
       <button
@@ -83,7 +85,7 @@ function scrollToFooter() {
         <span class="bar" /><span class="bar" /><span class="bar" />
       </button>
 
-      <ul class="nav-links z-50" :class="{ active: isMenuOpen }">
+      <ul class="nav-links z-50 ms-5 ms-8" :class="{ active: isMenuOpen }">
         <li
           class="dropdown"
           @mouseenter="showMovieSubmenu = true"
@@ -218,7 +220,7 @@ function scrollToFooter() {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 1.2rem 5%;
+  padding: 1.5rem 5%;
   backdrop-filter: blur(12px);
   background: var(--glass-bg);
   border-bottom: var(--border);
@@ -238,7 +240,8 @@ function scrollToFooter() {
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
-  transform: translateX(-120px);
+  transform: translateX(10px);
+  margin-left: 6px;
 }
 .navbar-member {
   display: flex;
@@ -265,7 +268,10 @@ function scrollToFooter() {
   flex-direction: row;
   gap: 2.5rem;
   list-style: none;
-  align-items: center;
+  align-items: end;
+  margin-left: 500px;
+  padding-left: 750px;
+  margin-right: 0;
 }
 
 /* 共用連結樣式（不再把 active 狀態寫在這裡，避免覆寫子選單 padding） */
