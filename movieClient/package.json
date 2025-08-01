@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@joeattardi/emoji-button": "^4.6.4",
     "@microsoft/signalr": "^8.0.7",
     "@vueuse/motion": "^3.0.3",
     "bootstrap": "^5.3.7",

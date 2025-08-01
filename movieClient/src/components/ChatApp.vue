@@ -15,6 +15,7 @@ import RoomList from "@/components/RoomList.vue";
 import ChatWindow from "@/components/ChatWindow.vue";
 import MemberList from "@/components/MemberList.vue";
 import TickerBar from "@/views/TickerBar.vue";
+import ChatInput from "./ChatInput.vue";
 /* Pinia store 與 router */
 const chat = useChatStore();
 const router = useRouter();
@@ -49,7 +50,7 @@ function sendMsg() {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-gray-900 text-gray-100 pb-10">
+  <div class="flex h-screen overflow-hidden bg-gray-900 text-gray-100">
     <!-- 左：房間清單 -->
     <aside class="w-72 border-r border-gray-700 overflow-hidden">
       <RoomList />
@@ -58,7 +59,8 @@ function sendMsg() {
     <!-- 中：聊天視窗 -->
     <section class="flex flex-col flex-1">
       <ChatWindow class="flex-1 overflow-y-auto" />
-      <div class="p-4 border-t border-gray-700 flex space-x-2">
+      <ChatInput></ChatInput>
+      <!-- <div class="p-4 border-t border-gray-700 flex space-x-2">
         <input
           v-model="text"
           @keyup.enter="sendMsg"
@@ -72,7 +74,7 @@ function sendMsg() {
         >
           送出
         </button>
-      </div>
+      </div> -->
     </section>
 
     <!-- 右：成員清單 -->
@@ -80,7 +82,7 @@ function sendMsg() {
       <MemberList />
     </aside>
   </div>
-  <TickerBar text="🎉 7/31 Press Demo ‧ 線上聊天室正式啟用！" />
+  <!-- <TickerBar text="🎉 7/31 Press Demo ‧ 線上聊天室正式啟用！" /> -->
 </template>
 
 <style scoped>
