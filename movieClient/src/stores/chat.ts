@@ -142,7 +142,7 @@ export const useChatStore = defineStore("chat", {
       /* 4️⃣ 頭像 URL */
       this.members.forEach((m: MemberDto) => {
         this.avatars[m.userId] = m.avatarPath
-          ? new URL(m.avatarPath, STATIC_BASE).href // https://localhost:7181/images/posterPicture/xxx.png
+          ? new URL(m.avatarPath, STATIC_BASE).href
           : DEFAULT_AVATAR;
       });
 
