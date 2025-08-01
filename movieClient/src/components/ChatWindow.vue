@@ -4,7 +4,7 @@ import { useChatStore } from "@/stores/chat";
 
 const chat = useChatStore();
 const bottom = ref<HTMLDivElement>();
-const defaultAvatar = "https://placehold.co/40x40?text=?";
+const DEFAULT_AVATAR = "https://placehold.co/40x40?text=?";
 
 watch(
   () => chat.messages.length,
@@ -35,7 +35,7 @@ watch(
     >
       <!-- 頭貼 -->
       <img
-        :src="chat.avatars[m.userId] || defaultAvatar"
+        :src="chat.avatars[m.userId] || DEFAULT_AVATAR"
         class="w-10 h-10 rounded-full object-cover shrink-0"
       />
       <!-- 泡泡 -->

@@ -18,7 +18,7 @@ export interface MessageDto {
 export interface MemberDto {
   userId: number;
   userName: string;
-  avatarPath?: string | null; // ⬅ 後端 JSON 欄位
+  avatarPath?: string | null;
   isOnline: boolean;
   lastSeen: string | null;
 }
@@ -140,9 +140,9 @@ export const useChatStore = defineStore("chat", {
       }));
 
       /* 4️⃣ 頭像 URL */
-      this.members.forEach((m) => {
+      this.members.forEach((m: MemberDto) => {
         this.avatars[m.userId] = m.avatarPath
-          ? new URL(m.avatarPath, STATIC_BASE).href
+          ? new URL(m.avatarPath, STATIC_BASE).href // https://localhost:7181/images/posterPicture/xxx.png
           : DEFAULT_AVATAR;
       });
 
