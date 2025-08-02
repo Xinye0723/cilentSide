@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, type Ref, onMounted, onUnmounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 
 const router = useRouter();
@@ -9,62 +9,84 @@ const showMovieSubmenu = ref(false);
 const showEventSubmenu = ref(false);
 const showMemberSubmenu = ref(false);
 
-let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+/* ─── ❶ 子選單收合計時器（100 ms） ─── */
+const HOVER_DELAY = 100; // ← 想再更短改這裡
+const hideTimer: Record<
+  "movie" | "event" | "member",
+  ReturnType<typeof setTimeout> | null
+> = {
+  movie: null,
+  event: null,
+  member: null,
+};
 
+/* ─── ❷ 切換漢堡 ─── */
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 function toggleMenu() {
   if (debounceTimeout) clearTimeout(debounceTimeout);
   isMenuOpen.value = !isMenuOpen.value;
   document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
-  // 確保在選單狀態變化後應用 overflow
   debounceTimeout = setTimeout(() => {
     document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
-  }, 300); // 延遲 300ms 等待動畫完成
+  }, 300);
 }
 
+/* ─── ❸ 點選連結 ─── */
 function handleLinkClick(to: { name: string }) {
   if (isMenuOpen.value) {
     toggleMenu();
-    // 延遲導航，確保選單關閉和 overflow 重置完成
-    setTimeout(() => {
-      router.push(to);
-    }, 300);
+    setTimeout(() => router.push(to), 300);
   } else {
     router.push(to);
   }
 }
 
+/* ─── ❹ 監聽滾動 / resize / ESC ─── */
 onMounted(() => {
-  const onScroll = () => {
-    isScrolled.value = window.scrollY > 50;
-  };
+  const onScroll = () => (isScrolled.value = window.scrollY > 50);
   const onResize = () => {
-    if (window.innerWidth > 768 && isMenuOpen.value) {
+    if (window.innerWidth > 1000 && isMenuOpen.value) {
       isMenuOpen.value = false;
-      document.body.style.overflow = ""; // 明確重置
+      document.body.style.overflow = "";
     }
   };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && isMenuOpen.value) toggleMenu();
-  };
+  const onKey = (e: KeyboardEvent) =>
+    e.key === "Escape" && isMenuOpen.value && toggleMenu();
 
   window.addEventListener("scroll", onScroll);
   window.addEventListener("resize", onResize);
   window.addEventListener("keydown", onKey);
-  onScroll(); // 初始化
+  onScroll();
 
   onUnmounted(() => {
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("keydown", onKey);
-    document.body.style.overflow = ""; // 清除 overflow
+    document.body.style.overflow = "";
     if (debounceTimeout) clearTimeout(debounceTimeout);
   });
 });
 
+/* ─── ❺ 捲到 footer ─── */
 function scrollToFooter() {
   if (isMenuOpen.value) toggleMenu();
-  const footer = document.getElementById("footer");
-  footer?.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("footer")?.scrollIntoView({ behavior: "smooth" });
+}
+const submenuFlags = {
+  movie: showMovieSubmenu,
+  event: showEventSubmenu,
+  member: showMemberSubmenu,
+} as const;
+/* ─── ❻ 工具函式：處理延遲收起 ─── */
+function enterMenu(which: keyof typeof submenuFlags) {
+  clearTimeout(hideTimer[which]!);
+  submenuFlags[which].value = true;
+}
+function leaveMenu(which: keyof typeof submenuFlags) {
+  hideTimer[which] = setTimeout(
+    () => (submenuFlags[which].value = false),
+    HOVER_DELAY
+  );
 }
 </script>
 
@@ -75,7 +97,9 @@ function scrollToFooter() {
         >INFINITY CINEMA</RouterLink
       >
     </div>
+
     <div class="navbar-container">
+      <!-- 漢堡 -->
       <button
         class="mobile-nav-toggle"
         :class="{ active: isMenuOpen }"
@@ -85,18 +109,20 @@ function scrollToFooter() {
         <span class="bar" /><span class="bar" /><span class="bar" />
       </button>
 
-      <ul class="nav-links z-50 ms-5 ms-8" :class="{ active: isMenuOpen }">
+      <!-- 主選單 -->
+      <ul class="nav-links" :class="{ active: isMenuOpen }">
+        <!-- 電影 -->
         <li
           class="dropdown"
-          @mouseenter="showMovieSubmenu = true"
-          @mouseleave="showMovieSubmenu = false"
+          @mouseenter="enterMenu('movie')"
+          @mouseleave="leaveMenu('movie')"
         >
           <RouterLink
             :to="{ name: 'movie' }"
             @click.prevent="handleLinkClick({ name: 'movie' })"
             >電影清單</RouterLink
           >
-          <ul class="submenu mt-2" v-show="showMovieSubmenu">
+          <ul class="submenu" v-show="showMovieSubmenu">
             <li>
               <RouterLink
                 :to="{ name: 'onShowMovie' }"
@@ -113,6 +139,8 @@ function scrollToFooter() {
             </li>
           </ul>
         </li>
+
+        <!-- 快速訂票 -->
         <li>
           <RouterLink
             :to="{ name: 'ticket' }"
@@ -120,17 +148,19 @@ function scrollToFooter() {
             >快速訂票</RouterLink
           >
         </li>
+
+        <!-- 活動 -->
         <li
           class="dropdown"
-          @mouseenter="showEventSubmenu = true"
-          @mouseleave="showEventSubmenu = false"
+          @mouseenter="enterMenu('event')"
+          @mouseleave="leaveMenu('event')"
         >
           <RouterLink
             :to="{ name: 'event' }"
             @click.prevent="handleLinkClick({ name: 'event' })"
             >活動公告</RouterLink
           >
-          <ul class="submenu mt-2" v-show="showEventSubmenu">
+          <ul class="submenu" v-show="showEventSubmenu">
             <li>
               <RouterLink
                 :to="{ name: 'cinemaEvent' }"
@@ -147,6 +177,8 @@ function scrollToFooter() {
             </li>
           </ul>
         </li>
+
+        <!-- 討論區 -->
         <li>
           <RouterLink
             :to="{ name: 'socialArea' }"
@@ -154,18 +186,22 @@ function scrollToFooter() {
             >討論區</RouterLink
           >
         </li>
+
+        <!-- 聯絡我們 -->
         <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
+
+        <!-- 會員 -->
         <li
           class="dropdown"
-          @mouseenter="showMemberSubmenu = true"
-          @mouseleave="showMemberSubmenu = false"
+          @mouseenter="enterMenu('member', showMemberSubmenu)"
+          @mouseleave="leaveMenu('member', showMemberSubmenu)"
         >
           <RouterLink
             :to="{ name: 'memberIn' }"
             @click.prevent="handleLinkClick({ name: 'memberIn' })"
             >會員中心</RouterLink
           >
-          <ul class="submenu mt-2" v-show="showMemberSubmenu">
+          <ul class="submenu" v-show="showMemberSubmenu">
             <li>
               <RouterLink
                 :to="{ name: 'memberInform' }"
@@ -186,35 +222,34 @@ function scrollToFooter() {
     </div>
   </nav>
 
+  <!-- 抽屜背景 -->
   <div class="overlay" :class="{ active: isMenuOpen }" @click="toggleMenu" />
 </template>
 
 <style lang="css" scoped>
-/* ---------- Reset & 全域 ---------- */
+/* -------- 變數 -------- */
+:global(:root) {
+  --gradient: linear-gradient(45deg, #ff3366, #ff6b6b, #4834d4, #686de0);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --drawer-w: 80%; /* ← 想再窄改這裡 */
+}
+
+/* -------- Reset -------- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
-
-:global(:root) {
-  --gradient: linear-gradient(45deg, #ff3366, #ff6b6b, #4834d4, #686de0);
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --border: 1px solid rgba(255, 255, 255, 0.1);
-  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-}
-
 :global(body) {
   background: #0a0a0a;
   min-height: 100vh;
   padding-top: 64px;
 }
-.page-container {
-  min-height: 100vh; /* 確保頁面高度至少等於視窗高度 */
-  overflow-y: auto; /* 強制啟用垂直滾動 */
-}
-/* ---------- Navbar ---------- */
+
+/* -------- Navbar -------- */
 .navbar {
   position: fixed;
   top: 0;
@@ -228,27 +263,19 @@ function scrollToFooter() {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow);
 }
-
 .navbar.scrolled {
   padding: 0.8rem 5%;
   background: rgba(10, 10, 10, 0.95);
 }
-
 .navbar-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
-  transform: translateX(10px);
-  margin-left: 6px;
-}
-.navbar-member {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
+/* -------- Logo -------- */
 .logo {
   font-size: 1.8rem;
   font-weight: 700;
@@ -262,23 +289,17 @@ function scrollToFooter() {
   margin-right: auto;
 }
 
-/* ---------- Nav Links ---------- */
+/* -------- Nav Links -------- */
 .nav-links {
   display: flex;
-  flex-direction: row;
   gap: 2.5rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  margin-left: clamp(4rem, 18vw, 500px);
   list-style: none;
-  align-items: end;
-  margin-left: 500px;
-  padding-left: 750px;
-  margin-right: 0;
 }
-
-/* 共用連結樣式（不再把 active 狀態寫在這裡，避免覆寫子選單 padding） */
 .nav-links a,
-.nav-links router-link,
-.submenu li a,
-.submenu li router-link {
+.submenu li a {
   color: white;
   text-decoration: none;
   font-weight: 500;
@@ -286,14 +307,10 @@ function scrollToFooter() {
   padding: 0.5rem 0;
   transition: all 0.3s ease;
   font-size: 1.05rem;
-  letter-spacing: 0.3px;
 }
-
 /* 上下漸層底線 */
 .nav-links a::before,
-.nav-links router-link::before,
-.nav-links a::after,
-.nav-links router-link::after {
+.nav-links a::after {
   content: "";
   position: absolute;
   width: 0;
@@ -302,42 +319,45 @@ function scrollToFooter() {
   background-size: 300%;
   transition: width 0.3s ease;
 }
-.nav-links a::before,
-.nav-links router-link::before {
+.nav-links a::before {
   top: -4px;
   left: 0;
 }
-.nav-links a::after,
-.nav-links router-link::after {
+.nav-links a::after {
   bottom: -4px;
   right: 0;
 }
-
-/* Hover 效果 */
 .nav-links a:hover,
-.nav-links router-link:hover,
-.submenu li a:hover,
-.submenu li router-link:hover {
+.submenu li a:hover {
   color: #fff;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 .nav-links a:hover::before,
-.nav-links router-link:hover::before,
-.nav-links a:hover::after,
-.nav-links router-link:hover::after {
+.nav-links a:hover::after {
   width: 100%;
   animation: gradient 8s linear infinite;
 }
 
-/* ---❶ 只給「第一層」的 active 狀態（避免影響子選單） --- */
-
-/* ---❷ 子選單在 active 狀態仍保留原 padding，防止文字左移 --- */
-.submenu li a.router-link-active,
-.submenu li a.router-link-exact-active {
-  padding: 0.75rem 1rem; /* 與 .submenu li a 一致 */
+/* -------- Dropdown -------- */
+.dropdown {
+  position: relative;
+}
+.submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: black;
+  list-style: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 2000;
+}
+.submenu li a {
+  display: block;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
 }
 
-/* ---------- Mobile Nav Toggle ---------- */
+/* -------- Mobile Toggle -------- */
 .mobile-nav-toggle {
   display: none;
   background: none;
@@ -349,6 +369,11 @@ function scrollToFooter() {
   z-index: 1001;
   border-radius: 50%;
   transition: background-color 0.3s ease;
+  margin-left: auto;
+  position: absolute; /* ←NEW */
+  right: 2rem; /* ←NEW：離右邊 2rem（跟 Navbar padding 對齊）*/
+  top: 50%; /* ←NEW */
+  transform: translateY(-50%); /* ←NEW：垂直置中 */
 }
 .mobile-nav-toggle:hover {
   background-color: rgba(255, 255, 255, 0.1);
@@ -371,25 +396,20 @@ function scrollToFooter() {
 .mobile-nav-toggle .bar:nth-child(3) {
   top: 24px;
 }
-
-/* ---------- Gradient Animation ---------- */
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.mobile-nav-toggle.active .bar:nth-child(1) {
+  transform: translate(-50%, 5px) rotate(45deg);
+  width: 24px;
+}
+.mobile-nav-toggle.active .bar:nth-child(2) {
+  opacity: 0;
+}
+.mobile-nav-toggle.active .bar:nth-child(3) {
+  transform: translate(-50%, -5px) rotate(-45deg);
+  width: 24px;
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 768px) {
-  .logo {
-    margin-right: 0;
-  }
+/* -------- Hamburger Drawer (≤1000px) -------- */
+@media (max-width: 1000px) {
   .mobile-nav-toggle {
     display: block;
   }
@@ -399,7 +419,7 @@ function scrollToFooter() {
     top: 0;
     right: -100%;
     height: 100vh;
-    width: 80%;
+    width: var(--drawer-w);
     max-width: 400px;
     background: linear-gradient(
       135deg,
@@ -408,72 +428,54 @@ function scrollToFooter() {
     );
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding: 3rem 2rem;
     gap: 2rem;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: right 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-    padding: 2rem;
     backdrop-filter: blur(10px);
-  }
-  .nav-links::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03));
-    pointer-events: none;
+    align-items: center; /* ← 原本 flex-start */
+    text-align: center; /* ← NEW：錨點置中 */
+    width: 300px;
   }
   .nav-links.active {
     right: 0;
   }
 
-  /* 滑入動畫只給第一層 */
-  .nav-links > li > a,
-  .nav-links > li > router-link {
+  /* 抽屜子選單往右開 */
+  .dropdown .submenu {
+    top: 0;
+    left: calc(100% + 10px);
+  }
+
+  /* 進出場動畫 */
+  .nav-links > li > a {
     font-size: 1.2rem;
     opacity: 0;
     transform: translateX(20px);
     transition: all 0.4s ease;
   }
-  .nav-links.active > li > a,
-  .nav-links.active > li > router-link {
+  .nav-links.active > li > a {
     opacity: 1;
     transform: translateX(0);
   }
-
-  /* 進場延遲 */
-  .nav-links > li:nth-child(1) > a,
-  .nav-links > li:nth-child(1) > router-link {
+  .nav-links > li:nth-child(1) > a {
     transition-delay: 0.1s;
   }
-  .nav-links > li:nth-child(2) > a,
-  .nav-links > li:nth-child(2) > router-link {
+  .nav-links > li:nth-child(2) > a {
     transition-delay: 0.2s;
   }
-  .nav-links > li:nth-child(3) > a,
-  .nav-links > li:nth-child(3) > router-link {
+  .nav-links > li:nth-child(3) > a {
     transition-delay: 0.3s;
   }
-  .nav-links > li:nth-child(4) > a,
-  .nav-links > li:nth-child(4) > router-link {
+  .nav-links > li:nth-child(4) > a {
     transition-delay: 0.4s;
   }
-  .nav-links > li:nth-child(5) > a,
-  .nav-links > li:nth-child(5) > router-link {
+  .nav-links > li:nth-child(5) > a {
     transition-delay: 0.5s;
   }
 
-  .mobile-nav-toggle.active .bar:nth-child(1) {
-    transform: translate(-50%, 5px) rotate(45deg);
-    width: 24px;
-  }
-  .mobile-nav-toggle.active .bar:nth-child(2) {
-    opacity: 0;
-  }
-  .mobile-nav-toggle.active .bar:nth-child(3) {
-    transform: translate(-50%, -5px) rotate(-45deg);
-    width: 24px;
-  }
-
+  /* overlay */
   .overlay {
     position: fixed;
     inset: 0;
@@ -482,102 +484,11 @@ function scrollToFooter() {
     visibility: hidden;
     transition: all 0.4s ease;
     backdrop-filter: blur(4px);
+    z-index: 999;
   }
   .overlay.active {
     opacity: 1;
     visibility: visible;
   }
-}
-
-/* ---------- Section ---------- */
-.section-title {
-  font-size: 3rem;
-}
-.section-description {
-  font-size: 1rem;
-  padding: 0 1rem;
-}
-
-section {
-  min-height: 100vh;
-  padding: 120px 5% 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-}
-section:nth-child(even) {
-  background: var(--section-bg);
-}
-
-.section-content {
-  max-width: 1400px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-.section-title {
-  font-size: 8vw;
-  font-weight: 800;
-  margin-bottom: 2rem;
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient 8s linear infinite;
-  background-size: 300%;
-  line-height: 1.1;
-  text-transform: uppercase;
-  letter-spacing: -2px;
-}
-.section-description {
-  font-size: 1.2rem;
-  max-width: 800px;
-  margin: 0 auto;
-  line-height: 1.6;
-  opacity: 0.8;
-  color: white;
-}
-
-/* ---------- Dropdown / Submenu ---------- */
-.dropdown {
-  position: relative;
-}
-
-.submenu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: black;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-}
-.submenu li a,
-.submenu li router-link {
-  display: block;
-  padding: 0.75rem 1rem;
-  white-space: nowrap;
-  color: whitesmoke;
-  text-decoration: none;
-}
-
-/* 子選單 hover 色（需要再開啟） */
-/* .submenu li a:hover,
-   .submenu li router-link:hover { background-color: #f0f0f0; } */
-/* 讓絕對定位的 submenu 不會被裁掉 */
-.navbar,
-.nav-links,
-.dropdown {
-  overflow: visible !important;
-}
-
-/* 讓 submenu 穩居最上層（高於卡片/overlay） */
-.submenu {
-  z-index: 2000; /* 比 .navbar 的 1000 再高一層即可 */
 }
 </style>
