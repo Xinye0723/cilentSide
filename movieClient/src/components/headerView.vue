@@ -193,8 +193,8 @@ function leaveMenu(which: keyof typeof submenuFlags) {
         <!-- 會員 -->
         <li
           class="dropdown"
-          @mouseenter="enterMenu('member', showMemberSubmenu)"
-          @mouseleave="leaveMenu('member', showMemberSubmenu)"
+          @mouseenter="enterMenu('member')"
+          @mouseleave="leaveMenu('member')"
         >
           <RouterLink
             :to="{ name: 'memberIn' }"
