@@ -190,12 +190,16 @@ function leaveMenu(which: keyof typeof submenuFlags) {
           <RouterLink
             :to="{ name: 'socialArea' }"
             @click.prevent="handleLinkClick({ name: 'chat' })"
-            >討論區</RouterLink
+            ><i class="bi bi-chat-dots me-1"></i>討論區</RouterLink
           >
         </li>
 
         <!-- 聯絡我們 -->
-        <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
+        <li>
+          <a href="#footer" @click.prevent="scrollToFooter"
+            ><i class="bi bi-telephone-forward me-1"></i>聯絡我們</a
+          >
+        </li>
 
         <!-- 會員 -->
         <li
@@ -351,7 +355,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
 }
 .submenu {
   position: absolute;
-  top: 100%;
+  top: 36px;
   left: 0;
   background: black;
   list-style: none;
