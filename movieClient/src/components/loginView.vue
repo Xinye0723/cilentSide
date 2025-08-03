@@ -22,7 +22,7 @@ async function login() {
   loading.value = true;
   try {
     console.log("開始登入請求...");
-    const res = await fetch("https://localhost:7181/api/Members/Login", {
+    const res = await fetch("http://localhost:5276/api/Members/Login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -73,7 +73,7 @@ async function sendCode() {
   loading.value = true;
   try {
     const res = await fetch(
-      "https://localhost:7181/api/Members/SendResetCode",
+      "http://localhost:5276/api/Members/SendResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,7 +114,7 @@ async function verifyResetCode() {
   loading.value = true;
   try {
     const res = await fetch(
-      "https://localhost:7181/api/Members/VerifyResetCode",
+      "http://localhost:5276/api/Members/VerifyResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,7 +160,7 @@ async function resetPassword() {
   loading.value = true;
   try {
     const res = await fetch(
-      "https://localhost:7181/api/Members/ResetPassword",
+      "http://localhost:5276/api/Members/ResetPassword",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -204,7 +204,7 @@ async function resetPassword() {
 function loginWithLine() {
   const clientId = "2007794102";
   const redirectUri = encodeURIComponent(
-    "https://localhost:5173/line-callback"
+    "http://localhost:5173/line-callback"
   );
   const state = Math.random().toString(36).substring(2);
   const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`;
@@ -215,7 +215,7 @@ function loginWithGoogle() {
   const clientId =
     "322146887203-gv50tarc1a5t2enjv1of3tpt045u8jj5.apps.googleusercontent.com";
   const redirectUri = encodeURIComponent(
-    "https://localhost:5173/google-callback"
+    "http://localhost:5173/google-callback"
   );
   const state = Math.random().toString(36).substring(2);
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20email%20profile&state=${state}`;

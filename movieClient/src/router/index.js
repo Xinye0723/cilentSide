@@ -23,6 +23,8 @@ import QrcodeView from "@/views/qrcodeView.vue";
 
 import LoginView from "@/components/loginView.vue";
 import RegisterView from "@/components/registerView.vue";
+import GoogleCallback from "@/components/GoogleCallback.vue";
+import LineCallback from "@/components/LineCallback.vue";
 
 const routes = [
   {
@@ -79,6 +81,8 @@ const routes = [
   { path: "/login", component: LoginView, name: "login" },
   { path: "/register", component: RegisterView, name: "register" },
   { path: "/memberInform", component: MemberInform, name: "memberInform" },
+  { path: "/google-callback", component: GoogleCallback, name: "googleCallback" },
+  { path: "/line-callback", component: LineCallback, name: "lineCallback" },
 ];
 
 const router = createRouter({

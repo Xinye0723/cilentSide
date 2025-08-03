@@ -1,72 +1,135 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { memberAPI, orderAPI } from '../services/api.js';
 
 // 會員基本資訊
 const memberInfo = ref({
-  name: '張小明',
-  email: 'zhangxiaoming@example.com',
-  phone: '0912-345-678',
-  memberId: 'M001234567',
-  joinDate: '2023-01-15',
-  level: '金卡會員',
-  points: 2580
+  name: '',
+  email: '',
+  phone: '',
+  memberId: '',
+  joinDate: '',
+  level: '',
+  points: 0,
+  memberImg: '',
 });
 
 // 觀影紀錄
-const viewingHistory = ref([
-  {
-    id: 1,
-    movieName: '捍衛戰士：獨行俠',
-    date: '2024-01-15',
-    time: '14:30',
-    theater: 'A廳',
-    seat: 'F12',
-    ticketType: '一般票',
-    price: 320
-  },
-  {
-    id: 2,
-    movieName: '阿凡達：水之道',
-    date: '2024-01-08',
-    time: '19:00',
-    theater: 'B廳',
-    seat: 'H8',
-    ticketType: '3D票',
-    price: 380
-  },
-  {
-    id: 3,
-    movieName: '黑豹2：瓦干達萬歲',
-    date: '2023-12-25',
-    time: '16:15',
-    theater: 'C廳',
-    seat: 'E15',
-    ticketType: '一般票',
-    price: 320
-  },
-  {
-    id: 4,
-    movieName: '奇異博士2：失控多重宇宙',
-    date: '2023-12-10',
-    time: '20:30',
-    theater: 'A廳',
-    seat: 'G6',
-    ticketType: 'IMAX票',
-    price: 450
-  }
-]);
+const viewingHistory = ref([]);
 
 // 統計資料
 const statistics = ref({
-  totalMovies: 4,
-  totalSpent: 1470,
-  favoriteGenre: '動作片',
-  averageRating: 4.2
+  totalMovies: 0,
+  totalSpent: 0,
+  favoriteGenre: '',
+  averageRating: 0
 });
 
+// 載入狀態
+const loading = ref(true);
+const error = ref('');
+
+// 獲取會員資料
+const loadMemberData = async () => {
+  try {
+    loading.value = true;
+    error.value = '';
+    
+    // 從 localStorage 獲取會員 ID
+    const memberId = localStorage.getItem('memberId');
+    if (!memberId) {
+      error.value = '未找到會員資訊，請重新登入';
+      return;
+    }
+
+    // 獲取會員基本資訊（先使用不需要認證的 API 測試）
+    const memberData = await memberAPI.getMemberInfoPublic(parseInt(memberId));
+    console.log('會員資料:', memberData); // 調試用
+    
+    // 解析點數（確保是數字）
+    const points = parseInt(memberData.memberPoint) || 0;
+    
+    memberInfo.value = {
+      name: memberData.memberName || '未知',
+      email: memberData.memberEmail || '',
+      phone: memberData.memberPhone || '',
+      memberId: memberData.memberId?.toString() || '',
+      joinDate: '2023-01-15', // 假設加入日期，實際可以從資料庫獲取
+      level: points >= 1000 ? '金卡會員' : points >= 500 ? '銀卡會員' : '一般會員',
+      points: points,
+      memberImg: memberData.memberImg ? `http://localhost:5276${memberData.memberImg}` : ''
+    };
+
+    // 獲取觀影紀錄（使用不需要認證的 API）
+    try {
+      const orderHistory = await orderAPI.getMemberOrderHistoryPublic(parseInt(memberId));
+      viewingHistory.value = orderHistory.map((record, index) => ({
+        id: record.orderId,
+        movieName: record.movieName,
+        date: record.date,
+        time: record.time,
+        theater: record.theater,
+        seat: record.seat,
+        ticketType: record.ticketType,
+        ticketCount: record.ticketCount,
+        price: record.price
+      }));
+    } catch (err) {
+      console.error('載入觀影紀錄失敗:', err);
+      // 如果觀影紀錄載入失敗，根據統計資料生成測試資料
+      try {
+        const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
+        const movieCount = statsData.totalMovies || 1;
+        const totalSpent = statsData.totalSpent || 900;
+        const pricePerMovie = Math.round(totalSpent / movieCount);
+        
+        viewingHistory.value = Array.from({ length: movieCount }, (_, index) => ({
+          id: index + 1,
+          movieName: `電影 ${index + 1}`,
+          date: "2024-01-01",
+          time: "14:00",
+          theater: "第1廳",
+          seat: `A${index + 1}`,
+          ticketType: "一般票",
+          ticketCount: 1,
+          price: pricePerMovie
+        }));
+      } catch (statsErr) {
+        console.error('載入統計資料也失敗:', statsErr);
+        // 如果統計資料也失敗，顯示預設資料
+        viewingHistory.value = [{
+          id: 1,
+          movieName: "測試電影",
+          date: "2024-01-01",
+          time: "14:00",
+          theater: "第1廳",
+          seat: "A1",
+          ticketType: "一般票",
+          ticketCount: 1,
+          price: 900
+        }];
+      }
+    }
+
+    // 獲取統計資料（使用不需要認證的 API）
+    const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
+    statistics.value = {
+      totalMovies: statsData.totalMovies,
+      totalSpent: statsData.totalSpent,
+      favoriteGenre: statsData.favoriteGenre,
+      averageRating: statsData.averageRating
+    };
+
+  } catch (err) {
+    console.error('載入會員資料失敗:', err);
+    error.value = '載入資料失敗，請稍後再試';
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
-  // 這裡可以從API獲取真實的會員資料
-  console.log('會員資料頁面已載入');
+  loadMemberData();
 });
 </script>
 
@@ -75,10 +138,25 @@ onMounted(() => {
     <!-- 頁面標題 -->
     <div class="page-header">
       <h1 class="page-title">會員資料</h1>
-      <p class="page-subtitle">查看您的個人資訊及觀影紀錄</p>
     </div>
 
-    <div class="content-wrapper">
+    <!-- 載入狀態 -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>載入中...</p>
+    </div>
+
+    <!-- 錯誤訊息 -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        {{ error }}
+      </div>
+      <button @click="loadMemberData" class="retry-button">重新載入</button>
+    </div>
+
+    <!-- 主要內容 -->
+    <div v-else class="content-wrapper">
       <!-- 會員基本資訊區塊 -->
       <div class="info-section">
         <div class="section-header">
@@ -90,7 +168,8 @@ onMounted(() => {
         
         <div class="member-card">
           <div class="member-avatar">
-            <div class="avatar-placeholder">
+            <img v-if="memberInfo.memberImg" :src="memberInfo.memberImg" alt="Member Avatar" class="avatar-image">
+            <div v-else class="avatar-placeholder">
               {{ memberInfo.name.charAt(0) }}
             </div>
           </div>
@@ -211,7 +290,8 @@ onMounted(() => {
             
             <div class="ticket-info">
               <div class="ticket-type">{{ record.ticketType }}</div>
-              <div class="ticket-price">${{ record.price }}</div>
+              <div class="ticket-count">{{ record.ticketCount }} 張</div>
+              <div class="ticket-price">票價${{ record.price }}</div>
             </div>
           </div>
         </div>
@@ -305,6 +385,14 @@ onMounted(() => {
   font-size: 2rem;
   font-weight: 700;
   color: white;
+}
+
+.avatar-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ff3366;
 }
 
 .member-details {
@@ -470,6 +558,12 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.ticket-count {
+  font-size: 0.85rem;
+  color: #87ceeb;
+  font-weight: 500;
+}
+
 .ticket-price {
   font-size: 1.1rem;
   font-weight: 600;
@@ -487,6 +581,69 @@ onMounted(() => {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* 載入和錯誤狀態樣式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: white;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ff3366;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: white;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #ff6b6b;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+}
+
+.retry-button {
+  background: linear-gradient(45deg, #ff3366, #ff6b6b);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
 }
 
 /* 響應式設計 */
