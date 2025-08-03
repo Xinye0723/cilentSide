@@ -37,6 +37,8 @@ import LoginView from "@/components/loginView.vue";
 import RegisterView from "@/components/registerView.vue";
 import ChatApp from "@/components/ChatApp.vue";
 import MovieReview from "@/movies/MovieReview.vue";
+import GoogleCallback from "@/components/GoogleCallback.vue";
+import LineCallback from "@/components/LineCallback.vue";
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -151,6 +153,13 @@ const routes = [
   /* -------- Auth -------- */
   { path: "/login", component: LoginView, name: "login" },
   { path: "/register", component: RegisterView, name: "register" },
+  { path: "/memberInform", component: MemberInform, name: "memberInform" },
+  {
+    path: "/google-callback",
+    component: GoogleCallback,
+    name: "googleCallback",
+  },
+  { path: "/line-callback", component: LineCallback, name: "lineCallback" },
 
   /* -------- 404 -------- */
   { path: "/:pathMatch(.*)*", redirect: "/home" },

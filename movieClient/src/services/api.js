@@ -1,5 +1,5 @@
 // API 服務
-const API_BASE_URL = "http://localhost:5276/api";
+const API_BASE_URL = "https://localhost:7181/api";
 
 // 獲取 Token
 function getToken() {
@@ -55,13 +55,34 @@ async function apiRequest(endpoint, options = {}) {
 
 // 會員相關 API
 export const memberAPI = {
-  // 獲取會員資料
+  // 獲取會員資料（需要認證）
   async getMemberInfo(memberId) {
     const response = await apiRequest(`/Members/${memberId}`);
     if (response && response.ok) {
       return await response.json();
     }
     throw new Error("獲取會員資料失敗");
+  },
+
+  // 獲取會員資料（不需要認證，測試用）
+  async getMemberInfoPublic(memberId) {
+    const url = `${API_BASE_URL}/Members/public/${memberId}`;
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (response && response.ok) {
+        return await response.json();
+      }
+      throw new Error("獲取會員資料失敗");
+    } catch (error) {
+      console.error("API 請求失敗:", error);
+      throw error;
+    }
   },
 
   // 更新會員資料
@@ -74,6 +95,69 @@ export const memberAPI = {
       return true;
     }
     throw new Error("更新會員資料失敗");
+  },
+};
+
+// 訂單相關 API
+export const orderAPI = {
+  // 獲取會員觀影紀錄（需要認證）
+  async getMemberOrderHistory(memberId) {
+    const response = await apiRequest(`/Order/member/${memberId}/history`);
+    if (response && response.ok) {
+      return await response.json();
+    }
+    throw new Error("獲取觀影紀錄失敗");
+  },
+
+  // 獲取會員觀影紀錄（不需要認證，測試用）
+  async getMemberOrderHistoryPublic(memberId) {
+    const url = `${API_BASE_URL}/Order/member/${memberId}/history/public`;
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (response && response.ok) {
+        return await response.json();
+      }
+      throw new Error("獲取觀影紀錄失敗");
+    } catch (error) {
+      console.error("API 請求失敗:", error);
+      throw error;
+    }
+  },
+
+  // 獲取會員統計資料（需要認證）
+  async getMemberStatistics(memberId) {
+    const response = await apiRequest(`/Order/member/${memberId}/statistics`);
+    if (response && response.ok) {
+      return await response.json();
+    }
+    throw new Error("獲取統計資料失敗");
+  },
+
+  // 獲取會員統計資料（不需要認證，測試用）
+  async getMemberStatisticsPublic(memberId) {
+    const url = `${API_BASE_URL}/Order/member/${memberId}/statistics/public`;
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (response && response.ok) {
+        return await response.json();
+      }
+      throw new Error("獲取統計資料失敗");
+    } catch (error) {
+      console.error("API 請求失敗:", error);
+      throw error;
+    }
   },
 };
 
