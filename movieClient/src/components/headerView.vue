@@ -120,7 +120,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
           <RouterLink
             :to="{ name: 'movie' }"
             @click.prevent="handleLinkClick({ name: 'movie' })"
-            >電影清單</RouterLink
+            ><i class="bi bi-camera-reels me-1"></i>電影清單</RouterLink
           >
           <ul class="submenu" v-show="showMovieSubmenu">
             <li>
@@ -137,6 +137,13 @@ function leaveMenu(which: keyof typeof submenuFlags) {
                 >即將上映</RouterLink
               >
             </li>
+            <li>
+              <RouterLink
+                :to="{ name: 'movieReview' }"
+                @click.prevent="handleLinkClick({ name: 'movieReview' })"
+                >所有評論</RouterLink
+              >
+            </li>
           </ul>
         </li>
 
@@ -145,7 +152,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
           <RouterLink
             :to="{ name: 'ticket' }"
             @click.prevent="handleLinkClick({ name: 'ticket' })"
-            >快速訂票</RouterLink
+            ><i class="bi bi-ticket-perforated me-1"></i>快速訂票</RouterLink
           >
         </li>
 
@@ -158,7 +165,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
           <RouterLink
             :to="{ name: 'event' }"
             @click.prevent="handleLinkClick({ name: 'event' })"
-            >活動公告</RouterLink
+            ><i class="bi bi-calendar2-event me-1"></i>活動公告</RouterLink
           >
           <ul class="submenu" v-show="showEventSubmenu">
             <li>
@@ -199,7 +206,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
           <RouterLink
             :to="{ name: 'memberIn' }"
             @click.prevent="handleLinkClick({ name: 'memberIn' })"
-            >會員中心</RouterLink
+            ><i class="bi bi-person-circle me-1"></i>會員中心</RouterLink
           >
           <ul class="submenu" v-show="showMemberSubmenu">
             <li>
