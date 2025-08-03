@@ -15,7 +15,14 @@ onMounted(async () => {
     organizer: item.organizerName,
     registered: item.registered,
     maxCapacity: item.maxCapacity,
-    startTime: item.startTime,
+    startTime: item.startTime
+      ? new Date(item.startTime).toLocaleDateString("zh-TW") +
+        " " +
+        new Date(item.startTime).toLocaleTimeString("zh-TW", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "時間未定",
     status: item.status,
   }));
 });

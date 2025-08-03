@@ -12,7 +12,7 @@ const showShareMenu = ref(false);
 onMounted(async () => {
   try {
     const res = await fetch(
-      `http://localhost:7181/api/CinemaEvent/${route.params.id}`
+      `https://localhost:7181/api/CinemaEvent/${route.params.id}`
     );
     if (!res.ok) throw new Error("活動不存在");
     const data = await res.json();
