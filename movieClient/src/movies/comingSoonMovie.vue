@@ -134,10 +134,10 @@ import { useRouter } from "vue-router";
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 18px;   /* 卡片間距，可調整 */
+    gap: 12px;   /* 卡片間距，可調整 */
   }
   .movie-card {
-    width: 260px;
+    width: 265px;
     margin: 25px 1px 1px 11px;
     border-radius: 18px;
     background: #202125;
@@ -152,7 +152,7 @@ import { useRouter } from "vue-router";
   }
   .movie-poster-img {
     width: 100%;
-    height: 370px;
+    height: 376px;
     object-fit: cover;
     border-radius: 18px 18px 0 0;
     background: #191a1f;
@@ -160,7 +160,7 @@ import { useRouter } from "vue-router";
   .movie-info {
     display: flex;
     flex-direction: column;
-    height: 120px;     /* 可以調整，依你片名多寡決定 */
+    height: 160px;     /* 可以調整，依你片名多寡決定 */
     padding: 10px 16px 10px 16px;
     text-align: center;
   }

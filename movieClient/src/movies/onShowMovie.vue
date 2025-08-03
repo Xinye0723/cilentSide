@@ -147,7 +147,7 @@ import { useRouter } from 'vue-router';
     gap: 18px;   /* 卡片間距，可調整 */
   }
   .movie-card {
-    width: 260px;
+    width: 265px;
     margin: 25px 1px 1px 1px;
     border-radius: 18px;
     background: #202125;
@@ -162,7 +162,7 @@ import { useRouter } from 'vue-router';
   }
   .movie-poster-img {
     width: 100%;
-    height: 370px;
+    height: 376px;
     object-fit: cover;
     border-radius: 18px 18px 0 0;
     background: #191a1f;

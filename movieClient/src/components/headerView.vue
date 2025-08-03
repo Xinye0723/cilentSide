@@ -92,7 +92,7 @@ function scrollToFooter() {
           <RouterLink
             :to="{ name: 'movie' }"
             @click.prevent="handleLinkClick({ name: 'movie' })"
-            >電影清單</RouterLink
+            ><i class="bi bi-camera-reels me-1"></i>電影清單</RouterLink
           >
           <ul class="submenu mt-2" v-show="showMovieSubmenu">
             <li>
@@ -109,13 +109,20 @@ function scrollToFooter() {
                 >即將上映</RouterLink
               >
             </li>
+            <li>
+              <RouterLink
+                :to="{ name: 'movieReview' }"
+                @click.prevent="handleLinkClick({ name: 'movieReview' })"
+                >所有評論</RouterLink
+              >
+            </li>
           </ul>
         </li>
         <li>
           <RouterLink
             :to="{ name: 'ticket' }"
             @click.prevent="handleLinkClick({ name: 'ticket' })"
-            >快速訂票</RouterLink
+            ><i class="bi bi-ticket-perforated me-1"></i>快速訂票</RouterLink
           >
         </li>
         <li
@@ -126,7 +133,7 @@ function scrollToFooter() {
           <RouterLink
             :to="{ name: 'event' }"
             @click.prevent="handleLinkClick({ name: 'event' })"
-            >活動公告</RouterLink
+            ><i class="bi bi-calendar2-event me-1"></i>活動公告</RouterLink
           >
           <ul class="submenu mt-2" v-show="showEventSubmenu">
             <li>
@@ -149,10 +156,10 @@ function scrollToFooter() {
           <RouterLink
             :to="{ name: 'socialArea' }"
             @click.prevent="handleLinkClick({ name: 'socialArea' })"
-            >討論區</RouterLink
+            ><i class="bi bi-chat-dots me-1"></i>討論區</RouterLink
           >
         </li>
-        <li><a href="#footer" @click.prevent="scrollToFooter">聯絡我們</a></li>
+        <li><a href="#footer" @click.prevent="scrollToFooter"><i class="bi bi-telephone-forward me-1"></i>聯絡我們</a></li>
         <li
           class="dropdown"
           @mouseenter="showMemberSubmenu = true"
@@ -161,7 +168,7 @@ function scrollToFooter() {
           <RouterLink
             :to="{ name: 'memberIn' }"
             @click.prevent="handleLinkClick({ name: 'memberIn' })"
-            >會員中心</RouterLink
+            ><i class="bi bi-person-circle me-1"></i>會員中心</RouterLink
           >
           <ul class="submenu mt-2" v-show="showMemberSubmenu">
             <li>
@@ -236,9 +243,6 @@ function scrollToFooter() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  transform: translateX(-120px);
 }
 .navbar-member {
   display: flex;
@@ -263,7 +267,7 @@ function scrollToFooter() {
 .nav-links {
   display: flex;
   flex-direction: row;
-  gap: 2.5rem;
+  gap: 2rem;
   list-style: none;
   align-items: center;
 }

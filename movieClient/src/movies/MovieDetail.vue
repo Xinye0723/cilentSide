@@ -1,163 +1,394 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import { EffectCards } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-cards';
 
-    const route = useRoute();
-    const movie = ref([]);
-    const imgBaseUrl = 'https://localhost:7181/';
-    // 幾個一行
-    const starsPerRow = 4;
+  const route = useRoute();
+  const router = useRouter();
+  const movie = ref([]);
+  const reviews = ref([]);
+  const movieId = route.params.movieId;
+  const imgBaseUrl = 'https://localhost:7181/';
+  const anonymousNames = [
+    "影迷小王", "電影狂人", "匿名觀眾", "電影達人", "看片高手",
+    "光影旅人", "膠片收藏家", "銀幕粉絲", "劇情狂熱者", "獨立評論家"
+  ];
+  
+  // 產生分好行的主演陣列
+  const starsPerRow = 4;
+  const starringChunks = computed(() => {
+    if (!movie.value?.starring) return [];
+    const list = movie.value.starring.split(/,|、|\n/).map(s => s.trim()).filter(Boolean);
+    const result = [];
+      for (let i = 0; i < list.length; i += starsPerRow) {
+        result.push(list.slice(i, i + starsPerRow));
+      }
+      return result;
+  });
 
-    // 產生分好行的主演陣列
-    const starringChunks = computed(() => {
-        if (!movie.value?.starring) return [];
-        const list = movie.value.starring.split(/,|、|\n/).map(s => s.trim()).filter(Boolean);
-        const result = [];
-        for (let i = 0; i < list.length; i += starsPerRow) {
-            result.push(list.slice(i, i + starsPerRow));
-        }
-        return result;
-    });
+  const directorList = computed(() => {
+    if (!movie.value?.director) return [];
+    // 可依你後端分隔符號改，這裡支援中、英文逗號
+    return movie.value.director.split(/,|、|\n/).map(s => s.trim()).filter(Boolean);
+  });
 
-    onMounted(() => {
-        fetch(`https://localhost:7181/api/Movies/${route.params.movieId}`)
-        .then(res => res.json())
-        .then(data => {
-            movie.value = data;
-        });
-    });
+  // 取匿名名字（依review id模長）
+  function getAnonymousName(reviewId) {
+    return anonymousNames[reviewId % anonymousNames.length];
+  }
+
+  // 根據分數過濾評論
+  function filteredReviews(score) {
+    if (!reviews.value) return [];
+    return reviews.value.filter(r => r.rating === score);
+  }
+
+  async function fetchReviews() {
+    try{
+      const res = await fetch(`https://localhost:7181/api/MovieReviews/movie/${movieId}`);
+      if (!res.ok) throw new Error('Fetch reviews failed');
+      const data = await res.json();
+      reviews.value = data;
+      await nextTick();
+      // 如果用ref拿Swiper實例，這裡可以調用swiper.update()，必要時加入
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  onMounted(async () => {
+    try{
+      // 先讓後端點閱次數 +1
+      await fetch(`https://localhost:7181/api/Movies/${movieId}/view`, { method: "POST" });
+      // 再去抓這部電影的最新資料
+      const res = await fetch(`https://localhost:7181/api/Movies/${movieId}`);
+      movie.value = await res.json();
+      // 再抓評論資料
+      await fetchReviews();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  function goToTicket(movieId) {
+    router.push(`/bookTicket/${movieId}`);
+  }
 </script>
 
 <template>
-    <div class="movie-detail-container">
-    <div class="movie-detail-main">
-      <img :src="imgBaseUrl + movie.posterPicture" class="movie-detail-poster" :alt="movie.movieNameChinese" />
-<!-- 劇照輪播 -->
-      <div class="movie-detail-info">
-        <h2 class="movie-title-ch">{{ movie.movieNameChinese }}</h2>
-        <div class="movie-title-en">{{ movie.movieNameEnglish }}</div>
-        <div class="movie-detail-meta">
-          <!-- <div >類型：</div> -->
-          <div>分級：{{ movie.ratingDescription }}{{ movie.ratingCode ? `(${movie.ratingCode})` : '' }}</div>
-          <div>片長：{{ movie.duration }} 分鐘</div>
-          <div>上映日期：{{ movie.releaseDate ? movie.releaseDate.slice(0,10) : '-' }}</div>
-          <div>導演：{{ movie.director }}</div>
-          <div class="movie-detail-starring">
-            <template v-for="(chunk, idx) in starringChunks" :key="idx">
-                <span v-if="idx === 0">主演：{{ chunk.join('、') }}</span>
-                <span v-else style="display: block; text-indent: 3em; margin-left: 0;">{{ chunk.join('、') }}</span>
-            </template>
+  <div class="movie-detail-wrapper">
+    <!-- 左邊電影詳情區 -->
+    <div class="left-container">
+      <div class="movie-detail-container">
+        <div class="movie-detail-main">
+          <img :src="imgBaseUrl + movie.posterPicture" class="movie-detail-poster" :alt="movie.movieNameChinese" />
+          <div class="movie-detail-info">
+            <h2 class="movie-title-ch">{{ movie.movieNameChinese }}</h2>
+            <div class="movie-title-en">{{ movie.movieNameEnglish }}</div>
+            <div class="movie-detail-meta">
+              <div>類型：{{ movie.tags ? movie.tags.join('、') : '-' }}</div>
+              <div>分級：{{ movie.ratingDescription }}{{ movie.ratingCode ? `(${movie.ratingCode})` : '' }}</div>
+              <div>片長：{{ movie.duration }} 分鐘</div>
+              <div>上映日期：{{ movie.releaseDate ? movie.releaseDate.slice(0,10) : '-' }}</div>
+              <div>導演：{{ directorList.join('、') }}</div>
+              <div class="movie-detail-starring">
+                <template v-for="(chunk, idx) in starringChunks" :key="idx">
+                  <span v-if="idx === 0">主演：{{ chunk.join('、') }}</span>
+                  <span v-else style="display: block; text-indent: 3em; margin-left: 0;">{{ chunk.join('、') }}</span>
+                </template>
+              </div>
+              <div>製作商：{{ movie.production }}</div>
+              <div>發行商：{{ movie.distributor }}</div>
+              <div>產地：{{ movie.country }}</div>
+            </div>
           </div>
-          <div>製作商：{{ movie.production }}</div>
-          <div>發行商：{{ movie.distributor }}</div>
-          <div>產地：{{ movie.country }}</div>
+        </div>
+        
+        <div class="movie-detail-plot">
+          <div class="section-title">劇情簡介</div>
+          <div>{{ movie.plot }}</div>
+        </div>
+    
+        <div v-if="movie.trailerUrl" class="movie-detail-trailer">
+          <div class="section-title">預告片</div>
+          <iframe :src="movie.trailerUrl" frameborder="0" allowfullscreen
+                  style="width:100%;min-height:500px;border-radius:10px;">
+          </iframe>
+        </div>
+    
+        <div class="movie-detail-bottom">
+          <button @click="$router.back()" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-left"></i> 電影清單</button>
+          <span class="movie-view-count">點閱：{{ movie.viewCount?.toLocaleString() || 0 }}</span>
+          <button class="buy-btn" :class="{ upcoming: movie.movieStatusId === 1, off: movie.movieStatusId === 3 }" 
+                  :disabled="movie.movieStatusId !== 2" @click.stop="movie.movieStatusId === 2 && goToTicket(movie.movieId)">
+            <i class="bi bi-ticket-perforated me-1"></i>
+            <span v-if="movie.movieStatusId === 2">立即訂票</span>
+            <span v-else-if="movie.movieStatusId === 1">敬請期待</span>
+            <span v-else-if="movie.movieStatusId === 3">已下檔</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="movie-detail-plot">
-      <div class="section-title">劇情簡介</div>
-      <div>{{ movie.plot }}</div>
-    </div>
-
-    <div v-if="movie.trailerUrl" class="movie-detail-trailer">
-      <div class="section-title">預告片</div>
-      <iframe
-        :src="movie.trailerUrl"
-        frameborder="0"
-        allowfullscreen
-        style="width:100%;min-height:500px;border-radius:10px;"
-      ></iframe>
-    </div>
-
-    <div class="movie-detail-bottom">
-      <button @click="$router.back()" class="btn btn-outline-secondary">電影單</button>
-      <span class="movie-view-count">點閱：{{ movie.viewCount || 0 }}</span>
+    <!-- 右邊評論區 -->
+    <div class="right-container review-block">
+      <h3 class="review-title"><i class="bi bi-chat-dots"></i> 網友評論</h3>
+      <div class="review-cards-group" v-for="score in [5,4,3,2,1]" :key="score">
+        <div class="review-group-title">
+          <span class="review-stars">{{ '★'.repeat(score) + '☆'.repeat(5-score) }}</span>
+          <span class="review-score-label">{{ score }}分</span>
+        </div>
+        <Swiper :modules="[EffectCards]" effect="cards" grab-cursor="true" class="review-swiper" 
+                v-if="filteredReviews(score).length">
+          <SwiperSlide v-for="review in filteredReviews(score)" :key="review.MovieReviewId">
+            <div class="review-card-ticket">
+              <div class="review-card-user"><i class="bi bi-person-circle"></i> {{ getAnonymousName(review.MovieReviewId) }}</div>
+              <div class="review-card-content">{{ review.comment }}</div>
+              <div class="review-card-date">{{ new Date(review.reviewedAt).toLocaleDateString() }}</div>
+            </div>
+          </SwiperSlide>
+        </Swiper>
+        <div v-else class="review-card-empty">暫無{{ score }}分評論</div>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="css" scoped>
-.movie-detail-container {
-  max-width: 960px;
-  margin: 38px auto 70px auto;
-  color: #fff;
-  font-family: 'Noto Sans TC', sans-serif;
-  background: #1c1d22;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px #222b;
-  padding: 38px 34px 36px 34px;
-}
-.movie-detail-main {
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-}
-.movie-detail-poster {
-  width: 260px;
-  min-width: 180px;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px #000c;
-  background: #23232a;
-}
-.movie-detail-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  font-size: 1.08rem;
-  min-width: 0;
-}
-.movie-title-ch {
-  font-size: 2.1em;
-  font-weight: 900;
-  color: #ffe480;
-  margin-bottom: 3px;
-}
-.movie-title-en {
-  font-size: 1.05em;
-  color: #7be6fa;
-  margin-bottom: 12px;
-}
-.movie-detail-meta div {
-  margin-bottom: 6px;
-}
-.movie-detail-plot, .movie-detail-trailer {
-  margin-top: 34px;
-  padding: 20px 0 0 0;
-  border-top: 1px solid #234;
-}
-.section-title {
-  font-size: 1.16em;
-  font-weight: 700;
-  color: #ffe287;
-  margin-bottom: 9px;
-  letter-spacing: 2px;
-}
-.movie-detail-bottom {
-  display: flex;
-  align-items: center;
-  margin-top: 30px;
-  gap: 20px;
-}
-.movie-view-count {
-  color: #ffe287;
-  font-size: 1.1em;
-  font-weight: 700;
-  margin-left: 18px;
-}
-@media (max-width: 768px) {
-  .movie-detail-main {
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
+  .movie-detail-wrapper {
+    display: flex;
+    gap: 36px;
+    align-items: flex-start;
+    width: 100%;
   }
-  .movie-detail-poster {
-    width: 60vw;
-    max-width: 300px;
+  .left-container {
+    min-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
   }
   .movie-detail-container {
-    padding: 16px 6vw;
+    max-width: 960px;
+    margin: 38px auto 70px 50px;
+    color: #fff;
+    font-family: 'Noto Sans TC', sans-serif;
+    background: #1c1d22;
+    border-radius: 20px;
+    border-top: 1.5px solid #324;
+    box-shadow: 0 8px 32px #222b;
+    padding: 38px 34px 36px 34px;
   }
-}
+  .movie-detail-main {
+    display: flex;
+    gap: 29px;
+    align-items: flex-start;
+  }
+  .movie-detail-poster {
+    width: 275px;
+    min-width: 180px;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px #000c;
+    background: #23232a;
+  }
+  .movie-detail-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 1.08rem;
+    min-width: 0;
+  }
+  .movie-title-ch {
+    font-size: 2.09em;
+    font-weight: 900;
+    color: #ffe480;
+    margin-bottom: 3px;
+  }
+  .movie-title-en {
+    font-size: 1.1em;
+    color: #7be6fa;
+    margin-bottom: 12px;
+  }
+  .movie-detail-meta div {
+    margin-bottom: 6px;
+  }
+  .movie-detail-plot {
+    text-align: justify;
+  }
+  .movie-detail-plot, .movie-detail-trailer {
+    margin-top: 34px;
+    padding: 20px 0 0 0;
+    border-top: 1px solid #234;
+  }
+  .section-title {
+    font-size: 1.16em;
+    font-weight: 700;
+    color: #ffe287;
+    margin-bottom: 9px;
+    letter-spacing: 2px;
+  }
+  .movie-detail-bottom {
+    display: flex;
+    align-items: center;
+    margin-top: 30px;
+    gap: 20px;
+  }
+  .movie-view-count {
+    color: #b9c7e2;
+    font-size: 1em;
+    font-weight: 700;
+    margin-left: 1px;
+  }
+  @media (max-width: 768px) {
+    .movie-detail-main {
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .movie-detail-poster {
+      width: 60vw;
+      max-width: 300px;
+    }
+    .movie-detail-container {
+      padding: 16px 6vw;
+    }
+  }
+  .buy-btn {
+    width: 13%;
+    margin: 0.7em 0.1em 0em auto;
+    display: block;
+    background: linear-gradient(90deg, #ffd700 60%, #ff60ef 100%);
+    color: #222;
+    font-weight: bold;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 0 7px 0;
+    box-shadow: 0 2px 12px #ffd70044;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+  }
+  .buy-btn:hover {
+    background: linear-gradient(90deg, #ffae00 60%, #fc41f4 100%);
+    color: #fff;
+    box-shadow: 0 4px 18px #ffd70066;
+  }
+  .buy-btn:disabled,
+  .buy-btn.upcoming,
+  .buy-btn.off {
+    background: linear-gradient(90deg, #bbb 60%, #eee 100%);
+    color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+  }
+  .right-container {
+    flex: 1;
+    min-width: 340px;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #12131a;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  /* 行動裝置調整 */
+  @media (max-width: 950px) {
+    .movie-detail-wrapper {
+      flex-direction: column;
+    }
+    .left-container, .right-container {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+  .review-block {
+    margin-top: 34px;
+    margin-bottom: 32px;
+    padding: 38px 0 0 20px;
+    border-top: 1.5px solid #324;
+    max-width: 480px;
+    /* 若要靠右可加 float:right 或用 flex 排版 */
+  }
+  .review-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 14px;
+    color: #ffd76a;
+  }
+  .review-cards-group {
+    margin-bottom: 32px;
+  }
+  .review-group-title {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+  }
+  .review-stars {
+    color: #ffd700;
+    font-size: 1.16em;
+    letter-spacing: 1px;
+  }
+  .review-score-label {
+    color: #fff;
+    background: #393b40;
+    padding: 2px 12px;
+    border-radius: 16px;
+    font-size: 1em;
+  }
+  .review-swiper {
+    width: 315px;
+    min-height: 138px;
+    margin-bottom: 4px;
+  }
+  .review-card-ticket {
+    min-width: 300px;
+    min-height: 110px;
+    background: repeating-linear-gradient(
+      -45deg, #fffbe6, #fffbe6 22px, #fff9d7 22px, #fff9d7 44px
+    );
+    border-radius: 20px 20px 18px 18px / 30px 30px 16px 16px;
+    border: 2.8px dashed #ffce59;
+    box-shadow: 0 2px 16px #0005;
+    position: relative;
+    padding: 22px 24px 14px 24px;
+    font-size: 1.05em;
+    margin-bottom: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    line-height: 1.5em;
+  }
+  .review-card-user {
+    font-weight: bold;
+    color: #55529a;
+    margin-bottom: 6px;
+  }
+  .review-card-content {
+    color: #222;
+    margin-bottom: 7px;
+    font-size: 1.07em;
+    text-align: justify;
+  }
+  .review-card-date {
+    font-size: 0.93em;
+    color: #8c8c8c;
+    text-align: right;
+  }
+  .review-card-empty {
+    color: #a5a5a5;
+    background: #242424;
+    border-radius: 14px;
+    padding: 16px 10px;
+    margin: 8px 0 12px 0;
+    font-size: 1.02em;
+    opacity: 0.83;
+    text-align: center;
+  }
 </style>

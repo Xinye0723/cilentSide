@@ -1,7 +1,7 @@
 <script setup>
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
-import { nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { EffectCoverflow } from "swiper/modules";
 import { useRouter } from "vue-router";
 
@@ -14,6 +14,11 @@ const swiperRef = ref(null);
 const activeIndex = ref(4); // 預設中間
 const summaryOpen = ref(false); // 只判斷有沒有打開
 const router = useRouter();
+const directorList = computed(() => {
+  if (!movie.value?.director) return [];
+  // 可依你後端分隔符號改，這裡支援中、英文逗號
+  return movie.value.director.split(/,|、|\n/).map(s => s.trim()).filter(Boolean);
+});
 
 // 點擊事件
 function onPosterClick(idx) {
@@ -37,8 +42,8 @@ function truncatePlot(str, len = 56) {
 function goToDetail(movieId) {
   router.push(`/movies/${movieId}`);
 }
-function goToTicket(id) {
-  router.push(`/bookTicket/${id}`);
+function goToTicket(movieId) {
+  router.push(`/bookTicket/${movieId}`);
 }
 
 let speechTimer = null; // 定時器全域變數
@@ -122,7 +127,7 @@ watch(
     :slides-per-view="Math.min(movies.length, 4.2)"
     :centered-slides="true"
     :loop="movies.length > 4"
-    :initial-slide="4"
+    :initial-slide="2"
     @slideChange="onSlideChange"
     class="movie-carousel"
     v-if="movies && movies.length"
@@ -156,7 +161,7 @@ watch(
                 draggable="false"
               />
             </div>
-            <button class="buy-btn" @click.stop="goToTicket(id)">
+            <button class="buy-btn" @click.stop="goToTicket(movie.movieId)">
               <i class="bi bi-ticket-perforated me-1"></i>立即訂票
             </button>
           </div>
@@ -177,7 +182,7 @@ watch(
               :alt="movie.ratingDescription"
               style="
                 position: absolute;
-                bottom: 60px;
+                bottom: 58px;
                 left: 16px;
                 width: 40px;
                 height: 40px;
@@ -186,10 +191,10 @@ watch(
             />
             <div class="summary-title-ch">{{ movie.movieNameChinese }}</div>
             <div class="summary-title-en">{{ movie.movieNameEnglish }}</div>
-            <div class="summary-meta">
-              片長：{{ movie.duration || "-" }} 分鐘
-            </div>
-            <div class="summary-meta">導演：{{ movie.director }}</div>
+            <div class="summary-meta">類型：{{ movie.tags ? movie.tags.join('、') : '-'  }}</div>
+            <div class="summary-meta">片長：{{ movie.duration || "-" }} 分鐘</div>
+            <div class="summary-meta">導演：
+              {{ movie.director ? movie.director.split(/,|、|\n/).map(s => s.trim()).filter(Boolean).join('、') : '-' }}</div>
             <div class="summary-meta">製作商：{{ movie.production }}</div>
             <div class="summary-meta">產地：{{ movie.country }}</div>
             <div class="summary-desc">
@@ -210,7 +215,7 @@ watch(
                   movie.releaseDate ? movie.releaseDate.slice(0, 10) : "-"
                 }}
               </div>
-              <button class="buy-btn" @click.stop="goToTicket(id)">
+              <button class="buy-btn" @click.stop="goToTicket(movie.movieId)">
                 <i class="bi bi-ticket-perforated me-1"></i>立即訂票
               </button>
             </div>
@@ -336,9 +341,9 @@ watch(
   margin-bottom: 10px;
 }
 .summary-meta {
-  font-size: 0.97em;
+  font-size: 0.96em;
   color: #fff;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 .summary-desc {
   font-size: 0.97em;
@@ -349,6 +354,7 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   max-height: unset;
+  text-align: justify;
 }
 .detail-link {
   background: none;

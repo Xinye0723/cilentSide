@@ -79,7 +79,7 @@ import 'swiper/css/thumbs';
     box-shadow: 0 4px 24px #7be6fa44, 0 1.5px 0 #fff2;
   }
   .thumbs-swiper-wrap {
-    margin-top: 5px;
+    margin-top: 1px;
     margin-bottom: 20px;
     max-width: 900px;
     margin-left: auto;

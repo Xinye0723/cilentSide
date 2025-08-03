@@ -23,6 +23,7 @@ import QrcodeView from "@/views/qrcodeView.vue";
 
 import LoginView from "@/components/loginView.vue";
 import RegisterView from "@/components/registerView.vue";
+import MovieReview from "@/movies/MovieReview.vue";
 
 const routes = [
   {
@@ -44,7 +45,7 @@ const routes = [
     name: "comingSoonMovie",
   },
   { path: "/movies/:movieId", component: MovieDetail, name: "movieDetail" },
-
+  { path: "/movieReview", component: MovieReview, name: "movieReview" },
   { path: "/ticket", component: TicketView, name: "ticket" },
   {
     path: "/event",
