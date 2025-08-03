@@ -38,7 +38,7 @@ onMounted(() => {
     io.observe(footer);
   }
 });
-
+// onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
 onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
 </script>
 
