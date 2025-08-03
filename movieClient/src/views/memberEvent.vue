@@ -8,14 +8,19 @@
       </RouterLink>
     </div>
     <div class="event-list">
-      <div v-for="event in events" :key="event.id" class="event-row">
-        <div class="event-title">{{ event.title }}</div>
-        <div class="event-organizer">主辦人：{{ event.organizer }}</div>
-        <div class="event-info">
-          報名：{{ event.registered }}/{{ event.maxCapacity }}
+      <div
+        v-for="event in events"
+        :key="event.id"
+        class="event-row event-hover"
+      >
+        <div class="event-info-block">
+          <div class="event-title">{{ event.title }}</div>
+          <div class="event-meta">
+            <span>報名：{{ event.registered }}/{{ event.maxCapacity }}</span>
+            <span>狀態：{{ event.status || "無" }}</span>
+          </div>
+          <div class="event-time">時間：{{ event.startTime }}</div>
         </div>
-        <div class="event-time">時間：{{ event.startTime }}</div>
-        <div class="event-status">狀態：{{ event.status }}</div>
         <RouterLink :to="`/memberEventDetail/${event.id}`">
           <button class="detail-btn">查看詳情</button>
         </RouterLink>
@@ -26,55 +31,58 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { RouterLink } from "vue-router";
 
-console.log("memberEvent.vue 已載入"); // 這行應該要顯示
-
+const router = useRouter();
 const events = ref([]);
 
 onMounted(async () => {
-  console.log("onMounted 開始執行"); // 這行應該要顯示
-
   const res = await fetch("https://localhost:7181/api/MemberEvent");
   const data = await res.json();
-  console.log("API 原始資料:", data); // 這行應該要顯示
-
-  events.value = data.map((item) => {
-    console.log("item.startTime 原始值:", item.startTime); // 這行應該要顯示
-    return {
-      id: item.memberEventId,
-      title: item.title,
-      organizer: item.organizerName || "",
-      registered: item.registered,
-      maxCapacity: item.maxCapacity,
-      startTime: item.startTime
-        ? new Date(item.startTime).toLocaleDateString("zh-TW") +
-          " " +
-          new Date(item.startTime).toLocaleTimeString("zh-TW", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "時間未定",
-      status: item.status,
-    };
-  });
+  events.value = data.map((item) => ({
+    id: item.memberEventId,
+    title: item.title,
+    organizer: item.organizerName,
+    registered: item.registered,
+    maxCapacity: item.maxCapacity,
+    startTime: item.startTime
+      ? new Date(item.startTime).toLocaleDateString("zh-TW") +
+        " " +
+        new Date(item.startTime).toLocaleTimeString("zh-TW", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "時間未定",
+    status: item.status,
+  }));
 });
+
+const goToDetail = (id) => {
+  router.push(`/memberEvent/${id}`);
+};
+
+// ✅ 加這個：跳轉到建立活動頁
+const goToCreateEvent = () => {
+  router.push("/createMemberEvent");
+};
 </script>
 
 <style scoped>
 .group-event {
   padding: 2rem;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a23, #141433);
-  color: white;
+  background: linear-gradient(135deg, #18182c 60%, #2a2a4a 100%);
+  color: #f3f3fa;
   font-family: "Poppins", "Noto Sans TC", sans-serif;
 }
 .title {
   font-size: 2.8rem;
   font-weight: bold;
-  color: #a387ff;
-  text-shadow: 0 0 10px #a387ff, 0 0 20px #7c7cfb;
+  color: #b388ff;
+  text-shadow: 0 0 16px #b388ff, 0 0 32px #7c7cfb;
   margin-bottom: 0.5rem;
+  animation: flicker 3s infinite;
 }
 .subtitle-row {
   display: flex;
@@ -85,15 +93,19 @@ onMounted(async () => {
   gap: 1rem;
 }
 .create-btn {
-  background-color: #a387ff;
+  background: linear-gradient(90deg, #b388ff 60%, #7c7cfb 100%);
   color: white;
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 10px;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 0 12px #a387ff;
-  transition: all 0.3s ease;
+  box-shadow: 0 0 12px #b388ff55;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.create-btn:hover {
+  background: linear-gradient(90deg, #7c7cfb 60%, #b388ff 100%);
+  box-shadow: 0 0 18px #b388ff77;
 }
 .event-list {
   display: flex;
@@ -101,51 +113,73 @@ onMounted(async () => {
   gap: 1.2rem;
 }
 .event-row {
-  background: #1a1a2e;
+  background: linear-gradient(120deg, #23234a 70%, #3a2a5a 100%);
   border-radius: 16px;
   padding: 1.2rem 2rem;
+  box-shadow: 0 2px 10px #b388ff22;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 0 10px #a387ff33;
-  font-size: 1.1rem;
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  cursor: pointer;
 }
-.event-col {
-  flex: 1;
-  text-align: center;
+.event-row:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 24px 0 #b388ff33, 0 0 0 #fff;
+  z-index: 2;
+}
+.event-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 .event-title {
-  color: #66d9ff;
+  color: #a387ff;
   font-weight: bold;
   font-size: 1.2rem;
+  margin-bottom: 0.2rem;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px #a387ff33;
 }
-.event-organizer {
-  color: #ccc;
-  font-size: 0.9rem;
-}
-.event-info {
-  color: #b3b3e6;
-  font-size: 0.9rem;
+.event-meta {
+  color: #e0e0fa;
+  font-size: 1rem;
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.2rem;
 }
 .event-time {
-  color: #b3b3e6;
-  font-size: 0.9rem;
-}
-.event-status {
-  color: #b3b3e6;
-  font-size: 0.9rem;
+  color: #7c7cfb;
+  font-size: 1rem;
 }
 .detail-btn {
-  background: #a387ff;
-  color: #fff;
+  background: linear-gradient(90deg, #5a3fa7 60%, #2e6ad7 100%);
+  color: #f3f3fa;
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
   margin-left: 1.5rem;
-  transition: background 0.2s;
+  font-weight: bold;
+  box-shadow: 0 0 8px #5a3fa755;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 .detail-btn:hover {
-  background: #7e5de4;
+  background: linear-gradient(90deg, #2e6ad7 60%, #5a3fa7 100%);
+  color: #fff;
+  box-shadow: 0 0 14px #5a3fa799;
+}
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 10px #b388ff, 0 0 20px #7c7cfb;
+  }
+  50% {
+    opacity: 0.8;
+    text-shadow: 0 0 6px #7c7cfb, 0 0 12px #7c7cfb;
+  }
 }
 </style>
