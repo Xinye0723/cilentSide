@@ -147,7 +147,7 @@ const routes = [
     path: "/qrcode",
     component: QrcodeView,
     name: "qrcode",
-    meta: { requiresAuth: true },
+    // meta: { requiresAuth: true },
   },
 
   /* -------- Auth -------- */
@@ -182,25 +182,23 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem("token");
 
-  /* 1️⃣ 尚未登入卻訪問需要驗證的頁 */
+  /* 1️⃣ 尚未登入卻訪問需要驗證的頁 ── 直接導向 /login */
   if (to.meta.requiresAuth && !token) {
-    Swal.fire({
-      icon: "warning",
-      title: "請先登入",
-      confirmButtonText: "前往登入",
-      allowOutsideClick: false,
-    }).then(() => {
-      // 帶上一個 redirect query，登入後可跳回原路徑
-      next({ path: "/login", query: { redirect: to.fullPath } });
+    next({
+      // 直接重導
+      path: "/login",
+      query: { redirect: to.fullPath }, // 保留目標頁，登入完可導回
     });
-    return; // 必須 return，否則 guard 會繼續往下跑
+    return; // 記得 return 終止後續流程
   }
 
-  /* 2️⃣ 已登入卻想再去 /login 或 /register → 直接回首頁 */
+  /* 2️⃣ 已登入卻想再去 /login 或 /register ── 送回 /home */
   if (token && (to.path === "/login" || to.path === "/register")) {
-    return next("/home");
+    next("/home");
+    return;
   }
 
+  /* 3️⃣ 其他狀況照常放行 */
   next();
 });
 

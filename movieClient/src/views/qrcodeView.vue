@@ -35,7 +35,7 @@ const movie = ref({
 onMounted(async () => {
   try {
     if (orderId) {
-      const res = await fetch(`"https://localhost:7181"/api/orders/${orderId}`);
+      const res = await fetch(`https://localhost:7181/api/orders/${orderId}`);
       if (res.ok) {
         const data = await res.json();
         order.value = {
@@ -78,7 +78,7 @@ onMounted(async () => {
 
 // QR Code 內容：以後端驗票網址為例，可依實際需求調整
 const qrValue = computed(
-  () => `"https://localhost:7181"/ticket/validate/${order.value.orderNumber}`
+  () => `https://localhost:7181/ticket/validate/${order.value.orderNumber}`
 );
 
 // 清理並返回首頁

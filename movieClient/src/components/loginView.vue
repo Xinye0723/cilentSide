@@ -22,7 +22,7 @@ async function login() {
   loading.value = true;
   try {
     console.log("開始登入請求...");
-    const res = await fetch("http://localhost:5276/api/Members/Login", {
+    const res = await fetch("https://localhost:7181/api/Members/Login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -73,7 +73,7 @@ async function sendCode() {
   loading.value = true;
   try {
     const res = await fetch(
-      "http://localhost:5276/api/Members/SendResetCode",
+      "https://localhost:7181/api/Members/SendResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,17 +159,14 @@ async function resetPassword() {
   }
   loading.value = true;
   try {
-    const res = await fetch(
-      "http://localhost:5276/api/Members/ResetPassword",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.value,
-          newPassword: newPassword.value,
-        }),
-      }
-    );
+    const res = await fetch("http://localhost:5276/api/Members/ResetPassword", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.value,
+        newPassword: newPassword.value,
+      }),
+    });
 
     if (!res.ok) {
       let errorMsg = "重設密碼失敗";
@@ -203,9 +200,7 @@ async function resetPassword() {
 
 function loginWithLine() {
   const clientId = "2007794102";
-  const redirectUri = encodeURIComponent(
-    "http://localhost:5173/line-callback"
-  );
+  const redirectUri = encodeURIComponent("http://localhost:5173/line-callback");
   const state = Math.random().toString(36).substring(2);
   const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`;
   window.location.href = lineAuthUrl;
