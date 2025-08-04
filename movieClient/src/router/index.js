@@ -1,14 +1,15 @@
 /* ---------------------------------------------------------------
  *  src/router/index.ts
- *  -------------------------------------------------------------
+ * -------------------------------------------------------------
  *  - 登入成功時請在 LoginView 將 token 寫入 localStorage.token
- *  - 未登入直接打需要驗證的頁 → 會被導向 /login
+ *  - 未登入直接打需要驗證的頁 → SweetAlert 提示後導向 /login
  *  - 已登入但手動輸入 /login → 會被導向 /home
  * -------------------------------------------------------------*/
 
 import { createRouter, createWebHistory } from "vue-router";
-import Swal from "sweetalert2"; // ★ 新增
+import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
+
 /* ---------- 版面元件 ---------- */
 import BookTicket from "@/components/bookTicket.vue";
 import CinemaEvent from "@/components/cinemaEvent.vue";
@@ -21,7 +22,7 @@ import OnShowMovie from "@/movies/onShowMovie.vue";
 import SocialArea from "@/components/socialArea.vue";
 import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
-import memberIn from "@/components/memberIn.vue";
+import MemberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 import MemberEventDetail from "@/views/MemberEventDetail.vue";
 import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
@@ -59,7 +60,7 @@ const routes = [
   },
   { path: "/movies/:movieId", component: MovieDetail, name: "movieDetail" },
   { path: "/movieReview", component: MovieReview, name: "movieReview" },
-  { path: "/ticket", component: TicketView, name: "ticket" },
+
   {
     path: "/event",
     redirect: "/cinemaEvent",
@@ -73,15 +74,25 @@ const routes = [
     name: "cinemaEventDetail",
   },
   { path: "/event/:id", component: EventDetail, name: "eventDetail" },
-  { path: "/bookTicket/:id", component: BookTicket, name: "bookTicket" },
 
-  /* -------- 需要登入的路由 (meta.requiresAuth) -------- */
+  /* -------- 需要登入的路由 -------- */
+  {
+    path: "/bookTicket/:id",
+    component: BookTicket,
+    name: "bookTicket",
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/ticket",
+    component: TicketView,
+    name: "ticket",
+    meta: { requiresAuth: true },
+  },
   {
     path: "/chat",
     component: ChatApp,
     name: "chat",
-    meta: { requiresAuth: true },
-    meta: { hideFooter: true },
+    meta: { requiresAuth: true, hideFooter: true },
   },
   {
     path: "/memberCenter",
@@ -127,7 +138,7 @@ const routes = [
   },
   {
     path: "/memberIn",
-    component: memberIn,
+    component: MemberIn,
     name: "memberIn",
     meta: { requiresAuth: true },
   },
@@ -147,13 +158,13 @@ const routes = [
     path: "/qrcode",
     component: QrcodeView,
     name: "qrcode",
+    // 若需要驗證就取消註解
     // meta: { requiresAuth: true },
   },
 
   /* -------- Auth -------- */
   { path: "/login", component: LoginView, name: "login" },
   { path: "/register", component: RegisterView, name: "register" },
-  { path: "/memberInform", component: MemberInform, name: "memberInform" },
   {
     path: "/google-callback",
     component: GoogleCallback,
@@ -176,30 +187,33 @@ const router = createRouter({
 /* ================================================================
  *  全域守衛：檢查 JWT
  * ----------------------------------------------------------------
- *  1. 有 requiresAuth 而 localStorage.token 不存在 → 去 /login
+ *  1. 有 requiresAuth 而 localStorage.token 不存在 → SweetAlert 後導向 /login
  *  2. 已登入還想進 /login 或 /register → 轉回 /home
  * ================================================================*/
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to) => {
   const token = localStorage.getItem("token");
 
-  /* 1️⃣ 尚未登入卻訪問需要驗證的頁 ── 直接導向 /login */
+  /* 1️⃣ 未登入卻想進需要驗證的頁 */
   if (to.meta.requiresAuth && !token) {
-    next({
-      // 直接重導
-      path: "/login",
-      query: { redirect: to.fullPath }, // 保留目標頁，登入完可導回
+    await Swal.fire({
+      icon: "warning",
+      title: "請先登入",
+      confirmButtonText: "前往登入",
+      allowOutsideClick: false,
     });
-    return; // 記得 return 終止後續流程
+
+    return {
+      path: "/login",
+      query: { redirect: to.fullPath },
+    };
   }
 
-  /* 2️⃣ 已登入卻想再去 /login 或 /register ── 送回 /home */
+  /* 2️⃣ 已登入卻想再去 /login 或 /register → 送回 /home */
   if (token && (to.path === "/login" || to.path === "/register")) {
-    next("/home");
-    return;
+    return { path: "/home" };
   }
 
-  /* 3️⃣ 其他狀況照常放行 */
-  next();
+  /* 3️⃣ 其他狀況照常放行（不需回傳任何東西） */
 });
 
 export default router;

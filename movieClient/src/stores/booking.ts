@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import type { PersistenceOptions } from "pinia-plugin-persistedstate";
 
-/* ----------  自訂型別  ---------- */
 export interface TicketType {
   name: string;
   price: number;
@@ -13,77 +12,49 @@ export interface SnackItem {
   qty: number;
 }
 
-interface BookingState {
-  /* 票券階段 */
-  ticketCounts: Record<string, number>;
-  ticketTypes: TicketType[];
-  movieName: string;
-  sessionId: number;
-  sessionTime: string;
-  theaterNo: number;
-  selectedSeats: string[];
-  ticketTotal: number;
-  movieDuration: number;
-  /* 附餐階段 */
-  snacks: SnackItem[];
-  snackTotal: number;
-}
-
-/* ----------  Store  ---------- */
 export const useBookingStore = defineStore("booking", {
-  /* -------- state -------- */
-  state: (): BookingState => ({
-    ticketCounts: {},
-    ticketTypes: [],
+  state: () => ({
+    /* 票券階段 */
+    ticketCounts: {} as Record<string, number>,
+    ticketTypes: [] as TicketType[],
     movieName: "",
     sessionId: 0,
     sessionTime: "",
     theaterNo: 0,
-    selectedSeats: [],
+    selectedSeats: [] as string[],
     ticketTotal: 0,
-    snacks: [],
-    snackTotal: 0,
     movieDuration: 0,
+    /* 附餐階段 */
+    snacks: [] as SnackItem[],
+    snackTotal: 0,
+    /* 新增：結帳資訊 */
+    orderNumber: "", // ← 送綠界前寫入
+    orderAmount: 0, // ← 送綠界前寫入
   }),
 
-  /* -------- actions ------ */
   actions: {
-    /** ① 票券 → 座位 → 附餐 */
-    setTicketData(payload: {
-      movieId: number;
-      movieName: string;
-      sessionId: number;
-      sessionTime: string;
-      theaterNo: number;
-      ticketCounts: Record<string, number>;
-      ticketTypes: TicketType[];
-      selectedSeats: string[];
-      ticketTotal: number;
-      movieDuration: number;
-    }) {
+    setTicketData(payload: Record<string, any>) {
       Object.assign(this, payload);
     },
-
-    /** ② 附餐 → 結帳 */
-    setSnackData(snacks: SnackItem[], snackTotal: number) {
+    setSnackData(snacks: SnackItem[], total: number) {
       this.snacks = snacks;
-      this.snackTotal = snackTotal;
+      this.snackTotal = total;
     },
-
-    /** ③ 流程結束或取消時清空 */
+    setOrderInfo(no: string, amt: number) {
+      // ← 新增
+      this.orderNumber = no;
+      this.orderAmount = amt;
+    },
     reset() {
       this.$reset();
     },
   },
 
-  /* -------- persist ------ */
-  /** ❷ 這裡的型別用 `PersistedStateOptions`，欄位叫 `paths` */
   persist: <PersistenceOptions>{
-    storage: sessionStorage,
+    storage: localStorage, // ← 改這裡
     paths: [
       "ticketCounts",
       "ticketTypes",
-      "movieId",
       "movieName",
       "sessionId",
       "sessionTime",
@@ -93,6 +64,8 @@ export const useBookingStore = defineStore("booking", {
       "movieDuration",
       "snacks",
       "snackTotal",
+      "orderNumber",
+      "orderAmount", // ← 新增
     ],
   },
 });
