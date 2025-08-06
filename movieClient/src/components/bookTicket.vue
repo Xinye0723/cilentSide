@@ -385,7 +385,7 @@ function saveAndGoNext() {
 
       <!-- 座位格子略…（保持原樣） -->
       <!-- ① 包一層 inline-block，讓內容寬度可被 w-full 捕捉 -->
-      <div class="inline-block ml-20">
+      <div class="inline-block ml-1">
         <!-- 螢幕文字＋條，直接用 w-full 置中 -->
         <p class="text-center text-gray-400 mb-1">螢幕位置</p>
         <div

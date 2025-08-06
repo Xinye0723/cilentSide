@@ -11,19 +11,21 @@ const loading = ref(true);
 // 檢查會員是否已報名此活動
 const checkSignupStatus = async (eventId) => {
   try {
-    const memberId = localStorage.getItem('memberId'); // 假設會員ID存在localStorage
+    const memberId = localStorage.getItem("memberId"); // 假設會員ID存在localStorage
     if (!memberId) {
-      console.log('未登入會員');
+      console.log("未登入會員");
       return;
     }
-    
-    const res = await fetch(`https://localhost:7181/api/MemberEvent/CheckJoinStatus?eventId=${eventId}&memberId=${memberId}`);
+
+    const res = await fetch(
+      `https://localhost:7181/api/MemberEvent/CheckJoinStatus?eventId=${eventId}&memberId=${memberId}`
+    );
     if (res.ok) {
       const data = await res.json();
       hasSignedUp.value = data.isJoined || false;
     }
   } catch (error) {
-    console.error('檢查報名狀態失敗:', error);
+    console.error("檢查報名狀態失敗:", error);
   }
 };
 
@@ -43,9 +45,9 @@ onMounted(async () => {
               hour: "2-digit",
               minute: "2-digit",
             })
-          : "時間未定"
+          : "時間未定",
       };
-      
+
       // 檢查報名狀態
       await checkSignupStatus(id);
     } else {
@@ -64,45 +66,41 @@ function goBack() {
 
 async function signupOrCancel() {
   if (!event.value) return;
-  
-  try {
-    const memberId = localStorage.getItem('memberId');
-    if (!memberId) {
-      alert('請先登入會員');
-      return;
-    }
-    
-    const action = hasSignedUp.value ? 'leave' : 'join';
-    const res = await fetch(`https://localhost:7181/api/MemberEvent/${action}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        eventId: event.value.memberEventId,
-        memberId: memberId
-      })
-    });
-    
-    if (res.ok) {
-      if (action === 'join') {
-        event.value.registered += 1;
-        hasSignedUp.value = true;
-        alert('報名成功！');
-      } else {
-        if (event.value.registered > 0) {
-          event.value.registered -= 1;
-        }
-        hasSignedUp.value = false;
-        alert('取消報名成功！');
-      }
-    } else {
-      const errorData = await res.json();
-      alert(errorData.error || '操作失敗，請稍後再試');
-    }
-  } catch (error) {
-    console.error('報名操作失敗:', error);
-    alert('操作失敗，請稍後再試');
+
+  const memberId = localStorage.getItem("memberId");
+  if (!memberId) {
+    alert("請先登入會員");
+    return;
+  }
+
+  const apiRoot = "https://localhost:7181/api/MemberEvent";
+  const eventId = event.value.memberEventId;
+
+  /* 判斷是報名還是取消 */
+  const isCancel = hasSignedUp.value;
+  const url = isCancel
+    ? `${apiRoot}/apply?eventId=${eventId}&memberId=${memberId}` // DELETE
+    : `${apiRoot}/apply?eventId=${eventId}&memberId=${memberId}`; // POST
+
+  const res = await fetch(url, {
+    method: isCancel ? "DELETE" : "POST",
+  });
+
+  if (!res.ok) {
+    const msg = await res.text(); // 回傳字串就別再 json()
+    alert(msg || "操作失敗");
+    return;
+  }
+
+  /* 依結果更新畫面 */
+  if (isCancel) {
+    if (event.value.registered > 0) event.value.registered--;
+    hasSignedUp.value = false;
+    alert("取消報名成功！");
+  } else {
+    event.value.registered++;
+    hasSignedUp.value = true;
+    alert("報名成功！");
   }
 }
 </script>
@@ -127,16 +125,16 @@ async function signupOrCancel() {
         <span class="label">狀態：</span>{{ event.status || "無" }}
       </div>
     </div>
-    
+
     <!-- 顯示已報名狀態 -->
     <div class="signup-status" v-if="hasSignedUp">
       <p class="status-msg">✅ 您已報名此活動</p>
     </div>
-    
+
     <div class="btn-row">
       <button class="back-btn" @click="goBack">返回上一頁</button>
-      <button 
-        class="signup-btn" 
+      <button
+        class="signup-btn"
         :class="{ 'cancel-btn': hasSignedUp }"
         @click="signupOrCancel"
       >
@@ -202,7 +200,8 @@ h1 {
   justify-content: center;
 }
 
-.back-btn, .signup-btn {
+.back-btn,
+.signup-btn {
   padding: 0.8rem 1.5rem;
   border: none;
   border-radius: 8px;
@@ -252,7 +251,8 @@ h1 {
   border: 1px solid #4caf50;
 }
 
-.not-found, .loading {
+.not-found,
+.loading {
   text-align: center;
   margin: 2rem;
   color: #ccc;

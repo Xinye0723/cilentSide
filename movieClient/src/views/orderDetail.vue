@@ -8,7 +8,8 @@ const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
 const ngrokBaseUrl = "https://03ae022edc46.ngrok-free.app";
-const frontendUrl = "https://bosnia-t-faq-garden.trycloudflare.com";
+const frontendUrl =
+  "https://manufacturing-converted-absorption-xp.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
@@ -27,35 +28,40 @@ async function pay(method: "credit" | "linepay") {
     theaterNo: booking.theaterNo,
     seats: booking.selectedSeats,
     tickets: booking.ticketCounts,
-    snacks: booking.snacks,
+    snacks: booking.snacks
+      .filter((s) => s.qty > 0)
+      .map((s) => ({ snackId: s.id, qty: s.qty })), // ★ 確定是 snackId,
     amount: grandTotal.value,
     email: email.value,
     payMethod: method,
     desc: desc.value,
     itemName: itemName.value,
-    userId: booking.userId || "",
+    userId: booking.userId,
     orderSource: "web",
     returnUrl: `${ngrokBaseUrl}/api/ecpay/Notify`,
     clientBackUrl: `${frontendUrl}/qrcode`,
   };
+  console.log("selectedSeats =", booking.selectedSeats);
   const res = await fetch("https://localhost:7181/api/Ecpay/CreateOrder", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(order),
   });
   if (!res.ok) {
-    alert(await res.text());
+    console.log(await res.text());
     return;
   }
-  const { formHtml } = await res.json();
-  console.log("ECPay 回傳的表單:", formHtml); // 記錄表單內容以便調試
+  const { orderId, formHtml } = await res.json();
+  booking.orderNumber = orderId; // 快取，以便跳回商店時能重新查詢
+
+  // 原本的表單送出流程照舊
   const doc = new DOMParser().parseFromString(formHtml, "text/html");
   const form = doc.querySelector("form");
   if (form) {
     document.body.appendChild(form);
     form.submit();
   } else {
-    alert("表單解析失敗");
+    console.log("表單解析失敗");
   }
 }
 </script>

@@ -35,7 +35,10 @@ const crumbs = computed(() => {
 </script>
 
 <template>
-  <nav class="breadcrumb-container mb-4 pl-8 ml-20" aria-label="Breadcrumb">
+  <nav
+    class="breadcrumb-container mb-4 pl-8 ml-20 mt-5"
+    aria-label="Breadcrumb"
+  >
     <ol class="flex items-center text-gray-400 text-base space-x-2">
       <li v-for="(crumb, idx) in crumbs" :key="idx" class="flex items-center">
         <router-link

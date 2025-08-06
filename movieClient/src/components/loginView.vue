@@ -114,7 +114,7 @@ async function verifyResetCode() {
   loading.value = true;
   try {
     const res = await fetch(
-      "http://localhost:5276/api/Members/VerifyResetCode",
+      "https://localhost:7181/api/Members/VerifyResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,14 +159,17 @@ async function resetPassword() {
   }
   loading.value = true;
   try {
-    const res = await fetch("http://localhost:5276/api/Members/ResetPassword", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.value,
-        newPassword: newPassword.value,
-      }),
-    });
+    const res = await fetch(
+      "https://localhost:7181/api/Members/ResetPassword",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.value,
+          newPassword: newPassword.value,
+        }),
+      }
+    );
 
     if (!res.ok) {
       let errorMsg = "重設密碼失敗";

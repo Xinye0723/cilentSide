@@ -1,114 +1,131 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useBookingStore } from "@/stores/booking";
 import QrcodeVue from "qrcode.vue";
-
-// // ⚙️ 環境變數（後端 base URL）
-// const apiBase = import.meta.env.VITE_API_BASE || "https://localhost:7181";
+import { useBookingStore } from "@/stores/booking";
 
 const booking = useBookingStore();
 const route = useRoute();
 const router = useRouter();
+const orderId = (route.query.orderId as string) || booking.orderNumber;
 
-// 可能透過 query 傳入，或從 Pinia 取得
-const orderId = (route.query.orderId as string) || booking.orderNumber || "";
-
-// state
+/* ---------- 畫面狀態 ---------- */
 const loading = ref(true);
 const error = ref("");
-const order = ref({
-  orderNumber: orderId,
-  paymentTime: "",
-  amount: 0,
-});
-const movie = ref({
+
+/* ---------- 訂單 / 電影 ---------- */
+const order = ref({ orderNumber: orderId, paymentTime: "", amount: 0 });
+interface MovieInfo {
+  chineseName: string;
+  sessionDate: string;
+  sessionTime: string;
+  theaterNumber: number;
+  seats: string[];
+}
+const movie = ref<MovieInfo>({
   chineseName: "",
-  englishName: "",
   sessionDate: "",
   sessionTime: "",
   theaterNumber: 0,
-  seats: [] as string[],
+  seats: [],
 });
 
-// 1️⃣ 優先嘗試從後端以 orderId 取最新資料
+/* ---------- 明細（★ 型別改成陣列物件） ---------- */
+interface TicketLine {
+  type: string;
+  qty: number;
+  price: number;
+  sub: number;
+}
+interface SnackLine {
+  name: string;
+  qty: number;
+  price: number;
+  sub: number;
+}
+
+const ticketLines = ref<TicketLine[]>([]);
+const snackLines = ref<SnackLine[]>([]);
+
+/* ---------- 掛載抓單 ---------- */
 onMounted(async () => {
   try {
-    if (orderId) {
-      const res = await fetch(`https://localhost:7181/api/orders/${orderId}`);
-      if (res.ok) {
-        const data = await res.json();
-        order.value = {
-          orderNumber: data.orderNumber,
-          paymentTime: data.paymentTime,
-          amount: data.amount,
-        };
-        movie.value = {
-          chineseName: data.movieChineseName,
-          englishName: data.movieEnglishName,
-          sessionDate: data.sessionDate,
-          sessionTime: data.sessionTime,
-          theaterNumber: data.theaterNo,
-          seats: data.seats,
-        };
-        loading.value = false;
-        return;
-      }
-    }
-    // 2️⃣ 若查詢失敗，使用 Pinia 快取資料作為備案
+    const res = await fetch(`https://localhost:7181/api/orders/${orderId}`);
+    if (!res.ok) throw new Error("查無訂單");
+    const data = await res.json();
+
     order.value = {
-      orderNumber: orderId || "暫無",
-      paymentTime: new Date().toLocaleString(),
-      amount: booking.ticketTotal + booking.snackTotal,
+      orderNumber: data.orderNo,
+      paymentTime: new Date(data.createTime).toLocaleString(),
+      amount: data.totalPrice,
     };
+
     movie.value = {
-      chineseName: booking.movieName,
-      englishName: booking.movieNameEnglish ?? "",
-      sessionDate: booking.sessionTime?.split(" ")[0] ?? "",
-      sessionTime: booking.sessionTime?.split(" ")[1] ?? "",
+      chineseName: booking.movieName || "未知",
+      sessionDate: booking.sessionTime.split(" ")[0] || "",
+      sessionTime: booking.sessionTime.split(" ")[1] || "",
       theaterNumber: booking.theaterNo,
-      seats: booking.selectedSeats,
+      seats: (data.seats ?? []).map((s: any) => `${s.seatRow}${s.seatNumber}`),
     };
+
+    ticketLines.value = (data.tickets ?? []).map((t: any) => ({
+      type: t.ticketType,
+      qty: t.qty,
+      price: t.unitPrice,
+      sub: t.subTotal,
+    }));
+
+    snackLines.value = (data.snacks ?? []).map((s: any) => ({
+      name: s.snackName,
+      qty: s.qty,
+      price: s.unitPrice,
+      sub: s.subTotal,
+    }));
   } catch (e: any) {
-    error.value = e.message ?? "載入失敗，請稍後再試";
+    console.error(e);
+    error.value = e.message || "載入失敗";
   } finally {
     loading.value = false;
   }
 });
 
-// QR Code 內容：以後端驗票網址為例，可依實際需求調整
+/* ---------- QR Code ---------- */
 const qrValue = computed(
   () => `https://localhost:7181/ticket/validate/${order.value.orderNumber}`
 );
 
-// 清理並返回首頁
+/* ---------- 返回首頁 ---------- */
 function goHome() {
-  booking.reset?.(); // 若 store 有 reset 函式
+  booking.reset?.();
+  router.push("/");
 }
 </script>
+
 <template>
   <div
     class="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center py-8 px-4"
   >
     <h1 class="text-3xl md:text-4xl font-bold mb-8 text-center">訂單明細</h1>
 
-    <!-- ⚠️ 載入 / 失敗狀態 -->
+    <!-- ⚠️ 載入 / 失敗 -->
     <p v-if="loading" class="text-gray-400 mt-20">載入中…</p>
     <p v-else-if="error" class="text-red-400 mt-20">{{ error }}</p>
 
-    <!-- 主要內容 -->
+    <!-- ▼ 正常內容 -->
     <div
       v-else
       class="w-full max-w-5xl grid md:grid-cols-2 gap-6 animate-fadeIn"
     >
-      <!-- 訂單 + 電影資訊 -->
+      <!-- 訂單 & 電影資訊 -->
       <div class="space-y-6">
+        <!-- 訂單資訊 -->
         <section class="bg-gray-800 rounded-2xl shadow p-6">
           <h2
             class="text-xl font-semibold mb-4 flex items-center justify-center"
           >
             <span class="i-lucide-receipt mr-2" /> 訂單資訊
           </h2>
+
           <div class="space-y-1 text-base">
             <p class="flex justify-between mb-3">
               <span class="font-medium">訂單編號：</span>
@@ -120,44 +137,39 @@ function goHome() {
             </p>
           </div>
 
-          <!-- 明細：票種 & 附餐 -->
+          <!-- 票券明細 -->
           <div class="mt-6 text-base space-y-4">
-            <!-- 票種明細 -->
-            <div>
-              <h3 class="font-medium mb-2">票種明細</h3>
-              <ul class="list-disc list-inside text-sm ml-3 mt-3">
-                <li
-                  v-for="type in booking.ticketTypes.filter(
-                    (t) => booking.ticketCounts[t.name] > 0
-                  )"
-                  :key="type.name"
-                  class="flex justify-between"
-                >
-                  <span
-                    >{{ type.name }} ×
-                    {{ booking.ticketCounts[type.name] }}</span
-                  >
-                  <span
-                    >{{ type.price * booking.ticketCounts[type.name] }} 元</span
-                  >
-                </li>
-              </ul>
-            </div>
-            <!-- 附餐明細 -->
-            <div>
-              <h3 class="font-medium mb-2">附餐明細</h3>
-              <ul class="list-disc list-inside text-sm ml-3 mt-3">
-                <li
-                  v-for="s in booking.snacks.filter((s) => s.qty > 0)"
-                  :key="s.id"
-                  class="flex justify-between"
-                >
-                  <span>{{ s.name }} × {{ s.qty }}</span>
-                  <span>{{ s.price * s.qty }} 元</span>
-                </li>
-              </ul>
-            </div>
-            <p class="flex justify-between">
+            <h3 class="font-medium mb-2">票種明細</h3>
+            <!-- 票券明細 -->
+            <ul
+              v-if="ticketLines.length"
+              class="list-disc list-inside text-sm ml-3 mt-3"
+            >
+              <li
+                v-for="t in ticketLines"
+                :key="t.type"
+                class="flex justify-between"
+              >
+                <span>{{ t.type }} × {{ t.qty }}</span>
+                <span>{{ t.sub }} 元</span>
+              </li>
+            </ul>
+
+            <!-- 餐點明細 -->
+            <ul
+              v-if="snackLines.length"
+              class="list-disc list-inside text-sm ml-3 mt-3"
+            >
+              <li
+                v-for="s in snackLines"
+                :key="s.name"
+                class="flex justify-between"
+              >
+                <span>{{ s.name }} × {{ s.qty }}</span>
+                <span>{{ s.sub }} 元</span>
+              </li>
+            </ul>
+            <p class="flex justify-between mt-2">
               <span class="font-medium">總金額</span>
               <span>{{ order.amount }} 元</span>
             </p>
@@ -171,24 +183,21 @@ function goHome() {
           >
             <span class="i-lucide-film" /> 電影資訊
           </h2>
-          <div class="space-y-1 text-base">
-            <p>
-              <span class="font-medium">電影：</span>{{ movie.chineseName
-              }}<span v-if="movie.englishName"> ({{ movie.englishName }})</span>
-            </p>
-            <p>
-              <span class="font-medium">場次時間：</span>{{ movie.sessionDate }}
-              {{ movie.sessionTime }}
-            </p>
-            <p>
-              <span class="font-medium">影廳：</span
-              >{{ movie.theaterNumber }} 號廳
-            </p>
-            <p>
-              <span class="font-medium">座位：</span
-              >{{ movie.seats.join(", ") }}
-            </p>
-          </div>
+          <p>
+            <span class="font-medium">電影：</span>{{ movie.chineseName
+            }}<span v-if="movie.chineseName"> ({{ movie.chineseName }})</span>
+          </p>
+          <p>
+            <span class="font-medium">場次時間：</span>{{ movie.sessionDate }}
+            {{ movie.sessionTime }}
+          </p>
+          <p>
+            <span class="font-medium">影廳：</span
+            >{{ movie.theaterNumber }} 號廳
+          </p>
+          <p>
+            <span class="font-medium">座位：</span>{{ movie.seats.join(", ") }}
+          </p>
         </section>
       </div>
 
@@ -203,33 +212,14 @@ function goHome() {
       </div>
     </div>
 
-    <!-- 影城宣導 -->
-    <section
-      v-if="!loading && !error"
-      class="w-full max-w-5xl bg-gray-800 rounded-2xl shadow p-6 mt-8"
-    >
-      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-        <span class="i-lucide-megaphone" /> 影城宣導
-      </h2>
-      <ul
-        class="list-disc list-inside space-y-2 text-sm md:text-base text-gray-300"
-      >
-        <li>請勿聽信陌生人指示轉帳，防範詐騙。</li>
-        <li>影片播放期間嚴禁錄影、直播或拍照，違者依法處理。</li>
-        <li>入場請保持安靜，將手機調整為靜音或關機模式。</li>
-        <li>食物及飲料請妥善存放，保持影廳環境整潔。</li>
-        <li>如遇緊急事件，請依工作人員指示迅速離場。</li>
-      </ul>
-    </section>
-
+    <!-- 返回首頁 -->
     <div v-if="!loading && !error" class="mt-10 text-center">
-      <router-link
-        to="/"
-        class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-500 transition-colors text-white font-medium py-2 px-6 rounded-2xl shadow"
+      <button
         @click="goHome"
+        class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-500 transition-colors text-white font-medium py-2 px-6 rounded-2xl shadow"
       >
         <span class="i-lucide-home" /> 返回首頁
-      </router-link>
+      </button>
     </div>
   </div>
 </template>
