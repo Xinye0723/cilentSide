@@ -9,6 +9,23 @@ const loading = ref(true);
 const error = ref(null);
 const showShareMenu = ref(false);
 
+// 移除所有參加功能相關的狀態
+// const hasJoined = ref(false);
+// const isPaid = ref(false);
+// const joinLoading = ref(false);
+// const paymentDeadline = ref(null);
+// const isExpired = ref(false);
+// const countdown = ref(null);
+
+// 移除付款相關變數
+// const showPaymentModal = ref(false);
+// const paymentMethod = ref('credit');
+// const paymentLoading = ref(false);
+
+// 移除票種相關變數
+// const ticketTypes = ref({...});
+// const maxTickets = ref(10);
+
 onMounted(async () => {
   try {
     const res = await fetch(
@@ -29,12 +46,27 @@ onMounted(async () => {
       img: data.img,
       status: data.status || "進行中",
     };
+
+    // 移除參加狀態檢查
+    // await checkJoinStatus();
   } catch (err) {
     error.value = err.message || "載入失敗";
   } finally {
     loading.value = false;
   }
 });
+
+// 移除所有參加相關函數
+// const checkJoinStatus = async () => { ... };
+// const startCountdown = () => { ... };
+// const joinEvent = async () => { ... };
+// const leaveEvent = async () => { ... };
+// const confirmPayment = async () => { ... };
+// const processPayment = async () => { ... };
+// const closePaymentModal = () => { ... };
+// const getTotalTickets = () => { ... };
+// const getTotalPrice = () => { ... };
+// const hasSelectedTickets = () => { ... };
 
 const goBack = () => {
   router.push("/cinemaEvent");
@@ -54,22 +86,94 @@ const getStatusColor = (status) => {
 };
 
 const showSuccessMessage = (message) => {
+  // 先移除所有現有的 toast
+  const existingToasts = document.querySelectorAll('.custom-toast');
+  existingToasts.forEach(toast => {
+    if (document.body.contains(toast)) {
+      document.body.removeChild(toast);
+    }
+  });
+
   const toast = document.createElement("div");
+  toast.className = 'custom-toast';
+  
+  // 基本樣式
   toast.style.position = "fixed";
-  toast.style.top = "20px";
+  toast.style.top = "100px";
   toast.style.right = "20px";
-  toast.style.background = "rgba(76, 175, 80, 0.95)";
-  toast.style.color = "white";
-  toast.style.padding = "0.8rem 1.2rem";
-  toast.style.borderRadius = "8px";
+  toast.style.padding = "1.2rem";
+  toast.style.borderRadius = "12px";
   toast.style.zIndex = "99999";
-  toast.style.fontSize = "1rem";
-  toast.style.boxShadow = "0 2px 12px rgba(0,0,0,0.15)";
-  toast.textContent = message;
+  toast.style.fontSize = "0.9rem";
+  toast.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)";
+  toast.style.backdropFilter = "blur(10px)";
+  toast.style.border = "1px solid rgba(179, 136, 255, 0.1)";
+  toast.style.maxWidth = "350px";
+  toast.style.fontWeight = "500";
+  toast.style.transition = "all 0.3s ease";
+  
+  // 根據訊息內容決定樣式
+  if (message.includes("失敗") || message.includes("錯誤")) {
+    toast.style.background = "rgba(255, 107, 107, 0.15)";
+    toast.style.border = "1px solid rgba(255, 107, 107, 0.3)";
+    toast.style.color = "#ff6b6b";
+    toast.textContent = "❌ " + message;
+  } else if (message.includes("成功")) {
+    toast.style.background = "rgba(76, 175, 80, 0.15)";
+    toast.style.border = "1px solid rgba(76, 175, 80, 0.3)";
+    toast.style.color = "#4CAF50";
+    toast.textContent = "✅ " + message;
+  } else {
+    toast.style.background = "rgba(179, 136, 255, 0.15)";
+    toast.style.border = "1px solid rgba(179, 136, 255, 0.3)";
+    toast.style.color = "#b388ff";
+    toast.textContent = "ℹ️ " + message;
+  }
+  
+  // 初始狀態（隱藏）
+  toast.style.transform = "translateX(100%)";
+  toast.style.opacity = "0";
+  
   document.body.appendChild(toast);
+  
+  // 強制重繪後開始動畫
   setTimeout(() => {
-    document.body.removeChild(toast);
-  }, 2000);
+    // 滑入動畫
+    toast.style.transform = "translateX(0)";
+    toast.style.opacity = "1";
+    
+    // 如果是失敗訊息，跳動完後立即消失
+    if (message.includes("失敗") || message.includes("錯誤")) {
+      setTimeout(() => {
+        toast.style.animation = "shake 0.6s ease-in-out";
+        // 跳動動畫結束後立即消失
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            toast.style.transform = "translateX(100%)";
+            toast.style.opacity = "0";
+            setTimeout(() => {
+              if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+              }
+            }, 300);
+          }
+        }, 600); // 跳動動畫結束後立即消失
+      }, 500);
+    } else {
+      // 成功或一般訊息，3秒後消失
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          toast.style.transform = "translateX(100%)";
+          toast.style.opacity = "0";
+          setTimeout(() => {
+            if (document.body.contains(toast)) {
+              document.body.removeChild(toast);
+            }
+          }, 300);
+        }
+      }, 3000);
+    }
+  }, 10);
 };
 
 const shareEvent = async () => {
@@ -146,6 +250,9 @@ const toggleShareMenu = () => {
           </div>
         </div>
 
+        <!-- 移除懸浮參加狀態視窗 -->
+        <!-- <div v-if="hasJoined" class="floating-status-window">...</div> -->
+
         <div class="event-info-single">
           <div class="info-section">
             <h3 class="section-title">
@@ -193,6 +300,9 @@ const toggleShareMenu = () => {
           </div>
         </div>
 
+        <!-- 移除參加按鈕區域 -->
+        <!-- <div v-if="!hasJoined" class="join-section">...</div> -->
+
         <div class="action-section">
           <button @click="goBack" class="back-btn">
             <i class="bi bi-arrow-left"></i>
@@ -219,12 +329,16 @@ const toggleShareMenu = () => {
             </div>
           </div>
         </div>
+
+        <!-- 移除付款視窗 -->
+        <!-- <div v-if="showPaymentModal" class="payment-modal-overlay">...</div> -->
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* 保留基本樣式 */
 .cinema-event-detail {
   padding: 1.5rem;
   min-height: 100vh;
@@ -484,6 +598,47 @@ const toggleShareMenu = () => {
   width: 16px;
 }
 
+/* 移除所有參加相關的 CSS */
+/* .floating-status-window { ... } */
+/* .join-section { ... } */
+/* .payment-modal-overlay { ... } */
+/* .ticket-selection { ... } */
+/* 等等... */
+
+/* 保留動畫 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+/* 響應式設計 */
 @media (max-width: 768px) {
   .cinema-event-detail {
     padding: 1rem;

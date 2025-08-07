@@ -57,7 +57,7 @@ const loadMemberData = async () => {
       joinDate: '2023-01-15', // 假設加入日期，實際可以從資料庫獲取
       level: points >= 1000 ? '金卡會員' : points >= 500 ? '銀卡會員' : '一般會員',
       points: points,
-      memberImg: memberData.memberImg ? `http://localhost:5276${memberData.memberImg}` : ''
+      memberImg: memberData.memberImg ? `http://localhost:7181${memberData.memberImg}` : ''
     };
 
     // 獲取觀影紀錄（使用不需要認證的 API）
