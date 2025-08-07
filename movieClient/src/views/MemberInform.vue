@@ -37,12 +37,15 @@ const loadMemberData = async () => {
     
     // 從 localStorage 獲取會員 ID
     const memberId = localStorage.getItem('memberId');
+    console.log('開始載入會員資料，會員ID:', memberId);
+    
     if (!memberId) {
       error.value = '未找到會員資訊，請重新登入';
       return;
     }
 
     // 獲取會員基本資訊（先使用不需要認證的 API 測試）
+    console.log('嘗試獲取會員基本資訊...');
     const memberData = await memberAPI.getMemberInfoPublic(parseInt(memberId));
     console.log('會員資料:', memberData); // 調試用
     
@@ -57,12 +60,15 @@ const loadMemberData = async () => {
       joinDate: '2023-01-15', // 假設加入日期，實際可以從資料庫獲取
       level: points >= 1000 ? '金卡會員' : points >= 500 ? '銀卡會員' : '一般會員',
       points: points,
-      memberImg: memberData.memberImg ? `http://localhost:5276${memberData.memberImg}` : ''
+      memberImg: memberData.memberImg ? `https://localhost:7181${memberData.memberImg}` : ''
     };
 
     // 獲取觀影紀錄（使用不需要認證的 API）
     try {
+      console.log('嘗試獲取觀影紀錄...');
       const orderHistory = await orderAPI.getMemberOrderHistoryPublic(parseInt(memberId));
+      console.log('觀影紀錄:', orderHistory);
+      
       viewingHistory.value = orderHistory.map((record, index) => ({
         id: record.orderId,
         movieName: record.movieName,
@@ -71,14 +77,17 @@ const loadMemberData = async () => {
         theater: record.theater,
         seat: record.seat,
         ticketType: record.ticketType,
-        ticketCount: record.ticketCount,
+        ticketCount: record.ticketCount || 1,
         price: record.price
       }));
     } catch (err) {
       console.error('載入觀影紀錄失敗:', err);
       // 如果觀影紀錄載入失敗，根據統計資料生成測試資料
       try {
+        console.log('嘗試獲取統計資料...');
         const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
+        console.log('統計資料:', statsData);
+        
         const movieCount = statsData.totalMovies || 1;
         const totalSpent = statsData.totalSpent || 900;
         const pricePerMovie = Math.round(totalSpent / movieCount);
@@ -112,13 +121,27 @@ const loadMemberData = async () => {
     }
 
     // 獲取統計資料（使用不需要認證的 API）
-    const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
-    statistics.value = {
-      totalMovies: statsData.totalMovies,
-      totalSpent: statsData.totalSpent,
-      favoriteGenre: statsData.favoriteGenre,
-      averageRating: statsData.averageRating
-    };
+    try {
+      console.log('嘗試獲取統計資料...');
+      const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
+      console.log('統計資料:', statsData);
+      
+      statistics.value = {
+        totalMovies: statsData.totalMovies || 0,
+        totalSpent: statsData.totalSpent || 0,
+        favoriteGenre: statsData.favoriteGenre || '無資料',
+        averageRating: statsData.averageRating || 0
+      };
+    } catch (statsErr) {
+      console.error('載入統計資料失敗:', statsErr);
+      // 使用預設統計資料
+      statistics.value = {
+        totalMovies: 0,
+        totalSpent: 0,
+        favoriteGenre: '無資料',
+        averageRating: 0
+      };
+    }
 
   } catch (err) {
     console.error('載入會員資料失敗:', err);
@@ -131,6 +154,29 @@ const loadMemberData = async () => {
 onMounted(() => {
   loadMemberData();
 });
+
+// 測試 API 連接
+const testAPI = async () => {
+  try {
+    console.log('開始測試 API 連接...');
+    
+    // 測試基本 API 連接
+    const response = await fetch('https://localhost:7181/api/Members/debug/all');
+    console.log('API 測試回應狀態:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('API 測試成功:', data);
+      alert(`API 連接成功！找到 ${data.totalMembers} 個會員`);
+    } else {
+      console.error('API 測試失敗:', response.status);
+      alert(`API 連接失敗！狀態碼: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('API 測試錯誤:', error);
+    alert('API 測試錯誤: ' + error.message);
+  }
+};
 </script>
 
 <template>
@@ -153,6 +199,7 @@ onMounted(() => {
         {{ error }}
       </div>
       <button @click="loadMemberData" class="retry-button">重新載入</button>
+      <button @click="testAPI" class="retry-button" style="margin-left: 10px;">測試 API</button>
     </div>
 
     <!-- 主要內容 -->
@@ -200,8 +247,8 @@ onMounted(() => {
               <span class="value member-level">{{ memberInfo.level }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">累積點數：</span>
-              <span class="value points">{{ memberInfo.points }} 點</span>
+              <span class="label">抽籤次數：</span>
+              <span class="value points">{{ memberInfo.points }} 次</span>
             </div>
           </div>
         </div>

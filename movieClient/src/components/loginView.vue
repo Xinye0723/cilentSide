@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import Swal from "sweetalert2";
 
 const email = ref("");
 const password = ref("");
@@ -37,6 +38,7 @@ async function login() {
       const errorText = await res.text();
       console.error("登入失敗:", errorText);
       message.value = "帳號或密碼錯誤";
+      loading.value = false;
       return;
     }
 
@@ -47,12 +49,22 @@ async function login() {
     localStorage.setItem("token", data.token); // 儲存 JWT Token
     localStorage.setItem("memberName", data.name);
     message.value = `歡迎回來，${data.name}!`;
-    router.push("/memberIn");
+    
+    // 觸發登入狀態變化事件
+    window.dispatchEvent(new Event('loginStatusChanged'));
+    
+    // 等待3秒讓Loading動畫完成
+    setTimeout(() => {
+      loading.value = false;
+      router.push("/MemberInform");
+    }, 3000);
   } catch (err) {
     console.error("登入過程中發生錯誤:", err);
     message.value = "登入失敗，請稍後再試";
-  } finally {
-    loading.value = false;
+    // 等待3秒讓Loading動畫完成
+    setTimeout(() => {
+      loading.value = false;
+    }, 3000);
   }
 }
 
@@ -92,6 +104,7 @@ async function sendCode() {
         // 不是JSON就忽略
       }
       message.value = errorMsg;
+      loading.value = false;
       return;
     }
 
@@ -114,7 +127,7 @@ async function verifyResetCode() {
   loading.value = true;
   try {
     const res = await fetch(
-      "http://localhost:5276/api/Members/VerifyResetCode",
+      "https://localhost:7181/api/Members/VerifyResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -134,6 +147,7 @@ async function verifyResetCode() {
         // 不是JSON就忽略
       }
       message.value = errorMsg;
+      loading.value = false;
       return;
     }
 
@@ -149,17 +163,28 @@ async function verifyResetCode() {
 }
 
 async function resetPassword() {
-  if (!newPassword.value || !confirmNewPassword.value) {
-    message.value = "請輸入新密碼";
-    return;
-  }
-  if (newPassword.value !== confirmNewPassword.value) {
-    message.value = "新密碼與確認密碼不一致";
-    return;
-  }
+      if (!newPassword.value || !confirmNewPassword.value) {
+      Swal.fire({
+        icon: 'warning',
+        title: '請輸入新密碼',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#dc3545'
+      });
+      return;
+    }
+    if (newPassword.value !== confirmNewPassword.value) {
+      Swal.fire({
+        icon: 'warning',
+        title: '密碼不一致',
+        text: '新密碼與確認密碼不一致',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#dc3545'
+      });
+      return;
+    }
   loading.value = true;
   try {
-    const res = await fetch("http://localhost:5276/api/Members/ResetPassword", {
+    const res = await fetch("https://localhost:7181/api/Members/ResetPassword", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -176,25 +201,55 @@ async function resetPassword() {
       } catch (e) {
         // 不是JSON就忽略
       }
-      message.value = errorMsg;
+      
+      // 先關閉 loading 狀態
+      loading.value = false;
+      
+      Swal.fire({
+        icon: 'error',
+        title: '重設密碼失敗',
+        text: errorMsg,
+        confirmButtonText: '確定',
+        confirmButtonColor: '#dc3545'
+      });
       return;
     }
 
     const data = await res.json();
-    message.value = "密碼重設成功，請重新登入";
-    setTimeout(() => {
-      mode.value = "login";
-      email.value = "";
-      password.value = "";
-      newPassword.value = "";
-      confirmNewPassword.value = "";
-      message.value = "";
-    }, 1500);
+    
+    // 先關閉 loading 狀態
+    loading.value = false;
+    
+    // 使用 SweetAlert 顯示成功訊息
+    await Swal.fire({
+      icon: 'success',
+      title: '密碼重設成功！',
+      text: '請重新登入',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#dc3545'
+    });
+    
+    // 重設表單
+    mode.value = "login";
+    email.value = "";
+    password.value = "";
+    newPassword.value = "";
+    confirmNewPassword.value = "";
+    message.value = "";
   } catch (err) {
     console.error(err);
-    message.value = "重設密碼失敗，請稍後再試";
-  } finally {
+    
+    // 先關閉 loading 狀態
     loading.value = false;
+    
+    // 使用 SweetAlert 顯示錯誤訊息
+    Swal.fire({
+      icon: 'error',
+      title: '重設密碼失敗',
+      text: '請稍後再試',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#dc3545'
+    });
   }
 }
 
@@ -220,6 +275,8 @@ function loginWithGoogle() {
 function openYoutube() {
   window.open("https://www.youtube.com/watch?v=vKB2Lg-IM3I", "_blank");
 }
+
+
 </script>
 
 <template>
@@ -242,7 +299,7 @@ function openYoutube() {
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-9 col-lg-6 col-xl-5">
           <img
-            src="../images/IMG1123.jpg"
+            src="../images/Background.png"
             class="img-fluid"
             alt="logo"
             style="cursor: pointer"
@@ -269,7 +326,7 @@ function openYoutube() {
                 ></i>
               </button>
 
-              <button class="animated-button" @click="loginWithGoogle">
+              <button type="button" class="animated-button" @click="loginWithGoogle">
                 <img
                   src="../images/g-logo1.png"
                   alt="Google"
@@ -400,15 +457,17 @@ function openYoutube() {
               </div>
             </div>
 
+
+
             <!-- Login button -->
             <div class="text-center text-lg-start mt-4 pt-2">
-              <button
+                            <button
                 type="button"
                 class="btn btn-danger btn-lg"
                 @click="login"
                 :disabled="loading"
               >
-                <span v-if="!loading"> 登入 </span>
+                登入
               </button>
               <!-- router-link按鈕移除，恢復自動跳轉 -->
               <p class="small fw-bold mt-2 pt-1 mb-0 text-white">
@@ -547,4 +606,8 @@ img {
   justify-content: center;
   z-index: 9999;
 }
+
+
+
+
 </style>

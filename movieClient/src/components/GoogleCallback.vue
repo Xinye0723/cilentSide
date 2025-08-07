@@ -48,7 +48,7 @@ const processGoogleLogin = async () => {
 
   try {
     console.log('開始 Google 登入處理...');
-    const res = await fetch('http://localhost:5276/api/Members/GoogleLogin', {
+    const res = await fetch('https://localhost:7181/api/Members/GoogleLogin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,11 +82,14 @@ const processGoogleLogin = async () => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('memberName', data.name);
     
+    // 觸發登入狀態變化事件
+    window.dispatchEvent(new Event('loginStatusChanged'));
+    
     loading.value = false;
     
     // 延遲一下再跳轉，讓用戶看到成功訊息
     setTimeout(() => {
-      router.push('/memberIn');
+      router.push('/MemberInform');
     }, 1000);
     
   } catch (e) {

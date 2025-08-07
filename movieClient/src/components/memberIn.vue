@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 // ❶ 從 localStorage 取登入後的 memberId；測試時先寫死 1
-const memberId = localStorage.getItem("memberId") ?? "1";
+let memberId = localStorage.getItem("memberId") ?? "1";
 
 // ❷ 後端 BaseUrl（正式案建議放 .env，再寫成 import.meta.env.VITE_API_BASEURL）
 const apiBase = "https://localhost:7181/api"; // ← 你的 Controller 前面還有 /api
@@ -28,33 +28,77 @@ const validateError = ref("");
 
 async function loadMember() {
   try {
-    // ❹ 字串要用反引號 `...` 才能插值 ${}
+    console.log("開始載入會員資料...");
+    console.log("會員ID:", memberId);
+    console.log("API Base:", apiBase);
+    
+    // 檢查會員ID是否有效
+    if (!memberId || memberId === "1") {
+      console.warn("會員ID無效，嘗試從localStorage獲取");
+      const storedMemberId = localStorage.getItem("memberId");
+      if (storedMemberId) {
+        memberId = storedMemberId;
+        console.log("從localStorage獲取到會員ID:", memberId);
+      } else {
+        error.value = "未找到會員資訊，請重新登入";
+        router.push("/login");
+        return;
+      }
+    }
+
+    // 先嘗試不需要認證的 API
+    console.log("嘗試調用不需要認證的 API...");
     const token = localStorage.getItem("token");
-    const res = await fetch(`${apiBase}/Members/${memberId}`, {
+    const res = await fetch(`${apiBase}/Members/public/${memberId}`, {
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
       }
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`); // ❺ 同樣要用反引號或字串拼接
-    }
+    console.log("API 回應狀態:", res.status);
+    console.log("API 回應 URL:", res.url);
 
-    const data = (await res.json()) as memberUpdateDto;
-    if (data.memberBirth) {
-      data.memberBirth = data.memberBirth.slice(0, 10); // 只取 yyyy-MM-dd
+    if (!res.ok) {
+      console.error("API 回應錯誤:", res.status, res.statusText);
+      
+      // 如果 public API 失敗，嘗試需要認證的 API
+      if (token) {
+        console.log("嘗試調用需要認證的 API...");
+        const authRes = await fetch(`${apiBase}/Members/${memberId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        console.log("認證 API 回應狀態:", authRes.status);
+
+        if (!authRes.ok) {
+          if (authRes.status === 401) {
+            error.value = "登入已過期，請重新登入";
+            localStorage.removeItem("memberId");
+            localStorage.removeItem("token");
+            localStorage.removeItem("memberName");
+            router.push("/login");
+            return;
+          } else {
+            throw new Error(`HTTP ${authRes.status}`);
+          }
+        }
+
+        const data = (await authRes.json()) as memberUpdateDto;
+        processMemberData(data);
+      } else {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } else {
+      const data = (await res.json()) as memberUpdateDto;
+      processMemberData(data);
     }
-    if (!data.memberGender) data.memberGender = true; // 預設男
-    if (!data.memberBirth) data.memberBirth = "2000-01-01"; // 預設生日
-    if (!data.memberPoint || isNaN(Number(data.memberPoint))) data.memberPoint = "0"; // 預設點數
-    if (!data.memberImg) data.memberImg = "/images/posterPicture/default.jpg";
-    member.value = data;
   } catch (err) {
     console.error("取會員失敗：", err);
     if (err.message?.includes('401')) {
       error.value = "登入已過期，請重新登入";
-      // 清除過期的 token 並導向登入頁
       localStorage.removeItem("memberId");
       localStorage.removeItem("token");
       localStorage.removeItem("memberName");
@@ -63,6 +107,19 @@ async function loadMember() {
       error.value = "讀取會員資料失敗，請稍後再試";
     }
   }
+}
+
+// 處理會員資料的輔助函數
+function processMemberData(data: memberUpdateDto) {
+  if (data.memberBirth) {
+    data.memberBirth = data.memberBirth.slice(0, 10); // 只取 yyyy-MM-dd
+  }
+  if (!data.memberGender) data.memberGender = true; // 預設男
+  if (!data.memberBirth) data.memberBirth = "2000-01-01"; // 預設生日
+  if (!data.memberPoint || isNaN(Number(data.memberPoint))) data.memberPoint = "0"; // 預設點數
+  if (!data.memberImg) data.memberImg = "/images/posterPicture/default.jpg";
+  member.value = data;
+  console.log("會員資料載入成功:", data);
 }
 
 const router = useRouter();
@@ -80,12 +137,7 @@ const birthDate = computed(() => {
   return member.value.memberBirth.slice(0, 10);
 });
 
-function logout() {
-  localStorage.removeItem("memberId");
-  localStorage.removeItem("token");
-  localStorage.removeItem("memberName");
-  router.push("/memberCenter");
-}
+
 
 function getImgUrl(path: string) {
   if (!path) return "https://via.placeholder.com/120";
@@ -103,6 +155,12 @@ function getFullImgUrl(path: string) {
 
 const newImageFile = ref<File | null>(null);
 const previewImg = ref<string | null>(null);
+
+// 修改密碼相關變數
+const showChangePassword = ref(false);
+const newPassword = ref("");
+const confirmNewPassword = ref("");
+const passwordMessage = ref("");
 
 function onFileChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -189,6 +247,68 @@ async function saveMember() {
     alert("更新失敗，請稍後再試");
   }
 }
+
+// 修改密碼相關函數
+function toggleChangePassword() {
+  showChangePassword.value = !showChangePassword.value;
+  if (!showChangePassword.value) {
+    // 如果關閉修改密碼模式，清空相關資料
+    newPassword.value = "";
+    confirmNewPassword.value = "";
+    passwordMessage.value = "";
+  }
+}
+
+async function updatePassword() {
+  if (!newPassword.value || !confirmNewPassword.value) {
+    passwordMessage.value = "請輸入新密碼";
+    return;
+  }
+  if (newPassword.value !== confirmNewPassword.value) {
+    passwordMessage.value = "新密碼與確認密碼不一致";
+    return;
+  }
+  
+  try {
+    const memberId = localStorage.getItem("memberId");
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`https://localhost:7181/api/Members/UpdatePassword/${memberId}`, {
+      method: "PUT",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        NewPassword: newPassword.value,
+      }),
+    });
+
+    if (!res.ok) {
+      let errorMsg = "修改密碼失敗";
+      try {
+        const errorData = await res.json();
+        errorMsg = errorData.message || errorMsg;
+      } catch (e) {
+        // 不是JSON就忽略
+      }
+      passwordMessage.value = errorMsg;
+      return;
+    }
+
+    const data = await res.json();
+    passwordMessage.value = "密碼修改成功！";
+    setTimeout(() => {
+      showChangePassword.value = false;
+      newPassword.value = "";
+      confirmNewPassword.value = "";
+      passwordMessage.value = "";
+    }, 1500);
+  } catch (err) {
+    console.error(err);
+    passwordMessage.value = "修改密碼失敗，請稍後再試";
+  }
+}
 </script>
 
 <template>
@@ -200,13 +320,10 @@ async function saveMember() {
     <!-- 會員資料 -->
     <div v-if="member" class="card mb-4">
       <div
-        class="d-flex justify-content-between align-items-center card-header text-white"
+        class="card-header text-white"
         style="background: linear-gradient(to right, #3f51b5, #9c27b0)"
       >
         <span class="fw-bold">會員個人資料</span>
-        <button class="btn btn-outline-dark fw-bold" @click="logout">
-          登出
-        </button>
       </div>
       <div class="card-body">
         <div class="row">
@@ -232,9 +349,10 @@ async function saveMember() {
             </label>
           </div>
           <div class="col-md-9">
-            <form @submit.prevent="saveMember">
+            <!-- 會員資料表單 -->
+            <form v-if="!showChangePassword" @submit.prevent="saveMember">
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
+                <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>會員ID：</strong></label
                 >
                 <div class="col-sm-9">
@@ -247,7 +365,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
+                <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>姓名：</strong></label
                 >
                 <div class="col-sm-9">
@@ -259,7 +377,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end">
+                <label class="col-sm-3 col-form-label text-end text-white">
                   <span class="text-danger">*</span><strong>電話：</strong>
                 </label>
                 <div class="col-sm-9">
@@ -271,7 +389,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end">
+                <label class="col-sm-3 col-form-label text-end text-white">
                   <span class="text-danger">*</span><strong>性別：</strong>
                 </label>
                 <div class="col-sm-9">
@@ -282,7 +400,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end">
+                <label class="col-sm-3 col-form-label text-end text-white">
                   <span class="text-danger">*</span><strong>地址：</strong>
                 </label>
                 <div class="col-sm-9">
@@ -294,7 +412,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end">
+                <label class="col-sm-3 col-form-label text-end text-white">
                   <span class="text-danger">*</span><strong>生日：</strong>
                 </label>
                 <div class="col-sm-9">
@@ -306,7 +424,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
+                <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>Email：</strong></label
                 >
                 <div class="col-sm-9">
@@ -318,7 +436,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end"
+                <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>點數：</strong></label
                 >
                 <div class="col-sm-9">
@@ -331,7 +449,7 @@ async function saveMember() {
                 </div>
               </div>
               <div class="row mb-2 align-items-start">
-                <label class="col-sm-3 col-form-label text-end"
+                <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>個人介紹：</strong></label
                 >
                 <div class="col-sm-9">
@@ -344,12 +462,62 @@ async function saveMember() {
               </div>
               <div class="row">
                 <div class="col-sm-9 offset-sm-3">
-                  <button class="btn btn-primary mt-2" type="submit">
-                    儲存
-                  </button>
+                  <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-warning" type="button" @click="toggleChangePassword">
+                      修改密碼
+                    </button>
+                    <button class="btn btn-primary" type="submit">
+                      儲存
+                    </button>
+                  </div>
                 </div>
               </div>
             </form>
+
+            <!-- 修改密碼表單 -->
+            <div v-if="showChangePassword">
+              <div v-if="passwordMessage" class="alert alert-info text-center mb-3">
+                {{ passwordMessage }}
+              </div>
+              <div class="row mb-3">
+                <label class="col-sm-3 col-form-label text-end text-white">
+                  <span class="text-danger">*</span><strong>新密碼：</strong>
+                </label>
+                <div class="col-sm-9">
+                  <input
+                    v-model="newPassword"
+                    type="password"
+                    class="form-control"
+                    placeholder="輸入新密碼"
+                  />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label class="col-sm-3 col-form-label text-end text-white">
+                  <span class="text-danger">*</span><strong>確認新密碼：</strong>
+                </label>
+                <div class="col-sm-9">
+                  <input
+                    v-model="confirmNewPassword"
+                    type="password"
+                    class="form-control"
+                    placeholder="再次輸入新密碼"
+                  />
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-9 offset-sm-3">
+                  <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-warning" @click="updatePassword">
+                      確定修改
+                    </button>
+                    <button class="btn btn-secondary" @click="toggleChangePassword">
+                      取消
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -366,5 +534,6 @@ async function saveMember() {
 .card {
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background-color: #1a1a1a;
 }
 </style>

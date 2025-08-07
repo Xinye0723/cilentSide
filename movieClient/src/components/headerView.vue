@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref, onMounted, onUnmounted } from "vue";
+import { ref, type Ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 
 const router = useRouter();
@@ -8,6 +8,26 @@ const isScrolled = ref(false);
 const showMovieSubmenu = ref(false);
 const showEventSubmenu = ref(false);
 const showMemberSubmenu = ref(false);
+
+// 檢查是否已登入 - 使用 ref 來確保響應性
+const isLoggedIn = ref(false);
+
+// 更新登入狀態的函數
+function updateLoginStatus() {
+  isLoggedIn.value = !!(localStorage.getItem("memberId") && localStorage.getItem("token"));
+}
+
+// 監聽 localStorage 變化
+function setupLoginStatusListener() {
+  // 初始檢查
+  updateLoginStatus();
+  
+  // 監聽 storage 事件（當其他標籤頁修改 localStorage 時）
+  window.addEventListener('storage', updateLoginStatus);
+  
+  // 監聽自定義事件（當當前頁面修改 localStorage 時）
+  window.addEventListener('loginStatusChanged', updateLoginStatus);
+}
 
 /* ─── ❶ 子選單收合計時器（100 ms） ─── */
 const HOVER_DELAY = 100; // ← 想再更短改這裡
@@ -41,6 +61,25 @@ function handleLinkClick(to: { name: string }) {
   }
 }
 
+/* ─── 會員中心點擊處理 ─── */
+function handleMemberCenterClick() {
+  // 先更新登入狀態
+  updateLoginStatus();
+  
+  if (isLoggedIn.value) {
+    // 已登入：顯示下拉選單
+    showMemberSubmenu.value = !showMemberSubmenu.value;
+  } else {
+    // 未登入：跳轉到登入頁面
+    if (isMenuOpen.value) {
+      toggleMenu();
+      setTimeout(() => router.push({ name: 'login' }), 300);
+    } else {
+      router.push({ name: 'login' });
+    }
+  }
+}
+
 /* ─── ❹ 監聽滾動 / resize / ESC ─── */
 onMounted(() => {
   const onScroll = () => (isScrolled.value = window.scrollY > 50);
@@ -58,14 +97,35 @@ onMounted(() => {
   window.addEventListener("keydown", onKey);
   onScroll();
 
+  // 設置登入狀態監聽
+  setupLoginStatusListener();
+
   onUnmounted(() => {
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("keydown", onKey);
+    window.removeEventListener('storage', updateLoginStatus);
+    window.removeEventListener('loginStatusChanged', updateLoginStatus);
     document.body.style.overflow = "";
     if (debounceTimeout) clearTimeout(debounceTimeout);
   });
 });
+
+/* ─── 登出功能 ─── */
+function logout() {
+  localStorage.removeItem("memberId");
+  localStorage.removeItem("token");
+  localStorage.removeItem("memberName");
+  
+  // 觸發登入狀態變化事件
+  window.dispatchEvent(new Event('loginStatusChanged'));
+  
+  // 關閉下拉選單
+  showMemberSubmenu.value = false;
+  
+  // 跳轉到首頁
+  router.push({ name: 'home' });
+}
 
 /* ─── ❺ 捲到 footer ─── */
 function scrollToFooter() {
@@ -203,13 +263,14 @@ function leaveMenu(which: keyof typeof submenuFlags) {
 
         <!-- 會員 -->
         <li
+          v-if="isLoggedIn"
           class="dropdown"
           @mouseenter="enterMenu('member')"
           @mouseleave="leaveMenu('member')"
         >
           <RouterLink
             :to="{ name: 'memberIn' }"
-            @click.prevent="handleLinkClick({ name: 'memberIn' })"
+            @click.prevent="handleMemberCenterClick"
             ><i class="bi bi-person-circle me-1"></i>會員中心</RouterLink
           >
           <ul class="submenu" v-show="showMemberSubmenu">
@@ -227,7 +288,19 @@ function leaveMenu(which: keyof typeof submenuFlags) {
                 >修改資料</RouterLink
               >
             </li>
+            <li>
+              <a href="#" @click.prevent="logout">
+                <i class="bi bi-box-arrow-right me-1"></i>登出
+              </a>
+            </li>
           </ul>
+        </li>
+
+        <!-- 未登入時的會員中心 -->
+        <li v-else>
+          <a href="#" @click.prevent="handleMemberCenterClick">
+            <i class="bi bi-person-circle me-1"></i>會員中心
+          </a>
         </li>
       </ul>
     </div>
