@@ -17,6 +17,7 @@ const error = ref("");
 const order = ref({ orderNumber: orderId, paymentTime: "", amount: 0 });
 interface MovieInfo {
   chineseName: string;
+  englishName: string;
   sessionDate: string;
   sessionTime: string;
   theaterNumber: number;
@@ -24,6 +25,7 @@ interface MovieInfo {
 }
 const movie = ref<MovieInfo>({
   chineseName: "",
+  englishName: "",
   sessionDate: "",
   sessionTime: "",
   theaterNumber: 0,
@@ -60,11 +62,19 @@ onMounted(async () => {
       amount: data.totalPrice,
     };
 
+    // movie.value = {
+    //   chineseName: booking.movieName || "未知",
+    //   sessionDate: booking.sessionTime.split(" ")[0] || "",
+    //   sessionTime: booking.sessionTime.split(" ")[1] || "",
+    //   theaterNumber: booking.theaterNo,
+    //   seats: (data.seats ?? []).map((s: any) => `${s.seatRow}${s.seatNumber}`),
+    // };
     movie.value = {
-      chineseName: booking.movieName || "未知",
-      sessionDate: booking.sessionTime.split(" ")[0] || "",
-      sessionTime: booking.sessionTime.split(" ")[1] || "",
-      theaterNumber: booking.theaterNo,
+      chineseName: data.movieChineseName ?? "未知",
+      englishName: data.movieEnglishName,
+      sessionDate: data.sessionDate ?? "",
+      sessionTime: data.sessionTime?.substring(11, 16) ?? "", // 把 '2025-07-15T14:00:00' 取出 14:00
+      theaterNumber: data.theaterNo ?? 0,
       seats: (data.seats ?? []).map((s: any) => `${s.seatRow}${s.seatNumber}`),
     };
 
@@ -90,9 +100,17 @@ onMounted(async () => {
 });
 
 /* ---------- QR Code ---------- */
-const qrValue = computed(
-  () => `https://localhost:7181/ticket/validate/${order.value.orderNumber}`
-);
+const qrValue = computed(() => {
+  const params = new URLSearchParams({
+    order: order.value.orderNumber,
+    movie: movie.value.chineseName,
+    time: `${movie.value.sessionDate} ${movie.value.sessionTime}`,
+    cinema: String(movie.value.theaterNumber),
+    seats: movie.value.seats.join(","), // A18,A19
+    amount: String(order.value.amount),
+  });
+  return `https://countries-aware-uv-glasgow.trycloudflare.com?${params.toString()}`;
+});
 
 /* ---------- 返回首頁 ---------- */
 function goHome() {
@@ -185,7 +203,7 @@ function goHome() {
           </h2>
           <p>
             <span class="font-medium">電影：</span>{{ movie.chineseName
-            }}<span v-if="movie.chineseName"> ({{ movie.chineseName }})</span>
+            }}<span v-if="movie.chineseName"> ({{ movie.englishName }})</span>
           </p>
           <p>
             <span class="font-medium">場次時間：</span>{{ movie.sessionDate }}

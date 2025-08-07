@@ -40,6 +40,7 @@ import ChatApp from "@/components/ChatApp.vue";
 import MovieReview from "@/movies/MovieReview.vue";
 import GoogleCallback from "@/components/GoogleCallback.vue";
 import LineCallback from "@/components/LineCallback.vue";
+import MobileTicket from "@/views/MobileTicket.vue";
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -74,7 +75,7 @@ const routes = [
     name: "cinemaEventDetail",
   },
   { path: "/event/:id", component: EventDetail, name: "eventDetail" },
-
+  { path: "/mobileTicket", component: MobileTicket, name: "mobileTicket" },
   /* -------- 需要登入的路由 -------- */
   {
     path: "/bookTicket/:id",

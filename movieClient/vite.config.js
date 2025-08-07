@@ -25,7 +25,7 @@ export default defineConfig({
       },
       "/hubs": { target: "https://localhost:7181", ws: true, secure: false },
       hmr: {
-        host: "https://manufacturing-converted-absorption-xp.trycloudflare.com ", // 替換成你那串子網域
+        host: "https://countries-aware-uv-glasgow.trycloudflare.com", // 替換成你那串子網域
         protocol: "wss",
         clientPort: 443,
       },
