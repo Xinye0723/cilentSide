@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-
+import { useChatStore } from "@/stores/chat";
 const route = useRoute();
 const router = useRouter();
 
@@ -46,11 +46,11 @@ const checkSignupStatus = async (eventId) => {
       `https://localhost:7181/api/MemberEvent/CheckJoinStatus?eventId=${eventId}&memberId=${memberId}`
     );
 
-    console.log(`=== 檢查會員 ${memberId} 的活動 ${eventId} 狀態 ===`);
+    // console.log(`=== 檢查會員 ${memberId} 的活動 ${eventId} 狀態 ===`);
 
     if (res.ok) {
       const data = await res.json();
-      console.log("API 回傳資料:", data);
+      // console.log("API 回傳資料:", data);
 
       hasSignedUp.value = data.isJoined || false;
       isPaid.value = data.isPaid || false;
@@ -68,7 +68,7 @@ const checkSignupStatus = async (eventId) => {
       else if (hasSignedUp.value && !data.isPaid) {
         showPaymentCountdown.value = true;
         startCountdown(data.remainingTime);
-        console.log("⏰ 用戶未付款，顯示倒數視窗");
+        // console.log("⏰ 用戶未付款，顯示倒數視窗");
       }
       // 如果未報名，隱藏倒數視窗
       else {
@@ -77,7 +77,7 @@ const checkSignupStatus = async (eventId) => {
           clearInterval(countdownInterval.value);
           countdownInterval.value = null;
         }
-        console.log("❌ 用戶未報名");
+        // console.log("❌ 用戶未報名");
       }
     }
   } catch (error) {
@@ -241,10 +241,10 @@ onMounted(async () => {
 
       const statusCheckInterval = setInterval(async () => {
         if (event.value && hasSignedUp.value && !isPaid.value) {
-          console.log("輪詢檢查付款狀態...");
+          // console.log("輪詢檢查付款狀態...");
           await checkSignupStatus(id);
         }
-      }, 3000);
+      }, 10000);
 
       onUnmounted(() => {
         clearInterval(statusCheckInterval);

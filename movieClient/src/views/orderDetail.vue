@@ -8,7 +8,7 @@ const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
 const ngrokBaseUrl = "https://03ae022edc46.ngrok-free.app";
-const frontendUrl = "https://countries-aware-uv-glasgow.trycloudflare.com";
+const frontendUrl = "https://weblog-sustained-fifty-sugar.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)

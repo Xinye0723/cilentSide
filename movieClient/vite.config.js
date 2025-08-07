@@ -23,12 +23,11 @@ export default defineConfig({
         ws: true,
         secure: false,
       },
-    },
-    // <<< 不要放在 proxy 內 >>>
-    hmr: {
-      host: "countries-aware-uv-glasgow.trycloudflare.com",
-      protocol: "wss",
-      clientPort: 443,
+      hmr: {
+        host: "https://weblog-sustained-fifty-sugar.trycloudflare.com",
+        protocol: "wss",
+        clientPort: 443,
+      },
     },
   },
 });
