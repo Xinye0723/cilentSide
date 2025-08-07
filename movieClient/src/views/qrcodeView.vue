@@ -100,17 +100,9 @@ onMounted(async () => {
 });
 
 /* ---------- QR Code ---------- */
-const qrValue = computed(() => {
-  const params = new URLSearchParams({
-    order: order.value.orderNumber,
-    movie: movie.value.chineseName,
-    time: `${movie.value.sessionDate} ${movie.value.sessionTime}`,
-    cinema: String(movie.value.theaterNumber),
-    seats: movie.value.seats.join(","), // A18,A19
-    amount: String(order.value.amount),
-  });
-  return `https://countries-aware-uv-glasgow.trycloudflare.com?${params.toString()}`;
-});
+const qrValue = computed(
+  () => `${window.location.origin}/mobileTicket?orderId=${orderId}`
+);
 
 /* ---------- 返回首頁 ---------- */
 function goHome() {
