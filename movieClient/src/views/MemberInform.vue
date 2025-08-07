@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { memberAPI, orderAPI } from '../services/api.js';
+import { ref, onMounted } from "vue";
+import { memberAPI, orderAPI } from "../services/api.js";
 
 // 會員基本資訊
 const memberInfo = ref({
-  name: '',
-  email: '',
-  phone: '',
-  memberId: '',
-  joinDate: '',
-  level: '',
+  name: "",
+  email: "",
+  phone: "",
+  memberId: "",
+  joinDate: "",
+  level: "",
   points: 0,
-  memberImg: '',
+  memberImg: "",
 });
 
 // 觀影紀錄
@@ -21,54 +21,59 @@ const viewingHistory = ref([]);
 const statistics = ref({
   totalMovies: 0,
   totalSpent: 0,
-  favoriteGenre: '',
-  averageRating: 0
+  favoriteGenre: "",
+  averageRating: 0,
 });
 
 // 載入狀態
 const loading = ref(true);
-const error = ref('');
+const error = ref("");
 
 // 獲取會員資料
 const loadMemberData = async () => {
   try {
     loading.value = true;
-    error.value = '';
-    
+    error.value = "";
+
     // 從 localStorage 獲取會員 ID
-    const memberId = localStorage.getItem('memberId');
-    console.log('開始載入會員資料，會員ID:', memberId);
-    
+    const memberId = localStorage.getItem("memberId");
+    console.log("開始載入會員資料，會員ID:", memberId);
+
     if (!memberId) {
-      error.value = '未找到會員資訊，請重新登入';
+      error.value = "未找到會員資訊，請重新登入";
       return;
     }
 
     // 獲取會員基本資訊（先使用不需要認證的 API 測試）
-    console.log('嘗試獲取會員基本資訊...');
+    console.log("嘗試獲取會員基本資訊...");
     const memberData = await memberAPI.getMemberInfoPublic(parseInt(memberId));
-    console.log('會員資料:', memberData); // 調試用
-    
+    console.log("會員資料:", memberData); // 調試用
+
     // 解析點數（確保是數字）
     const points = parseInt(memberData.memberPoint) || 0;
-    
+
     memberInfo.value = {
-      name: memberData.memberName || '未知',
-      email: memberData.memberEmail || '',
-      phone: memberData.memberPhone || '',
-      memberId: memberData.memberId?.toString() || '',
-      joinDate: '2023-01-15', // 假設加入日期，實際可以從資料庫獲取
-      level: points >= 1000 ? '金卡會員' : points >= 500 ? '銀卡會員' : '一般會員',
+      name: memberData.memberName || "未知",
+      email: memberData.memberEmail || "",
+      phone: memberData.memberPhone || "",
+      memberId: memberData.memberId?.toString() || "",
+      joinDate: "2023-01-15", // 假設加入日期，實際可以從資料庫獲取
+      level:
+        points >= 1000 ? "金卡會員" : points >= 500 ? "銀卡會員" : "一般會員",
       points: points,
-      memberImg: memberData.memberImg ? `https://localhost:7181${memberData.memberImg}` : ''
+      memberImg: memberData.memberImg
+        ? `https://localhost:7181${memberData.memberImg}`
+        : "",
     };
 
     // 獲取觀影紀錄（使用不需要認證的 API）
     try {
-      console.log('嘗試獲取觀影紀錄...');
-      const orderHistory = await orderAPI.getMemberOrderHistoryPublic(parseInt(memberId));
-      console.log('觀影紀錄:', orderHistory);
-      
+      console.log("嘗試獲取觀影紀錄...");
+      const orderHistory = await orderAPI.getMemberOrderHistoryPublic(
+        parseInt(memberId)
+      );
+      console.log("觀影紀錄:", orderHistory);
+
       viewingHistory.value = orderHistory.map((record, index) => ({
         id: record.orderId,
         movieName: record.movieName,
@@ -78,74 +83,82 @@ const loadMemberData = async () => {
         seat: record.seat,
         ticketType: record.ticketType,
         ticketCount: record.ticketCount || 1,
-        price: record.price
+        price: record.price,
       }));
     } catch (err) {
-      console.error('載入觀影紀錄失敗:', err);
+      console.error("載入觀影紀錄失敗:", err);
       // 如果觀影紀錄載入失敗，根據統計資料生成測試資料
       try {
-        console.log('嘗試獲取統計資料...');
-        const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
-        console.log('統計資料:', statsData);
-        
+        console.log("嘗試獲取統計資料...");
+        const statsData = await orderAPI.getMemberStatisticsPublic(
+          parseInt(memberId)
+        );
+        console.log("統計資料:", statsData);
+
         const movieCount = statsData.totalMovies || 1;
         const totalSpent = statsData.totalSpent || 900;
         const pricePerMovie = Math.round(totalSpent / movieCount);
-        
-        viewingHistory.value = Array.from({ length: movieCount }, (_, index) => ({
-          id: index + 1,
-          movieName: `電影 ${index + 1}`,
-          date: "2024-01-01",
-          time: "14:00",
-          theater: "第1廳",
-          seat: `A${index + 1}`,
-          ticketType: "一般票",
-          ticketCount: 1,
-          price: pricePerMovie
-        }));
+
+        viewingHistory.value = Array.from(
+          { length: movieCount },
+          (_, index) => ({
+            id: index + 1,
+            movieName: `電影 ${index + 1}`,
+            date: "2024-01-01",
+            time: "14:00",
+            theater: "第1廳",
+            seat: `A${index + 1}`,
+            ticketType: "一般票",
+            ticketCount: 1,
+            price: pricePerMovie,
+          })
+        );
       } catch (statsErr) {
-        console.error('載入統計資料也失敗:', statsErr);
+        console.error("載入統計資料也失敗:", statsErr);
         // 如果統計資料也失敗，顯示預設資料
-        viewingHistory.value = [{
-          id: 1,
-          movieName: "測試電影",
-          date: "2024-01-01",
-          time: "14:00",
-          theater: "第1廳",
-          seat: "A1",
-          ticketType: "一般票",
-          ticketCount: 1,
-          price: 900
-        }];
+        viewingHistory.value = [
+          {
+            id: 1,
+            movieName: "測試電影",
+            date: "2024-01-01",
+            time: "14:00",
+            theater: "第1廳",
+            seat: "A1",
+            ticketType: "一般票",
+            ticketCount: 1,
+            price: 900,
+          },
+        ];
       }
     }
 
     // 獲取統計資料（使用不需要認證的 API）
     try {
-      console.log('嘗試獲取統計資料...');
-      const statsData = await orderAPI.getMemberStatisticsPublic(parseInt(memberId));
-      console.log('統計資料:', statsData);
-      
+      console.log("嘗試獲取統計資料...");
+      const statsData = await orderAPI.getMemberStatisticsPublic(
+        parseInt(memberId)
+      );
+      console.log("統計資料:", statsData);
+
       statistics.value = {
         totalMovies: statsData.totalMovies || 0,
         totalSpent: statsData.totalSpent || 0,
-        favoriteGenre: statsData.favoriteGenre || '無資料',
-        averageRating: statsData.averageRating || 0
+        favoriteGenre: statsData.favoriteGenre || "無資料",
+        averageRating: statsData.averageRating || 0,
       };
     } catch (statsErr) {
-      console.error('載入統計資料失敗:', statsErr);
+      console.error("載入統計資料失敗:", statsErr);
       // 使用預設統計資料
       statistics.value = {
         totalMovies: 0,
         totalSpent: 0,
-        favoriteGenre: '無資料',
-        averageRating: 0
+        favoriteGenre: "無資料",
+        averageRating: 0,
       };
     }
-
   } catch (err) {
-    console.error('載入會員資料失敗:', err);
-    error.value = '載入資料失敗，請稍後再試';
+    console.error("載入會員資料失敗:", err);
+    error.value = "載入資料失敗，請稍後再試";
   } finally {
     loading.value = false;
   }
@@ -158,23 +171,25 @@ onMounted(() => {
 // 測試 API 連接
 const testAPI = async () => {
   try {
-    console.log('開始測試 API 連接...');
-    
+    console.log("開始測試 API 連接...");
+
     // 測試基本 API 連接
-    const response = await fetch('https://localhost:7181/api/Members/debug/all');
-    console.log('API 測試回應狀態:', response.status);
-    
+    const response = await fetch(
+      "https://localhost:7181/api/Members/debug/all"
+    );
+    console.log("API 測試回應狀態:", response.status);
+
     if (response.ok) {
       const data = await response.json();
-      console.log('API 測試成功:', data);
+      console.log("API 測試成功:", data);
       alert(`API 連接成功！找到 ${data.totalMembers} 個會員`);
     } else {
-      console.error('API 測試失敗:', response.status);
+      console.error("API 測試失敗:", response.status);
       alert(`API 連接失敗！狀態碼: ${response.status}`);
     }
   } catch (error) {
-    console.error('API 測試錯誤:', error);
-    alert('API 測試錯誤: ' + error.message);
+    console.error("API 測試錯誤:", error);
+    alert("API 測試錯誤: " + error.message);
   }
 };
 </script>
@@ -199,7 +214,9 @@ const testAPI = async () => {
         {{ error }}
       </div>
       <button @click="loadMemberData" class="retry-button">重新載入</button>
-      <button @click="testAPI" class="retry-button" style="margin-left: 10px;">測試 API</button>
+      <button @click="testAPI" class="retry-button" style="margin-left: 10px">
+        測試 API
+      </button>
     </div>
 
     <!-- 主要內容 -->
@@ -212,15 +229,20 @@ const testAPI = async () => {
             基本資訊
           </h2>
         </div>
-        
+
         <div class="member-card">
           <div class="member-avatar">
-            <img v-if="memberInfo.memberImg" :src="memberInfo.memberImg" alt="Member Avatar" class="avatar-image">
+            <img
+              v-if="memberInfo.memberImg"
+              :src="memberInfo.memberImg"
+              alt="Member Avatar"
+              class="avatar-image"
+            />
             <div v-else class="avatar-placeholder">
               {{ memberInfo.name.charAt(0) }}
             </div>
           </div>
-          
+
           <div class="member-details">
             <div class="detail-row">
               <span class="label">姓名：</span>
@@ -262,7 +284,7 @@ const testAPI = async () => {
             觀影統計
           </h2>
         </div>
-        
+
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">🎬</div>
@@ -271,7 +293,7 @@ const testAPI = async () => {
               <div class="stat-label">觀影次數</div>
             </div>
           </div>
-          
+
           <div class="stat-card">
             <div class="stat-icon">💰</div>
             <div class="stat-content">
@@ -279,7 +301,7 @@ const testAPI = async () => {
               <div class="stat-label">總消費</div>
             </div>
           </div>
-          
+
           <div class="stat-card">
             <div class="stat-icon">🎭</div>
             <div class="stat-content">
@@ -287,7 +309,7 @@ const testAPI = async () => {
               <div class="stat-label">最愛類型</div>
             </div>
           </div>
-          
+
           <div class="stat-card">
             <div class="stat-icon">⭐</div>
             <div class="stat-content">
@@ -306,11 +328,11 @@ const testAPI = async () => {
             觀影紀錄
           </h2>
         </div>
-        
+
         <div class="history-list">
-          <div 
-            v-for="record in viewingHistory" 
-            :key="record.id" 
+          <div
+            v-for="record in viewingHistory"
+            :key="record.id"
             class="history-item"
           >
             <div class="movie-info">
@@ -334,7 +356,7 @@ const testAPI = async () => {
                 </span>
               </div>
             </div>
-            
+
             <div class="ticket-info">
               <div class="ticket-type">{{ record.ticketType }}</div>
               <div class="ticket-count">{{ record.ticketCount }} 張</div>
@@ -651,8 +673,12 @@ const testAPI = async () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-container {
@@ -698,34 +724,34 @@ const testAPI = async () => {
   .member-inform-container {
     padding: 100px 3% 60px;
   }
-  
+
   .page-title {
     font-size: 2rem;
   }
-  
+
   .member-card {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .member-details {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .history-item {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
-  
+
   .ticket-info {
     text-align: center;
   }
-  
+
   .movie-details {
     justify-content: center;
   }
@@ -735,7 +761,7 @@ const testAPI = async () => {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .movie-details {
     flex-direction: column;
     gap: 0.5rem;
