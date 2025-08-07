@@ -160,7 +160,7 @@ console.log("篩選後活動:", filteredEvents.value);
 
 <style scoped>
 .cinema-event {
-  padding: 6rem 2rem 2rem 2rem; /* 增加上方間距，避免被導航欄遮擋 */
+  padding: 2rem 2rem 2rem; /* 增加上方間距，避免被導航欄遮擋 */
   min-height: 100vh;
   background: linear-gradient(135deg, #18182c 60%, #2a2a4a 100%);
   color: #f3f3fa;

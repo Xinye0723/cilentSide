@@ -24,7 +24,7 @@ import TicketView from "@/components/ticketView.vue";
 import EventDetail from "@/views/EventDetail.vue";
 import MemberIn from "@/components/memberIn.vue";
 import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
-import MemberEventDetail from "@/views/MemberEventDetail.vue";
+import MemberEventDetail from "@/components/MemberEventDetail.vue";
 import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
 import MemberInform from "@/views/MemberInform.vue";
 import MovieDetail from "@/movies/MovieDetail.vue";

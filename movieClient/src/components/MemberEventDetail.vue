@@ -36,7 +36,7 @@ const isOrganizer = computed(() => {
 const checkSignupStatus = async (eventId) => {
   try {
     const memberId = localStorage.getItem("memberId"); // 假設會員ID存在localStorage
-    const memberId = localStorage.getItem("memberId");
+
     if (!memberId) {
       console.log("未登入會員");
       return;
@@ -48,9 +48,6 @@ const checkSignupStatus = async (eventId) => {
 
     console.log(`=== 檢查會員 ${memberId} 的活動 ${eventId} 狀態 ===`);
 
-    const res = await fetch(
-      `https://localhost:7181/api/MemberEvent/CheckJoinStatus?eventId=${eventId}&memberId=${memberId}`
-    );
     if (res.ok) {
       const data = await res.json();
       console.log("API 回傳資料:", data);
@@ -202,7 +199,6 @@ const updateMetaTags = (eventData) => {
   });
 
   // 更新頁面標題
-  document.title = `${eventData.title} - INFINITY CINEMA`;
 };
 
 // 組件掛載
@@ -965,7 +961,7 @@ const hideCountdown = () => {
 
 <style>
 /* 全域樣式 - 修改整個頁面背景 */
-body {
+/* body {
   background: linear-gradient(
     135deg,
     #1a1a2e 0%,
@@ -980,7 +976,7 @@ body {
 html {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   min-height: 100vh;
-}
+} */
 </style>
 
 <style scoped>

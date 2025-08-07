@@ -2,11 +2,11 @@
 import { ref, onMounted, computed, watch, onActivated } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { RouterLink } from "vue-router";
-import { Swiper, SwiperSlide } from 'swiper/vue';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import { Swiper, SwiperSlide } from "swiper/vue";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 const router = useRouter();
 const route = useRoute();
@@ -42,29 +42,33 @@ const loadEvents = async () => {
 
 onMounted(async () => {
   // 獲取當前會員ID
-  currentMemberId.value = localStorage.getItem('memberId');
+  currentMemberId.value = localStorage.getItem("memberId");
   // 載入活動資料
   await loadEvents();
 });
 
 // ✅ 修改：監聽路由變化，當進入 /memberEvent 時重新載入資料
-watch(() => route.path, async (newPath) => {
-  if (newPath === '/memberEvent') {
-    console.log("進入活動頁面，重新載入活動資料...");
-    await loadEvents();
-  }
-}, { immediate: true });
+watch(
+  () => route.path,
+  async (newPath) => {
+    if (newPath === "/memberEvent") {
+      console.log("進入活動頁面，重新載入活動資料...");
+      await loadEvents();
+    }
+  },
+  { immediate: true }
+);
 
 // ✅ 修改：監聽頁面可見性變化
 const handleVisibilityChange = async () => {
-  if (!document.hidden && route.path === '/memberEvent') {
+  if (!document.hidden && route.path === "/memberEvent") {
     console.log("頁面重新可見，重新載入活動資料...");
     await loadEvents();
   }
 };
 
 onMounted(() => {
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 });
 
 // ✅ 新增：當組件被激活時重新載入資料
@@ -76,18 +80,22 @@ onActivated(() => {
 // 計算屬性：區分自己辦的活動和別人辦的活動
 const myEvents = computed(() => {
   if (!currentMemberId.value) return [];
-  return events.value.filter(event => Number(event.organizerId) === Number(currentMemberId.value));
+  return events.value.filter(
+    (event) => Number(event.organizerId) === Number(currentMemberId.value)
+  );
 });
 
 const otherEvents = computed(() => {
   if (!currentMemberId.value) return events.value;
-  return events.value.filter(event => Number(event.organizerId) !== Number(currentMemberId.value));
+  return events.value.filter(
+    (event) => Number(event.organizerId) !== Number(currentMemberId.value)
+  );
 });
 
 // 格式化主辦人顯示文字
 const formatOrganizer = (organizerName, organizerId) => {
   if (!organizerName) return "未知主辦人";
-  
+
   const isMe = Number(organizerId) === Number(currentMemberId.value);
   return isMe ? `${organizerName}(我)` : organizerName;
 };
@@ -108,9 +116,9 @@ const swiperOptions = {
   slidesPerView: 1,
   spaceBetween: 20,
   navigation: true,
-  pagination: { 
+  pagination: {
     clickable: true,
-    dynamicBullets: true
+    dynamicBullets: true,
   },
   autoplay: {
     delay: 5000,
@@ -126,7 +134,7 @@ const swiperOptions = {
     1024: {
       slidesPerView: 3,
     },
-  }
+  },
 };
 </script>
 
@@ -149,10 +157,10 @@ const swiperOptions = {
         </h2>
         <span class="event-count">{{ myEvents.length }} 個活動</span>
       </div>
-      
+
       <!-- Swiper 輪播 -->
       <div class="swiper-container">
-        <Swiper 
+        <Swiper
           :modules="swiperModules"
           :slides-per-view="swiperOptions.slidesPerView"
           :space-between="swiperOptions.spaceBetween"
@@ -162,18 +170,31 @@ const swiperOptions = {
           :breakpoints="swiperOptions.breakpoints"
           class="my-events-swiper"
         >
-          <SwiperSlide v-for="event in myEvents" :key="event.id" class="swiper-slide">
+          <SwiperSlide
+            v-for="event in myEvents"
+            :key="event.id"
+            class="swiper-slide"
+          >
             <div class="event-card my-event-card">
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
-                <span class="organizer-badge">主辦人 {{ formatOrganizer(event.organizer, event.organizerId) }}</span>
+                <span class="organizer-badge"
+                  >主辦人
+                  {{
+                    formatOrganizer(event.organizer, event.organizerId)
+                  }}</span
+                >
               </div>
-              
+
               <div class="event-card-content">
                 <div class="event-meta">
                   <div class="meta-item">
                     <i class="bi bi-people-fill"></i>
-                    <span>報名：{{ event.registered }}/{{ event.maxCapacity }}</span>
+                    <span
+                      >報名：{{ event.registered }}/{{
+                        event.maxCapacity
+                      }}</span
+                    >
                   </div>
                   <div class="meta-item">
                     <i class="bi bi-calendar-check"></i>
@@ -185,7 +206,7 @@ const swiperOptions = {
                   </div>
                 </div>
               </div>
-              
+
               <div class="event-card-footer">
                 <RouterLink :to="`/memberEventDetail/${event.id}`">
                   <button class="detail-btn">查看詳情</button>
@@ -202,14 +223,14 @@ const swiperOptions = {
       <div class="section-header">
         <h2 class="section-title">
           <i class="bi bi-people-fill"></i>
-          {{ myEvents.length > 0 ? '其他活動' : '所有活動' }}
+          {{ myEvents.length > 0 ? "其他活動" : "所有活動" }}
         </h2>
         <span class="event-count">{{ otherEvents.length }} 個活動</span>
       </div>
-      
+
       <!-- Swiper 輪播 -->
       <div class="swiper-container">
-        <Swiper 
+        <Swiper
           :modules="swiperModules"
           :slides-per-view="swiperOptions.slidesPerView"
           :space-between="swiperOptions.spaceBetween"
@@ -219,18 +240,31 @@ const swiperOptions = {
           :breakpoints="swiperOptions.breakpoints"
           class="other-events-swiper"
         >
-          <SwiperSlide v-for="event in otherEvents" :key="event.id" class="swiper-slide">
+          <SwiperSlide
+            v-for="event in otherEvents"
+            :key="event.id"
+            class="swiper-slide"
+          >
             <div class="event-card other-event-card">
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
-                <span class="organizer-badge other-organizer">主辦人 {{ formatOrganizer(event.organizer, event.organizerId) }}</span>
+                <span class="organizer-badge other-organizer"
+                  >主辦人
+                  {{
+                    formatOrganizer(event.organizer, event.organizerId)
+                  }}</span
+                >
               </div>
-              
+
               <div class="event-card-content">
                 <div class="event-meta">
                   <div class="meta-item">
                     <i class="bi bi-people-fill"></i>
-                    <span>報名：{{ event.registered }}/{{ event.maxCapacity }}</span>
+                    <span
+                      >報名：{{ event.registered }}/{{
+                        event.maxCapacity
+                      }}</span
+                    >
                   </div>
                   <div class="meta-item">
                     <i class="bi bi-calendar-check"></i>
@@ -242,7 +276,7 @@ const swiperOptions = {
                   </div>
                 </div>
               </div>
-              
+
               <div class="event-card-footer">
                 <RouterLink :to="`/memberEventDetail/${event.id}`">
                   <button class="detail-btn">查看詳情</button>
@@ -270,7 +304,7 @@ const swiperOptions = {
 
 <style scoped>
 .group-event {
-  padding: 6rem 2rem 2rem 2rem;
+  padding: 2rem 2rem 2rem;
   min-height: 100vh;
   background: linear-gradient(135deg, #18182c 60%, #2a2a4a 100%);
   color: #f3f3fa;
@@ -603,8 +637,13 @@ const swiperOptions = {
 }
 
 @keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 /* 響應式設計 */
@@ -612,16 +651,16 @@ const swiperOptions = {
   .group-event {
     padding: 4rem 1rem 2rem 1rem;
   }
-  
+
   .title {
     font-size: 2rem;
   }
-  
+
   .subtitle-row {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .section-header {
     flex-direction: column;
     align-items: flex-start;
