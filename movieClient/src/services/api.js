@@ -67,6 +67,8 @@ export const memberAPI = {
   // 獲取會員資料（不需要認證，測試用）
   async getMemberInfoPublic(memberId) {
     const url = `${API_BASE_URL}/Members/public/${memberId}`;
+    console.log('調用 getMemberInfoPublic，URL:', url);
+    
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -74,10 +76,21 @@ export const memberAPI = {
     };
 
     try {
+      console.log('發送請求到:', url);
       const response = await fetch(url, config);
+      console.log('回應狀態:', response.status);
+      console.log('回應 URL:', response.url);
+      
       if (response && response.ok) {
-        return await response.json();
+        const data = await response.json();
+        console.log('成功獲取會員資料:', data);
+        return data;
       }
+      
+      console.error('API 回應錯誤:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('錯誤內容:', errorText);
+      
       throw new Error("獲取會員資料失敗");
     } catch (error) {
       console.error("API 請求失敗:", error);
