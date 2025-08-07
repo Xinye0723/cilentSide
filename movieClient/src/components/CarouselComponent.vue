@@ -8,10 +8,10 @@ import 'swiper/css/thumbs';
   const images = [
     '/carousel/InfinityCinema.jpg',
     '/carousel/KimetsuNoYaiba.jpg',
+    '/carousel/Nobody2.jpg',
+    '/carousel/TheBadGuys2.jpg',
     '/carousel/OmniscientReadersViewpoint.jpg',
     '/carousel/TheFantasticFour.jpg',
-    '/carousel/Superman.jpg',
-    '/carousel/JurassicWorldRebirth.jpg',
     '/carousel/F1.jpg'
   ];
   // Swiper refs

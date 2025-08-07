@@ -314,7 +314,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: default;
+  cursor: grab;
 }
 .slide-poster {
   width: 100%;

@@ -1,4 +1,5 @@
 <script setup>
+import HotEventsCube from "@/movies/HotEventsCube.vue";
 import MovieSwiper from "@/movies/MovieSwiper.vue";
 import { ref } from "vue";
 
@@ -18,10 +19,10 @@ fetch(apiUrl)
     // 依照 DisplayOrder 排序
     nowShowing.value = sorted
       .filter((movie) => movie.movieStatusId === 2)
-      .slice(0, 10);
+      .slice(0, 9);
     comingSoon.value = sorted
       .filter((movie) => movie.movieStatusId === 1)
-      .slice(0, 10);
+      .slice(0, 9);
   });
 
 const tabs = ref([
@@ -61,10 +62,7 @@ const onSlideChange = (idx) => {
     />
   </div>
   <br />
-  <br />
-  <br />
-  <br />
-  <h1>熱門活動</h1>
+  <HotEventsCube />
 </template>
 
 <style lang="css" scoped>
@@ -73,7 +71,7 @@ const onSlideChange = (idx) => {
 }
 .nav-tabs .nav-link.active {
   border-bottom: 3px solid white;
-  color: #007fff;
+  color: #ffec90;
   font-weight: bold;
   background: transparent;
 }
@@ -82,8 +80,5 @@ const onSlideChange = (idx) => {
   margin: 0 auto;
   padding-left: 10px;
   padding-right: 10px;
-}
-h1 {
-  color: white;
 }
 </style>
