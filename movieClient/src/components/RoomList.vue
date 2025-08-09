@@ -67,22 +67,22 @@ watch(
       </li>
 
       <!-- 未加入（未報名）的房間 -->
-      <li
+      <!-- <li
         v-for="r in unjoinedRooms"
         :key="r.roomId"
         class="px-4 py-2 flex justify-between items-center bg-gray-800/50 text-gray-400"
       >
-        <span class="truncate">{{ r.roomName }}</span>
+        <span class="truncate">{{ r.roomName }}</span> -->
 
-        <!-- router-link 要加 stop，避免點內文誤觸 li -->
-        <router-link
+      <!-- router-link 要加 stop，避免點內文誤觸 li -->
+      <!-- <router-link
           :to="`/memberEventDetail/${r.eventId}`"
           @click.stop
           class="bg-indigo-500 hover:bg-indigo-400 text-xs text-white px-2 py-1 rounded"
         >
           去報名
         </router-link>
-      </li>
+      </li> -->
     </ul>
   </div>
 </template>

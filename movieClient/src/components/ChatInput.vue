@@ -28,7 +28,8 @@ onMounted(() => {
 function handleSend() {
   if (!input.value) return;
   const msg = input.value.value.trim();
-  if (msg) chat.send(msg);
+  if (!msg) return; // 避免空白
+  chat.send(msg); // 交給 store
   input.value.value = "";
 }
 </script>
