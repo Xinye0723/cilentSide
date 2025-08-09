@@ -70,15 +70,15 @@ async function register() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        memberName: memberName.value,
-        memberImg: memberImg.value || "",
-        memberPhone: memberPhone.value,
-        memberPassword: memberPassword.value,
-        memberBirth: new Date(memberBirth.value).toISOString(),
-        memberGender: memberGender.value === "true",
-        memberEmail: memberEmail.value,
-        memberBio: memberBio.value || null,
-        memberAddress: memberAddress.value
+        MemberName: memberName.value,
+        MemberImg: memberImg.value || "",
+        MemberPhone: memberPhone.value,
+        MemberPassword: memberPassword.value,
+        MemberBirth: new Date(memberBirth.value).toISOString(),
+        MemberGender: memberGender.value === "true",
+        MemberEmail: memberEmail.value,
+        MemberBio: memberBio.value || null,
+        MemberAddress: memberAddress.value
       }),
     });
 
@@ -86,9 +86,21 @@ async function register() {
       let errorMsg = "註冊失敗，請稍後再試";
       try {
         const errorData = await res.json();
-        errorMsg = errorData.message || errorMsg;
+        console.error("註冊錯誤回應:", errorData);
+        if (typeof errorData === 'object') {
+          errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
+        } else {
+          errorMsg = errorData.toString();
+        }
       } catch (e) {
-        // 不是JSON就忽略
+        console.error("解析錯誤回應失敗:", e);
+        // 如果無法解析JSON，嘗試讀取純文字
+        try {
+          const textError = await res.text();
+          errorMsg = textError || errorMsg;
+        } catch (textError) {
+          console.error("讀取錯誤文字失敗:", textError);
+        }
       }
       message.value = errorMsg;
       return;
