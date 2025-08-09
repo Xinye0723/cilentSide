@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { storeToRefs } from "pinia";
+import Swal from "sweetalert2";
 
-// ❶ 從 localStorage 取登入後的 memberId；測試時先寫死 1
-let memberId = localStorage.getItem("memberId") ?? "1";
+const auth = useAuthStore();
+const { token, memberId: currentMemberId } = storeToRefs(auth);
+const isLoggedIn = computed(() => (auth as any).isLoggedIn);
+const router = useRouter();
+
+// ❶ 從 auth store 取登入後的 memberId
+let memberId = currentMemberId.value ?? "1";
 
 // ❷ 後端 BaseUrl（正式案建議放 .env，再寫成 import.meta.env.VITE_API_BASEURL）
 const apiBase = "https://localhost:7181/api"; // ← 你的 Controller 前面還有 /api
@@ -34,21 +42,18 @@ async function loadMember() {
     
     // 檢查會員ID是否有效
     if (!memberId || memberId === "1") {
-      console.warn("會員ID無效，嘗試從localStorage獲取");
-      const storedMemberId = localStorage.getItem("memberId");
-      if (storedMemberId) {
-        memberId = storedMemberId;
-        console.log("從localStorage獲取到會員ID:", memberId);
-      } else {
+      console.warn("會員ID無效，檢查登入狀態");
+      if (!isLoggedIn.value) {
         error.value = "未找到會員資訊，請重新登入";
         router.push("/login");
         return;
       }
+      memberId = currentMemberId.value;
     }
 
     // 先嘗試不需要認證的 API
     console.log("嘗試調用不需要認證的 API...");
-    const token = localStorage.getItem("token");
+    const authToken = token.value;
     const res = await fetch(`${apiBase}/Members/public/${memberId}`, {
       headers: {
         "Content-Type": "application/json"
@@ -62,11 +67,11 @@ async function loadMember() {
       console.error("API 回應錯誤:", res.status, res.statusText);
       
       // 如果 public API 失敗，嘗試需要認證的 API
-      if (token) {
+      if (authToken) {
         console.log("嘗試調用需要認證的 API...");
         const authRes = await fetch(`${apiBase}/Members/${memberId}`, {
           headers: {
-            "Authorization": `Bearer ${token}`,
+            "Authorization": `Bearer ${authToken}`,
             "Content-Type": "application/json"
           }
         });
@@ -74,13 +79,11 @@ async function loadMember() {
         console.log("認證 API 回應狀態:", authRes.status);
 
         if (!authRes.ok) {
-          if (authRes.status === 401) {
-            error.value = "登入已過期，請重新登入";
-            localStorage.removeItem("memberId");
-            localStorage.removeItem("token");
-            localStorage.removeItem("memberName");
-            router.push("/login");
-            return;
+                  if (authRes.status === 401) {
+          error.value = "登入已過期，請重新登入";
+          (auth as any).logout();
+          router.push("/login");
+          return;
           } else {
             throw new Error(`HTTP ${authRes.status}`);
           }
@@ -99,9 +102,7 @@ async function loadMember() {
     console.error("取會員失敗：", err);
     if (err.message?.includes('401')) {
       error.value = "登入已過期，請重新登入";
-      localStorage.removeItem("memberId");
-      localStorage.removeItem("token");
-      localStorage.removeItem("memberName");
+      (auth as any).logout();
       router.push("/login");
     } else {
       error.value = "讀取會員資料失敗，請稍後再試";
@@ -122,15 +123,13 @@ function processMemberData(data: memberUpdateDto) {
   console.log("會員資料載入成功:", data);
 }
 
-const router = useRouter();
 onMounted(() => {
-  if (!localStorage.getItem("memberId")) {
+  if (!isLoggedIn.value) {
     router.push("/memberCenter");
   } else {
     loadMember();
   }
 });
-import { computed } from "vue";
 
 const birthDate = computed(() => {
   if (!member.value) return "";
@@ -210,12 +209,12 @@ async function saveMember() {
     }
     console.log("即將送出 PUT 請求", member.value);
     // 2. 再送出會員資料
-    const token = localStorage.getItem("token");
+    const authToken = token.value;
     const res = await fetch(`${apiBase}/Members/${member.value.memberId}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${authToken}`
       },
       body: JSON.stringify({
         memberId: member.value.memberId,
@@ -232,19 +231,35 @@ async function saveMember() {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        alert("登入已過期，請重新登入");
-        localStorage.removeItem("memberId");
-        localStorage.removeItem("token");
-        localStorage.removeItem("memberName");
+        Swal.fire({
+          icon: "warning",
+          title: "登入已過期",
+          text: "請重新登入",
+          confirmButtonText: "確定",
+          confirmButtonColor: "#f39c12"
+        });
+        (auth as any).logout();
         router.push("/login");
         return;
       }
       throw new Error("更新失敗");
     }
-    alert("會員資料已更新！");
+    Swal.fire({
+      icon: "success",
+      title: "更新成功！",
+      text: "會員資料已更新",
+      confirmButtonText: "確定",
+      confirmButtonColor: "#3085d6"
+    });
   } catch (err) {
     console.error("更新會員資料失敗：", err);
-    alert("更新失敗，請稍後再試");
+    Swal.fire({
+      icon: "error",
+      title: "更新失敗",
+      text: "請稍後再試",
+      confirmButtonText: "確定",
+      confirmButtonColor: "#d33"
+    });
   }
 }
 
@@ -270,14 +285,14 @@ async function updatePassword() {
   }
   
   try {
-    const memberId = localStorage.getItem("memberId");
-    const token = localStorage.getItem("token");
+    const memberIdValue = currentMemberId.value;
+    const authToken = token.value;
     
-    const res = await fetch(`https://localhost:7181/api/Members/UpdatePassword/${memberId}`, {
+    const res = await fetch(`https://localhost:7181/api/Members/UpdatePassword/${memberIdValue}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${authToken}`
       },
       body: JSON.stringify({
         NewPassword: newPassword.value,
@@ -297,16 +312,27 @@ async function updatePassword() {
     }
 
     const data = await res.json();
-    passwordMessage.value = "密碼修改成功！";
-    setTimeout(() => {
+    Swal.fire({
+      icon: "success",
+      title: "密碼修改成功！",
+      text: "您的密碼已成功更新",
+      confirmButtonText: "確定",
+      confirmButtonColor: "#3085d6"
+    }).then(() => {
       showChangePassword.value = false;
       newPassword.value = "";
       confirmNewPassword.value = "";
       passwordMessage.value = "";
-    }, 1500);
+    });
   } catch (err) {
     console.error(err);
-    passwordMessage.value = "修改密碼失敗，請稍後再試";
+    Swal.fire({
+      icon: "error",
+      title: "修改密碼失敗",
+      text: "請稍後再試",
+      confirmButtonText: "確定",
+      confirmButtonColor: "#d33"
+    });
   }
 }
 </script>
@@ -435,19 +461,6 @@ async function updatePassword() {
                   />
                 </div>
               </div>
-              <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end text-white"
-                  ><strong>點數：</strong></label
-                >
-                <div class="col-sm-9">
-                  <input
-                    class="form-control"
-                    :value="member.memberPoint"
-                    type="text"
-                    disabled
-                  />
-                </div>
-              </div>
               <div class="row mb-2 align-items-start">
                 <label class="col-sm-3 col-form-label text-end text-white"
                   ><strong>個人介紹：</strong></label
@@ -522,12 +535,8 @@ async function updatePassword() {
         </div>
       </div>
     </div>
-
-    <!-- 點數區塊 -->
-    <div v-if="member" class="alert alert-secondary text-center">
-      目前可用點數：<strong>{{ member.memberPoint }}</strong> 點
-    </div>
   </div>
+
 </template>
 
 <style scoped>

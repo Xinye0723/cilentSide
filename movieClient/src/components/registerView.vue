@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
+const auth = useAuthStore();
 
 // 會員資料
 const memberName = ref("");
@@ -107,12 +109,31 @@ async function register() {
     }
 
     const data = await res.json();
-    message.value = `註冊成功！歡迎 ${data.memberName}`;
     
-    // 延遲跳轉到登入頁面
-    setTimeout(() => {
-      router.push("/login");
-    }, 2000);
+    // 如果後端返回了登入資訊（token等），直接登入
+    if (data.token && data.memberId) {
+      // 自動登入
+      auth.setAuth({
+        id: data.memberId.toString(),
+        token: data.token,
+        name: data.memberName
+      });
+      
+      message.value = `註冊成功！歡迎 ${data.memberName}，正在為您登入...`;
+      
+      // 延遲跳轉到首頁
+      setTimeout(() => {
+        router.push("/home");
+      }, 2000);
+    } else {
+      // 如果後端沒有返回登入資訊，顯示成功訊息後跳轉到登入頁
+      message.value = `註冊成功！歡迎 ${data.memberName}，請登入您的帳號`;
+      
+      // 延遲跳轉到登入頁面
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    }
   } catch (err) {
     console.error(err);
     message.value = "註冊失敗，請稍後再試";

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref, type Ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { storeToRefs } from "pinia";
 
+const auth = useAuthStore();
+const isLoggedIn = computed(() => (auth as any).isLoggedIn);
 const router = useRouter();
 const isMenuOpen = ref(false);
 const isScrolled = ref(false);
@@ -9,25 +13,7 @@ const showMovieSubmenu = ref(false);
 const showEventSubmenu = ref(false);
 const showMemberSubmenu = ref(false);
 
-// 檢查是否已登入 - 使用 ref 來確保響應性
-const isLoggedIn = ref(false);
-
-// 更新登入狀態的函數
-function updateLoginStatus() {
-  isLoggedIn.value = !!(localStorage.getItem("memberId") && localStorage.getItem("token"));
-}
-
-// 監聽 localStorage 變化
-function setupLoginStatusListener() {
-  // 初始檢查
-  updateLoginStatus();
-  
-  // 監聽 storage 事件（當其他標籤頁修改 localStorage 時）
-  window.addEventListener('storage', updateLoginStatus);
-  
-  // 監聽自定義事件（當當前頁面修改 localStorage 時）
-  window.addEventListener('loginStatusChanged', updateLoginStatus);
-}
+// isLoggedIn 現在直接從 storeToRefs 取得
 
 /* ─── ❶ 子選單收合計時器（100 ms） ─── */
 const HOVER_DELAY = 100; // ← 想再更短改這裡
@@ -63,9 +49,6 @@ function handleLinkClick(to: { name: string }) {
 
 /* ─── 會員中心點擊處理 ─── */
 function handleMemberCenterClick() {
-  // 先更新登入狀態
-  updateLoginStatus();
-  
   if (isLoggedIn.value) {
     // 已登入：顯示下拉選單
     showMemberSubmenu.value = !showMemberSubmenu.value;
@@ -97,15 +80,10 @@ onMounted(() => {
   window.addEventListener("keydown", onKey);
   onScroll();
 
-  // 設置登入狀態監聽
-  setupLoginStatusListener();
-
   onUnmounted(() => {
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("keydown", onKey);
-    window.removeEventListener('storage', updateLoginStatus);
-    window.removeEventListener('loginStatusChanged', updateLoginStatus);
     document.body.style.overflow = "";
     if (debounceTimeout) clearTimeout(debounceTimeout);
   });
@@ -113,12 +91,8 @@ onMounted(() => {
 
 /* ─── 登出功能 ─── */
 function logout() {
-  localStorage.removeItem("memberId");
-  localStorage.removeItem("token");
-  localStorage.removeItem("memberName");
-  
-  // 觸發登入狀態變化事件
-  window.dispatchEvent(new Event('loginStatusChanged'));
+  // 使用 Pinia store 登出
+  (auth as any).logout();
   
   // 關閉下拉選單
   showMemberSubmenu.value = false;
