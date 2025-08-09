@@ -2,13 +2,14 @@
 import { ref, computed } from "vue";
 import { useBookingStore } from "@/stores/booking";
 import { useRouter } from "vue-router";
+let memberId = localStorage.getItem("memberId");
 const router = useRouter();
 const booking = useBookingStore();
 const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
 const ngrokBaseUrl = "https://03ae022edc46.ngrok-free.app";
-const frontendUrl = "https://weblog-sustained-fifty-sugar.trycloudflare.com";
+const frontendUrl = "https://sees-wrote-dubai-suited.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
@@ -35,7 +36,7 @@ async function pay(method: "credit" | "linepay") {
     payMethod: method,
     desc: desc.value,
     itemName: itemName.value,
-    userId: booking.userId,
+    userId: memberId,
     orderSource: "web",
     returnUrl: `${ngrokBaseUrl}/api/ecpay/Notify`,
     clientBackUrl: `${frontendUrl}/qrcode`,

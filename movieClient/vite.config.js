@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://weblog-sustained-fifty-sugar.trycloudflare.com",
+        host: "https://sees-wrote-dubai-suited.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },
