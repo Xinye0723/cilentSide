@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
+import { useAuthStore } from "@/stores/auth";
 
 const email = ref("");
 const password = ref("");
@@ -45,9 +46,8 @@ async function login() {
     const data = await res.json();
     console.log("登入成功，接收到的資料:", data);
 
-    localStorage.setItem("memberId", data.id);
-    localStorage.setItem("token", data.token); // 儲存 JWT Token
-    localStorage.setItem("memberName", data.name);
+    const auth = useAuthStore();  //抓Pinia
+    auth.setAuth({id:data.id,token:data.token,name:data.name});
     message.value = `歡迎回來，${data.name}!`;
 
     // 觸發登入狀態變化事件

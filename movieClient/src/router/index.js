@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------
  *  src/router/index.ts
  * -------------------------------------------------------------
- *  - 登入成功時請在 LoginView 將 token 寫入 localStorage.token
+ *  - 登入成功時請在 LoginView 將 token 寫入 Pinia auth store
  *  - 未登入直接打需要驗證的頁 → SweetAlert 提示後導向 /login
  *  - 已登入但手動輸入 /login → 會被導向 /home
  * -------------------------------------------------------------*/
@@ -9,6 +9,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
+import { useAuthStore } from "@/stores/auth";
 
 /* ---------- 版面元件 ---------- */
 import BookTicket from "@/components/bookTicket.vue";
@@ -27,6 +28,7 @@ import CreatMemberEvent from "@/views/CreatMemberEvent.vue";
 import MemberEventDetail from "@/components/MemberEventDetail.vue";
 import CinemaEventDetail from "@/views/CinemaEventDetail.vue";
 import MemberInform from "@/views/MemberInform.vue";
+import LotteryGame from "@/views/LotteryGame.vue";
 import MovieDetail from "@/movies/MovieDetail.vue";
 import MealsView from "@/views/mealsView.vue";
 import OrderDetail from "@/views/orderDetail.vue";
@@ -132,6 +134,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/lotteryGame",
+    component: LotteryGame,
+    name: "lotteryGame",
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/socialArea",
     component: SocialArea,
     name: "socialArea",
@@ -188,14 +196,19 @@ const router = createRouter({
 /* ================================================================
  *  全域守衛：檢查 JWT
  * ----------------------------------------------------------------
- *  1. 有 requiresAuth 而 localStorage.token 不存在 → SweetAlert 後導向 /login
+ *  1. 有 requiresAuth 而未登入 → SweetAlert 後導向 /login
  *  2. 已登入還想進 /login 或 /register → 轉回 /home
  * ================================================================*/
 router.beforeEach(async (to) => {
-  const token = localStorage.getItem("token");
+  const auth = useAuthStore();
+
+  // 先嘗試從 localStorage 遷移資料（只在第一次載入時）
+  if (!auth.isLoggedIn) {
+    auth.initFromLocalStorage();
+  }
 
   /* 1️⃣ 未登入卻想進需要驗證的頁 */
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
     await Swal.fire({
       icon: "warning",
       title: "請先登入",
@@ -210,7 +223,7 @@ router.beforeEach(async (to) => {
   }
 
   /* 2️⃣ 已登入卻想再去 /login 或 /register → 送回 /home */
-  if (token && (to.path === "/login" || to.path === "/register")) {
+  if (auth.isLoggedIn && (to.path === "/login" || to.path === "/register")) {
     return { path: "/home" };
   }
 

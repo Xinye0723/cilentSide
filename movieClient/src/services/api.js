@@ -1,31 +1,30 @@
 // API 服務
+import { useAuthStore } from "@/stores/auth";
+
 const API_BASE_URL = "https://localhost:7181/api";
 
 // 獲取 Token
 function getToken() {
-  return localStorage.getItem("token");
+  const auth = useAuthStore();
+  return auth.token;
 }
 
 // 檢查是否已登入
 function isAuthenticated() {
-  const token = getToken();
-  return token !== null && token !== undefined;
+  const auth = useAuthStore();
+  return auth.isLoggedIn;
 }
 
 // 登出
 function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("memberId");
-  localStorage.removeItem("memberName");
+  const auth = useAuthStore();
+  auth.logout();
 }
 
 // 創建帶認證的請求標頭
 function getAuthHeaders() {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
+  const auth = useAuthStore();
+  return auth.authHeaders;
 }
 
 // 通用 API 請求函數
@@ -68,7 +67,7 @@ export const memberAPI = {
   async getMemberInfoPublic(memberId) {
     const url = `${API_BASE_URL}/Members/public/${memberId}`;
     console.log('調用 getMemberInfoPublic，URL:', url);
-    
+
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -80,17 +79,17 @@ export const memberAPI = {
       const response = await fetch(url, config);
       console.log('回應狀態:', response.status);
       console.log('回應 URL:', response.url);
-      
+
       if (response && response.ok) {
         const data = await response.json();
         console.log('成功獲取會員資料:', data);
         return data;
       }
-      
+
       console.error('API 回應錯誤:', response.status, response.statusText);
       const errorText = await response.text();
       console.error('錯誤內容:', errorText);
-      
+
       throw new Error("獲取會員資料失敗");
     } catch (error) {
       console.error("API 請求失敗:", error);

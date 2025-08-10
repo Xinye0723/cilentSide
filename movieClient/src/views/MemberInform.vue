@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onActivated, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { storeToRefs } from "pinia";
 import { memberAPI, orderAPI } from "../services/api.js";
+
+const auth = useAuthStore();
+const { memberId } = storeToRefs(auth);
+const isLoggedIn = computed(() => (auth as any).isLoggedIn);
+const router = useRouter();
 
 // 會員基本資訊
 const memberInfo = ref({
@@ -29,133 +37,188 @@ const statistics = ref({
 const loading = ref(true);
 const error = ref("");
 
-// 獲取會員資料
-const loadMemberData = async () => {
-  try {
-    loading.value = true;
-    error.value = "";
+    // 獲取會員資料
+    const loadMemberData = async () => {
+      try {
+        loading.value = true;
+        error.value = "";
 
-    // 從 localStorage 獲取會員 ID
-    const memberId = localStorage.getItem("memberId");
-    console.log("開始載入會員資料，會員ID:", memberId);
+        // 從 auth store 獲取會員 ID
+        const memberIdValue = memberId.value;
+        console.log("開始載入會員資料，會員ID:", memberIdValue);
 
-    if (!memberId) {
-      error.value = "未找到會員資訊，請重新登入";
-      return;
-    }
+        if (!memberIdValue || !isLoggedIn.value) {
+          error.value = "未找到會員資訊，請重新登入";
+          router.push("/login");
+          return;
+        }
 
-    // 獲取會員基本資訊（先使用不需要認證的 API 測試）
-    console.log("嘗試獲取會員基本資訊...");
-    const memberData = await memberAPI.getMemberInfoPublic(parseInt(memberId));
-    console.log("會員資料:", memberData); // 調試用
+        // 獲取會員基本資訊（先使用不需要認證的 API 測試）
+        console.log("嘗試獲取會員基本資訊...");
+        const memberData = await memberAPI.getMemberInfoPublic(parseInt(memberIdValue));
+        console.log("會員資料:", memberData); // 調試用
 
-    // 解析點數（確保是數字）
-    const points = parseInt(memberData.memberPoint) || 0;
+        // 獲取統計資料（使用不需要認證的 API）
+        try {
+          console.log("嘗試獲取統計資料...");
+          const statsData = await orderAPI.getMemberStatisticsPublic(
+            parseInt(memberIdValue)
+          );
+          console.log("統計資料:", statsData);
 
-    memberInfo.value = {
-      name: memberData.memberName || "未知",
-      email: memberData.memberEmail || "",
-      phone: memberData.memberPhone || "",
-      memberId: memberData.memberId?.toString() || "",
-      joinDate: "2023-01-15", // 假設加入日期，實際可以從資料庫獲取
-      level:
-        points >= 1000 ? "金卡會員" : points >= 500 ? "銀卡會員" : "一般會員",
-      points: points,
-      memberImg: memberData.memberImg
-        ? `https://localhost:7181${memberData.memberImg}`
-        : "",
-    };
+          statistics.value = {
+            totalMovies: statsData.totalMovies || 0,
+            totalSpent: statsData.totalSpent || 0,
+            favoriteGenre: statsData.favoriteGenre || "無資料",
+            averageRating: statsData.averageRating || 0,
+          };
+
+          // 計算抽籤次數（每500元就有一次抽獎機會）
+          const totalSpent = statsData.totalSpent || 0;
+          const drawCount = Math.floor(totalSpent / 500);
+
+          // 計算會員等級
+          let memberLevel = "";
+          if (totalSpent >= 5000) {
+            memberLevel = "鉑金會員";
+          } else if (totalSpent >= 3000) {
+            memberLevel = "銀卡會員";
+          } else if (totalSpent >= 1000) {
+            memberLevel = "銀卡會員";
+          } else {
+            memberLevel = "一般會員";
+          }
+
+          // 從資料庫讀取抽籤次數，如果沒有則使用計算值
+          let lotteryPoints = parseInt(memberData.memberPoint);
+          if (isNaN(lotteryPoints) || lotteryPoints < 0) {
+            lotteryPoints = drawCount;
+          }
+
+          memberInfo.value = {
+            name: memberData.memberName || "未知",
+            email: memberData.memberEmail || "",
+            phone: memberData.memberPhone || "",
+            memberId: memberData.memberId?.toString() || "",
+            joinDate: "2023-01-15", // 假設加入日期，實際可以從資料庫獲取
+            level: memberLevel,
+            points: lotteryPoints,
+            memberImg: memberData.memberImg
+              ? `https://localhost:7181${memberData.memberImg}`
+              : "",
+          };
+        } catch (statsErr) {
+          console.error("載入統計資料失敗:", statsErr);
+          // 如果統計資料載入失敗，使用預設值
+          memberInfo.value = {
+            name: memberData.memberName || "未知",
+            email: memberData.memberEmail || "",
+            phone: memberData.memberPhone || "",
+            memberId: memberData.memberId?.toString() || "",
+            joinDate: "2023-01-15",
+            level: "一般會員",
+            points: 0,
+            memberImg: memberData.memberImg
+              ? `https://localhost:7181${memberData.memberImg}`
+              : "",
+          };
+        }
 
     // 獲取觀影紀錄（使用不需要認證的 API）
     try {
       console.log("嘗試獲取觀影紀錄...");
       const orderHistory = await orderAPI.getMemberOrderHistoryPublic(
-        parseInt(memberId)
+        parseInt(memberIdValue)
       );
       console.log("觀影紀錄:", orderHistory);
 
-      viewingHistory.value = orderHistory.map((record, index) => ({
-        id: record.orderId,
-        movieName: record.movieName,
-        date: record.date,
-        time: record.time,
-        theater: record.theater,
-        seat: record.seat,
-        ticketType: record.ticketType,
-        ticketCount: record.ticketCount || 1,
-        price: record.price,
-      }));
+             viewingHistory.value = orderHistory.map((record, index) => ({
+         id: record.orderId,
+         movieName: record.movieName,
+         date: record.date,
+         time: record.time,
+         theater: record.theater,
+         seat: record.seat,
+         ticketType: record.ticketType,
+         ticketCount: record.ticketCount || 1,
+         price: record.price,
+         snackInfo: record.snackInfo,
+       }));
     } catch (err) {
       console.error("載入觀影紀錄失敗:", err);
-      // 如果觀影紀錄載入失敗，根據統計資料生成測試資料
+      // 如果觀影紀錄載入失敗，嘗試使用簡化版本的 API
       try {
-        console.log("嘗試獲取統計資料...");
-        const statsData = await orderAPI.getMemberStatisticsPublic(
-          parseInt(memberId)
+        console.log("嘗試使用簡化版本的觀影紀錄 API...");
+        const response = await fetch(
+          `https://localhost:7181/api/Order/member/${memberIdValue}/history/simple`
         );
-        console.log("統計資料:", statsData);
-
-        const movieCount = statsData.totalMovies || 1;
-        const totalSpent = statsData.totalSpent || 900;
-        const pricePerMovie = Math.round(totalSpent / movieCount);
-
-        viewingHistory.value = Array.from(
-          { length: movieCount },
-          (_, index) => ({
-            id: index + 1,
-            movieName: `電影 ${index + 1}`,
-            date: "2024-01-01",
-            time: "14:00",
-            theater: "第1廳",
-            seat: `A${index + 1}`,
-            ticketType: "一般票",
-            ticketCount: 1,
-            price: pricePerMovie,
-          })
-        );
-      } catch (statsErr) {
-        console.error("載入統計資料也失敗:", statsErr);
-        // 如果統計資料也失敗，顯示預設資料
-        viewingHistory.value = [
-          {
-            id: 1,
-            movieName: "測試電影",
-            date: "2024-01-01",
-            time: "14:00",
-            theater: "第1廳",
-            seat: "A1",
-            ticketType: "一般票",
-            ticketCount: 1,
-            price: 900,
-          },
-        ];
+        if (response.ok) {
+          const simpleOrderHistory = await response.json();
+          console.log("簡化觀影紀錄:", simpleOrderHistory);
+          
+                     viewingHistory.value = simpleOrderHistory.map((record, index) => ({
+             id: record.orderId,
+             movieName: record.movieName,
+             date: record.date,
+             time: record.time,
+             theater: record.theater,
+             seat: record.seat,
+             ticketType: record.ticketType,
+             ticketCount: record.ticketCount || 1,
+             price: record.price,
+             snackInfo: record.snackInfo,
+           }));
+        } else {
+          throw new Error("簡化 API 也失敗");
+        }
+      } catch (simpleErr) {
+        console.error("簡化觀影紀錄也失敗:", simpleErr);
+        // 如果簡化版本也失敗，使用基本版本
+        try {
+          console.log("嘗試使用基本版本的觀影紀錄 API...");
+          const response = await fetch(
+            `https://localhost:7181/api/Order/member/${memberIdValue}/history/basic`
+          );
+          if (response.ok) {
+            const basicOrderHistory = await response.json();
+            console.log("基本觀影紀錄:", basicOrderHistory);
+            
+                         viewingHistory.value = basicOrderHistory.map((record, index) => ({
+               id: record.orderId,
+               movieName: record.movieName,
+               date: record.date,
+               time: record.time,
+               theater: record.theater,
+               seat: record.seat,
+               ticketType: record.ticketType,
+               ticketCount: record.ticketCount || 1,
+               price: record.price,
+               snackInfo: record.snackInfo,
+             }));
+          } else {
+            throw new Error("基本 API 也失敗");
+          }
+        } catch (basicErr) {
+          console.error("基本觀影紀錄也失敗:", basicErr);
+          // 如果所有 API 都失敗，顯示預設資料
+          viewingHistory.value = [
+            {
+              id: 1,
+              movieName: "測試電影",
+              date: "2024-01-01",
+              time: "14:00",
+              theater: "第1廳",
+              seat: "A1",
+              ticketType: "一般票",
+              ticketCount: 1,
+              price: 900,
+            },
+          ];
+        }
       }
     }
 
-    // 獲取統計資料（使用不需要認證的 API）
-    try {
-      console.log("嘗試獲取統計資料...");
-      const statsData = await orderAPI.getMemberStatisticsPublic(
-        parseInt(memberId)
-      );
-      console.log("統計資料:", statsData);
 
-      statistics.value = {
-        totalMovies: statsData.totalMovies || 0,
-        totalSpent: statsData.totalSpent || 0,
-        favoriteGenre: statsData.favoriteGenre || "無資料",
-        averageRating: statsData.averageRating || 0,
-      };
-    } catch (statsErr) {
-      console.error("載入統計資料失敗:", statsErr);
-      // 使用預設統計資料
-      statistics.value = {
-        totalMovies: 0,
-        totalSpent: 0,
-        favoriteGenre: "無資料",
-        averageRating: 0,
-      };
-    }
   } catch (err) {
     console.error("載入會員資料失敗:", err);
     error.value = "載入資料失敗，請稍後再試";
@@ -165,6 +228,11 @@ const loadMemberData = async () => {
 };
 
 onMounted(() => {
+  loadMemberData();
+});
+
+// 當組件被激活時（從其他頁面返回時）重新載入資料
+onActivated(() => {
   loadMemberData();
 });
 
@@ -192,6 +260,54 @@ const testAPI = async () => {
     alert("API 測試錯誤: " + error.message);
   }
 };
+
+// 測試觀影紀錄 API
+const testOrderHistory = async () => {
+  try {
+    const memberIdValue = memberId.value;
+    if (!memberIdValue) {
+      alert("請先登入");
+      return;
+    }
+
+    console.log("開始測試觀影紀錄 API...");
+    
+    // 測試不同的 API 端點
+    const endpoints = [
+      `/api/Order/member/${memberIdValue}/history/public`,
+      `/api/Order/member/${memberIdValue}/history/simple`,
+      `/api/Order/member/${memberIdValue}/history/basic`,
+      `/api/Order/test/join/${memberIdValue}`,
+      `/api/Order/debug/member/${memberIdValue}`
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`https://localhost:7181${endpoint}`);
+        console.log(`測試 ${endpoint}:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`${endpoint} 成功:`, data);
+        } else {
+          console.error(`${endpoint} 失敗:`, response.status);
+        }
+      } catch (error) {
+        console.error(`${endpoint} 錯誤:`, error);
+      }
+    }
+
+    alert("觀影紀錄 API 測試完成，請查看控制台");
+  } catch (error) {
+    console.error("觀影紀錄 API 測試錯誤:", error);
+    alert("觀影紀錄 API 測試錯誤: " + error.message);
+  }
+};
+
+// 跳轉到抽籤遊戲
+const goToLottery = () => {
+  router.push("/lotteryGame");
+};
 </script>
 
 <template>
@@ -216,6 +332,9 @@ const testAPI = async () => {
       <button @click="loadMemberData" class="retry-button">重新載入</button>
       <button @click="testAPI" class="retry-button" style="margin-left: 10px">
         測試 API
+      </button>
+      <button @click="testOrderHistory" class="retry-button" style="margin-left: 10px">
+        測試觀影紀錄
       </button>
     </div>
 
@@ -271,6 +390,9 @@ const testAPI = async () => {
             <div class="detail-row">
               <span class="label">抽籤次數：</span>
               <span class="value points">{{ memberInfo.points }} 次</span>
+              <button @click="goToLottery" class="lottery-btn">
+                🎲 抽籤遊戲
+              </button>
             </div>
           </div>
         </div>
@@ -290,7 +412,7 @@ const testAPI = async () => {
             <div class="stat-icon">🎬</div>
             <div class="stat-content">
               <div class="stat-number">{{ statistics.totalMovies }}</div>
-              <div class="stat-label">觀影次數</div>
+              <div class="stat-label">訂單次數</div>
             </div>
           </div>
 
@@ -360,7 +482,11 @@ const testAPI = async () => {
             <div class="ticket-info">
               <div class="ticket-type">{{ record.ticketType }}</div>
               <div class="ticket-count">{{ record.ticketCount }} 張</div>
-              <div class="ticket-price">票價${{ record.price }}</div>
+              <div class="snack-info" v-if="record.snackInfo">
+                <span class="detail-icon">🍿</span>
+                {{ record.snackInfo }}
+              </div>
+              <div class="ticket-price">消費金額${{ record.price }}</div>
             </div>
           </div>
         </div>
@@ -478,7 +604,7 @@ const testAPI = async () => {
 }
 
 .label {
-  font-weight: 500;
+  font-weight: 700;
   color: #cccccc;
   min-width: 100px;
 }
@@ -496,6 +622,24 @@ const testAPI = async () => {
 .points {
   color: #00ff88;
   font-weight: 600;
+}
+
+.lottery-btn {
+  background: linear-gradient(45deg, #ff3366, #ff6b6b);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+}
+
+.lottery-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
 }
 
 /* 統計區塊樣式 */
