@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://sees-wrote-dubai-suited.trycloudflare.com",
+        host: "https://schedule-albert-ads-duncan.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },

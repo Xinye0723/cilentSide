@@ -56,9 +56,9 @@ function handleMemberCenterClick() {
     // 未登入：跳轉到登入頁面
     if (isMenuOpen.value) {
       toggleMenu();
-      setTimeout(() => router.push({ name: 'login' }), 300);
+      setTimeout(() => router.push({ name: "login" }), 300);
     } else {
-      router.push({ name: 'login' });
+      router.push({ name: "login" });
     }
   }
 }
@@ -93,12 +93,12 @@ onMounted(() => {
 function logout() {
   // 使用 Pinia store 登出
   (auth as any).logout();
-  
+
   // 關閉下拉選單
   showMemberSubmenu.value = false;
-  
+
   // 跳轉到首頁
-  router.push({ name: 'home' });
+  router.push({ name: "home" });
 }
 
 /* ─── ❺ 捲到 footer ─── */
@@ -244,7 +244,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
         >
           <RouterLink
             :to="{ name: 'memberIn' }"
-            @click.prevent="handleMemberCenterClick"
+            @click.prevent="handleLinkClick({ name: 'memberInform' })"
             ><i class="bi bi-person-circle me-1"></i>會員中心</RouterLink
           >
           <ul class="submenu" v-show="showMemberSubmenu">

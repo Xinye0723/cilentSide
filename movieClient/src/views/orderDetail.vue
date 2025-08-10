@@ -2,14 +2,17 @@
 import { ref, computed } from "vue";
 import { useBookingStore } from "@/stores/booking";
 import { useRouter } from "vue-router";
-let memberId = localStorage.getItem("memberId");
+import { useAuthStore } from "@/stores/auth";
+// let memberId = localStorage.getItem("memberId");
 const router = useRouter();
 const booking = useBookingStore();
+const memeberInform = useAuthStore();
+let memberId = memeberInform.memberId;
 const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
 const ngrokBaseUrl = "https://03ae022edc46.ngrok-free.app";
-const frontendUrl = "https://sees-wrote-dubai-suited.trycloudflare.com";
+const frontendUrl = "https://schedule-albert-ads-duncan.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
