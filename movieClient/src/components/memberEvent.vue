@@ -7,12 +7,12 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { useAuthStore } from "@/stores/auth";
-const memberId = useAuthStore;
+
 const router = useRouter();
 const route = useRoute();
 const events = ref([]);
 const currentMemberId = ref(null);
+
 // 載入活動資料的函數
 const loadEvents = async () => {
   try {
@@ -42,7 +42,7 @@ const loadEvents = async () => {
 
 onMounted(async () => {
   // 獲取當前會員ID
-  currentMemberId.value = memberId.memberId;
+  currentMemberId.value = localStorage.getItem("memberId");
   // 載入活動資料
   await loadEvents();
 });
@@ -680,13 +680,14 @@ const swiperOptions = {
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 1; 
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
-  50% { 
-    transform: scale(1.1); 
-    opacity: 0.8; 
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 </style>

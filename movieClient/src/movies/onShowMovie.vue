@@ -121,11 +121,11 @@ function startSpin() {
   spinning.value = true;
 
   // 可調參數：越小越快、越大越慢
-  const TOTAL = 7000; // 總轉動時間(ms)
-  const MIN_DELAY = 22; // 一開始兩步之間的間隔(快)
-  const MAX_DELAY = 200; // 收尾兩步之間的間隔(慢)
+  const TOTAL = 6000; // 總轉動時間(ms)
+  const MIN_DELAY = 20; // 一開始兩步之間的間隔(快)
+  const MAX_DELAY = 10; // 收尾兩步之間的間隔(慢)
   const MIN_DUR = 1; // slideNext 過渡時間(開始)
-  const MAX_DUR = 120; // slideNext 過渡時間(結尾)
+  const MAX_DUR = 80; // slideNext 過渡時間(結尾)
 
   const t0 = Date.now();
 
