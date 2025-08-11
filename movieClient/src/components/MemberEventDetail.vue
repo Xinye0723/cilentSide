@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatStore } from "@/stores/chat";
+import { useAuthStore } from "@/stores/auth";
+const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -26,16 +28,14 @@ const showShareMenu = ref(false);
 
 // 計算屬性
 const isOrganizer = computed(() => {
-  if (!event.value || !localStorage.getItem("memberId")) return false;
-  return (
-    Number(event.value.organizerId) === Number(localStorage.getItem("memberId"))
-  );
+  if (!event.value || !auth.memberId) return false;
+  return Number(event.value.organizerId) === Number(auth.memberId);
 });
 
 // 檢查會員是否已報名此活動
 const checkSignupStatus = async (eventId) => {
   try {
-    const memberId = localStorage.getItem("memberId"); // 假設會員ID存在localStorage
+    const memberId = auth.memberId; // 假設會員ID存在localStorage
 
     if (!memberId) {
       console.log("未登入會員");
@@ -126,7 +126,7 @@ const handleVisibilityChange = async () => {
     console.log("頁面重新可見，立即檢查付款狀態");
 
     if (isProcessingPayment.value) {
-      const memberId = localStorage.getItem("memberId");
+      const memberId = auth.memberId;
       if (memberId) {
         try {
           const updateRes = await fetch(
@@ -227,7 +227,7 @@ onMounted(async () => {
       };
 
       console.log("活動資料:", event.value); // 添加調試資訊
-      console.log("當前會員ID:", localStorage.getItem("memberId"));
+      console.log("當前會員ID:", auth.memberId);
       console.log("主辦人ID:", event.value.organizerId);
       console.log("是否為主辦人:", isOrganizer.value);
 
@@ -281,7 +281,7 @@ async function signupOrCancel() {
   if (!event.value) return;
 
   try {
-    const memberId = localStorage.getItem("memberId");
+    const memberId = auth.memberId;
     if (!memberId) {
       showSuccessMessage("請先登入會員");
       return;
@@ -370,8 +370,8 @@ const processPayment = async () => {
     paymentLoading.value = true;
     isProcessingPayment.value = true;
 
-    const memberId = localStorage.getItem("memberId");
-    const memberName = localStorage.getItem("memberName") || "會員";
+    const memberId = auth.memberId;
+    const memberName = auth.memberName || "會員";
 
     // 先立即更新付款狀態為成功
     try {

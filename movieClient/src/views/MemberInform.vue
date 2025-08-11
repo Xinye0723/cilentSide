@@ -412,9 +412,7 @@ const goToLottery = () => {
             <div class="detail-row">
               <span class="label">抽籤次數：</span>
               <span class="value points">{{ drawCount }} 次</span>
-              <button @click="goToLottery" class="lottery-btn">
-                🎲 抽籤遊戲
-              </button>
+              <button @click="goToLottery" class="lottery-btn">扭蛋遊戲</button>
             </div>
           </div>
         </div>

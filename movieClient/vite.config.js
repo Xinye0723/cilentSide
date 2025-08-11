@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://schedule-albert-ads-duncan.trycloudflare.com",
+        host: "https://explained-qc-files-provinces.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },

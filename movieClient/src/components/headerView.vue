@@ -306,7 +306,17 @@ function leaveMenu(which: keyof typeof submenuFlags) {
   min-height: 100vh;
   padding-top: 64px;
 }
-
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 /* -------- Navbar -------- */
 .navbar {
   position: fixed;
@@ -334,10 +344,10 @@ function leaveMenu(which: keyof typeof submenuFlags) {
 }
 
 /* -------- Logo -------- */
-.logo {
+.logo a {
   font-size: 1.8rem;
   font-weight: 700;
-  background: var(--gradient);
+  background: linear-gradient(45deg, #ff3366, #ff6b6b, #4834d4, #686de0);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
