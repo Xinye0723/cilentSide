@@ -461,19 +461,18 @@ const submitForm = async () => {
     if (res.ok) {
       const result = await res.json();
       console.log("活動建立成功:", result);
-      alert("✅ 活動建立成功！");
+      showSuccessToast("您的活動已成功建立！");
       
-      // 使用 window.location 強制重新載入頁面
-      window.location.href = "/memberEvent";
+      // 提示函數會自動處理跳轉，不需要手動跳轉
       
     } else {
       const errorData = await res.json();
       console.error("建立失敗:", errorData);
-      alert("❌ 建立失敗: " + (errorData.error || "未知錯誤"));
+      showErrorToast("建立失敗: " + (errorData.error || "未知錯誤"));
     }
   } catch (err) {
     console.error("提交錯誤：", err);
-    alert("❌ 建立失敗，請稍後再試");
+    showErrorToast("建立失敗，請稍後再試");
   } finally {
     isSubmitting.value = false; // 重置提交中標記
   }
@@ -488,6 +487,358 @@ const tooltip = ref({
 });
 
 const tooltipImageLoaded = ref(false);
+
+// 美觀的成功提示函數 - 升級版 (淡藍色主題)
+const showSuccessToast = (message) => {
+  // 移除現有的提示
+  const existingToasts = document.querySelectorAll(".event-success-toast");
+  existingToasts.forEach((toast) => {
+    if (document.body.contains(toast)) {
+      document.body.removeChild(toast);
+    }
+  });
+
+  const toast = document.createElement("div");
+  toast.className = "event-success-toast";
+
+  // 設置樣式 - 升級版 (淡藍色主題)
+  toast.style.position = "fixed";
+  toast.style.top = "50%";
+  toast.style.left = "50%";
+  toast.style.transform = "translate(-50%, -50%)";
+  toast.style.padding = "2.5rem";
+  toast.style.borderRadius = "25px";
+  toast.style.zIndex = "99999";
+  toast.style.fontSize = "1.1rem";
+  toast.style.boxShadow = "0 25px 80px rgba(100, 181, 246, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
+  toast.style.backdropFilter = "blur(25px)";
+  toast.style.maxWidth = "450px";
+  toast.style.fontWeight = "600";
+  toast.style.transition = "all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+  toast.style.display = "flex";
+  toast.style.flexDirection = "column";
+  toast.style.alignItems = "center";
+  toast.style.gap = "1.2rem";
+  toast.style.textAlign = "center";
+  toast.style.border = "2px solid rgba(255, 255, 255, 0.3)";
+  toast.style.background = "linear-gradient(135deg, rgba(100, 181, 246, 0.95) 0%, rgba(144, 202, 249, 0.95) 50%, rgba(100, 181, 246, 0.95) 100%)";
+  toast.style.color = "#fff";
+  toast.style.overflow = "hidden";
+
+  // 添加背景裝飾元素
+  toast.innerHTML = `
+    <div style="
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 3s ease-in-out infinite;
+    "></div>
+    <div style="
+      position: absolute;
+      bottom: -30px;
+      left: -30px;
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      animation: float 3s ease-in-out infinite reverse;
+    "></div>
+    
+    <div style="
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      animation: bounceIn 0.8s ease-out, pulse 2s ease-in-out infinite 1s;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      color: #1976d2;
+      font-weight: bold;
+    ">∞</div>
+    
+    <div style="
+      font-size: 1.4rem; 
+      font-weight: 700; 
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(45deg, #fff, #e3f2fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    ">活動建立成功！</div>
+    
+    <div style="
+      font-size: 1.05rem; 
+      opacity: 0.95; 
+      line-height: 1.5;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    ">${message}</div>
+    
+    <div style="
+      margin-top: 1.5rem;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, rgba(25, 118, 210, 0.3) 0%, rgba(66, 165, 245, 0.3) 100%);
+      border-radius: 30px;
+      font-size: 0.95rem;
+      border: 2px solid rgba(25, 118, 210, 0.5);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(25, 118, 210, 0.2);
+      animation: slideInUp 0.6s ease-out 0.3s both;
+      color: #1565c0;
+      font-weight: 600;
+    ">即將跳轉到活動頁面...</div>
+    
+    <div style="
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #1976d2, #42a5f5, #1976d2);
+      animation: progress 3s linear;
+    "></div>
+  `;
+
+  // 初始狀態
+  toast.style.transform = "translate(-50%, -50%) scale(0.3) rotate(-10deg)";
+  toast.style.opacity = "0";
+
+  // 添加升級版動畫樣式
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes bounceIn {
+      0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+      50% { transform: scale(1.1) rotate(5deg); }
+      70% { transform: scale(0.9) rotate(-2deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    
+    @keyframes fadeInUp {
+      0% { transform: translate(-50%, -50%) translateY(40px) scale(0.8); opacity: 0; }
+      100% { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    @keyframes slideInUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes progress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(toast);
+
+  // 顯示動畫
+  setTimeout(() => {
+    toast.style.transform = "translate(-50%, -50%) scale(1) rotate(0deg)";
+    toast.style.opacity = "1";
+  }, 10);
+
+  // 3秒後自動隱藏並跳轉
+  setTimeout(() => {
+    toast.style.transform = "translate(-50%, -50%) scale(0.7) rotate(5deg)";
+    toast.style.opacity = "0";
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+      // 跳轉到活動頁面
+      window.location.href = "/memberEvent";
+    }, 400);
+  }, 3000);
+};
+
+// 美觀的錯誤提示函數 - 升級版
+const showErrorToast = (message) => {
+  // 移除現有的提示
+  const existingToasts = document.querySelectorAll(".event-error-toast");
+  existingToasts.forEach((toast) => {
+    if (document.body.contains(toast)) {
+      document.body.removeChild(toast);
+    }
+  });
+
+  const toast = document.createElement("div");
+  toast.className = "event-error-toast";
+
+  // 設置樣式 - 升級版
+  toast.style.position = "fixed";
+  toast.style.top = "50%";
+  toast.style.left = "50%";
+  toast.style.transform = "translate(-50%, -50%)";
+  toast.style.padding = "2.5rem";
+  toast.style.borderRadius = "25px";
+  toast.style.zIndex = "99999";
+  toast.style.fontSize = "1.1rem";
+  toast.style.boxShadow = "0 25px 80px rgba(255, 107, 107, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
+  toast.style.backdropFilter = "blur(25px)";
+  toast.style.maxWidth = "450px";
+  toast.style.fontWeight = "600";
+  toast.style.transition = "all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+  toast.style.display = "flex";
+  toast.style.flexDirection = "column";
+  toast.style.alignItems = "center";
+  toast.style.gap = "1.2rem";
+  toast.style.textAlign = "center";
+  toast.style.border = "2px solid rgba(255, 255, 255, 0.3)";
+  toast.style.background = "linear-gradient(135deg, rgba(255, 107, 107, 0.95) 0%, rgba(255, 138, 138, 0.95) 50%, rgba(255, 107, 107, 0.95) 100%)";
+  toast.style.color = "#fff";
+  toast.style.overflow = "hidden";
+
+  // 添加背景裝飾元素
+  toast.innerHTML = `
+    <div style="
+      position: absolute;
+      top: -40px;
+      left: -40px;
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: floatError 2s ease-in-out infinite;
+    "></div>
+    <div style="
+      position: absolute;
+      bottom: -25px;
+      right: -25px;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      animation: floatError 2s ease-in-out infinite reverse;
+    "></div>
+    
+    <div style="
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      animation: shake 0.8s ease-in-out, pulseError 2s ease-in-out infinite 1s;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    ">❌</div>
+    
+    <div style="
+      font-size: 1.4rem; 
+      font-weight: 700; 
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(45deg, #fff, #ffeaea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    ">建立失敗</div>
+    
+    <div style="
+      font-size: 1.05rem; 
+      opacity: 0.95; 
+      line-height: 1.5;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    ">${message}</div>
+    
+    <div style="
+      margin-top: 1.5rem;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+      border-radius: 30px;
+      font-size: 0.95rem;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      animation: slideInUp 0.6s ease-out 0.3s both;
+    ">請檢查輸入資料後重試</div>
+    
+    <div style="
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ff6b6b, #ff8a8a, #ff6b6b);
+      animation: progressError 4s linear;
+    "></div>
+  `;
+
+  // 初始狀態
+  toast.style.transform = "translate(-50%, -50%) scale(0.3) rotate(10deg)";
+  toast.style.opacity = "0";
+
+  // 添加升級版搖晃動畫樣式
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-8px) rotate(-2deg); }
+      20%, 40%, 60%, 80% { transform: translateX(8px) rotate(2deg); }
+    }
+    
+    @keyframes floatError {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(90deg); }
+    }
+    
+    @keyframes pulseError {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes slideInUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes progressError {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(toast);
+
+  // 顯示動畫
+  setTimeout(() => {
+    toast.style.transform = "translate(-50%, -50%) scale(1) rotate(0deg)";
+    toast.style.opacity = "1";
+  }, 10);
+
+  // 4秒後自動隱藏
+  setTimeout(() => {
+    toast.style.transform = "translate(-50%, -50%) scale(0.7) rotate(-5deg)";
+    toast.style.opacity = "0";
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 400);
+  }, 4000);
+};
 
 const showTooltip = (event, movie) => {
   const windowWidth = window.innerWidth;
