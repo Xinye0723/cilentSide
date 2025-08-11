@@ -46,14 +46,22 @@ const checkSignupStatus = async (eventId) => {
       `https://localhost:7181/api/MemberEvent/CheckJoinStatus?eventId=${eventId}&memberId=${memberId}`
     );
 
-    // console.log(`=== 檢查會員 ${memberId} 的活動 ${eventId} 狀態 ===`);
-
     if (res.ok) {
       const data = await res.json();
-      // console.log("API 回傳資料:", data);
 
-      hasSignedUp.value = data.isJoined || false;
-      isPaid.value = data.isPaid || false;
+      // 避免不必要的狀態更新
+      const newHasSignedUp = data.isJoined || false;
+      const newIsPaid = data.isPaid || false;
+
+      // 只有當狀態真正改變時才更新
+      if (hasSignedUp.value !== newHasSignedUp || isPaid.value !== newIsPaid) {
+        hasSignedUp.value = newHasSignedUp;
+        isPaid.value = newIsPaid;
+
+        console.log(
+          `狀態更新: hasSignedUp=${hasSignedUp.value}, isPaid=${isPaid.value}`
+        );
+      }
 
       // 如果已付款，隱藏倒數視窗
       if (hasSignedUp.value && data.isPaid) {
@@ -68,7 +76,7 @@ const checkSignupStatus = async (eventId) => {
       else if (hasSignedUp.value && !data.isPaid) {
         showPaymentCountdown.value = true;
         startCountdown(data.remainingTime);
-        // console.log("⏰ 用戶未付款，顯示倒數視窗");
+        console.log("⏰ 用戶未付款，顯示倒數視窗");
       }
       // 如果未報名，隱藏倒數視窗
       else {
@@ -77,7 +85,7 @@ const checkSignupStatus = async (eventId) => {
           clearInterval(countdownInterval.value);
           countdownInterval.value = null;
         }
-        // console.log("❌ 用戶未報名");
+        console.log("❌ 用戶未報名");
       }
     }
   } catch (error) {
@@ -234,14 +242,26 @@ onMounted(async () => {
       // 更新 meta 標籤
       updateMetaTags(event.value);
 
+      // 重置狀態，避免舊狀態影響
       isRedirectingToPayment.value = false;
+      hasSignedUp.value = false;
+      isPaid.value = false;
+      showPaymentCountdown.value = false;
+
+      // 檢查報名狀態
       await checkSignupStatus(id);
 
       document.addEventListener("visibilitychange", handleVisibilityChange);
 
+      // 設置狀態檢查間隔，但只在需要時檢查
       const statusCheckInterval = setInterval(async () => {
-        if (event.value && hasSignedUp.value && !isPaid.value) {
-          // console.log("輪詢檢查付款狀態...");
+        if (
+          event.value &&
+          hasSignedUp.value &&
+          !isPaid.value &&
+          !showPaymentCountdown.value
+        ) {
+          console.log("輪詢檢查付款狀態...");
           await checkSignupStatus(id);
         }
       }, 10000);
@@ -288,9 +308,19 @@ async function signupOrCancel() {
     }
 
     const action = hasSignedUp.value ? "leave" : "join";
+
+    // 如果是取消報名，先顯示確認視窗
+    if (action === "leave") {
+      showCancelJoinConfirm();
+      return;
+    }
+
     console.log(
       `執行操作: ${action}, 當前狀態: hasSignedUp=${hasSignedUp.value}, isPaid=${isPaid.value}`
     );
+
+    // 立即設置重定向狀態，防止閃現
+    isRedirectingToPayment.value = true;
 
     const res = await fetch(
       `https://localhost:7181/api/MemberEvent/${action}`,
@@ -308,41 +338,81 @@ async function signupOrCancel() {
 
     if (res.ok) {
       if (action === "join") {
+        // 先更新本地狀態
         event.value.registered += 1;
         hasSignedUp.value = true;
-        console.log("報名成功，狀態更新為: hasSignedUp=true");
+        isPaid.value = false; // 確保付款狀態為 false
 
-        // 重新檢查狀態
-        await checkSignupStatus(event.value.memberEventId);
+        console.log("報名成功，狀態更新為: hasSignedUp=true, isPaid=false");
 
-        // ❌ 移除：自動跳轉到付款頁面的邏輯
-        // 讓用戶自己點擊"立即付款"按鈕
-      } else {
-        // 取消報名時，重置所有相關狀態
-        if (event.value.registered > 0) {
-          event.value.registered -= 1;
-        }
-        hasSignedUp.value = false;
-        isPaid.value = false;
-        showPaymentCountdown.value = false;
-        if (countdownInterval.value) {
-          clearInterval(countdownInterval.value);
-          countdownInterval.value = null;
-        }
-        console.log(
-          "取消報名成功，狀態重置為: hasSignedUp=false, isPaid=false"
-        );
-        showSuccessMessage("取消報名成功！");
-
-        // 重新檢查狀態以確保同步
-        await checkSignupStatus(event.value.memberEventId);
+        // 延遲一下再檢查狀態，避免閃現
+        setTimeout(async () => {
+          await checkSignupStatus(event.value.memberEventId);
+          // 檢查完成後，重置重定向狀態
+          isRedirectingToPayment.value = false;
+        }, 100);
       }
+    } else {
+      const errorData = await res.json();
+      showSuccessMessage(errorData.error || "操作失敗，請稍後再試");
+      // 如果失敗，也要重置重定向狀態
+      isRedirectingToPayment.value = false;
+    }
+  } catch (error) {
+    console.error("報名操作失敗:", error);
+    showSuccessMessage("操作失敗，請稍後再試");
+    // 如果出錯，也要重置重定向狀態
+    isRedirectingToPayment.value = false;
+  }
+}
+
+// 實際執行取消報名的函數
+async function executeCancelJoin() {
+  if (!event.value) return;
+
+  try {
+    const memberId = localStorage.getItem("memberId");
+    if (!memberId) {
+      showSuccessMessage("請先登入會員");
+      return;
+    }
+
+    const res = await fetch(`https://localhost:7181/api/MemberEvent/leave`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventId: event.value.memberEventId,
+        memberId: memberId,
+      }),
+    });
+
+    if (res.ok) {
+      // 取消報名時，重置所有相關狀態
+      if (event.value.registered > 0) {
+        event.value.registered -= 1;
+      }
+      hasSignedUp.value = false;
+      isPaid.value = false;
+      showPaymentCountdown.value = false;
+      if (countdownInterval.value) {
+        clearInterval(countdownInterval.value);
+        countdownInterval.value = null;
+      }
+      console.log("取消報名成功，狀態重置為: hasSignedUp=false, isPaid=false");
+      showSuccessMessage("取消報名成功！");
+
+      // 延遲重新檢查狀態，避免閃現
+      setTimeout(async () => {
+        await checkSignupStatus(event.value.memberEventId);
+      }, 100);
     } else {
       const errorData = await res.json();
       showSuccessMessage(errorData.error || "操作失敗，請稍後再試");
     }
   } catch (error) {
-    console.error("報名操作失敗:", error);
+    console.error("取消報名失敗:", error);
     showSuccessMessage("操作失敗，請稍後再試");
   }
 }
@@ -350,6 +420,8 @@ async function signupOrCancel() {
 // 立即付款
 const payNow = () => {
   console.log("點擊立即付款按鈕");
+  // 設置重定向狀態，防止閃現
+  isRedirectingToPayment.value = true;
   // 隱藏倒數視窗
   showPaymentCountdown.value = false;
   // 顯示付款模態視窗
@@ -484,18 +556,244 @@ const processPayment = async () => {
 // 關閉付款視窗
 const closePaymentModal = () => {
   showPaymentModal.value = false;
+  // 重置重定向狀態
+  isRedirectingToPayment.value = false;
 };
 
-// 強制取消活動
-const forceCancelEvent = async () => {
+// 美觀的取消活動確認視窗 - 影城黑紫粉配色版
+const showCancelEventConfirm = () => {
+  // 移除現有的確認視窗
+  const existingConfirm = document.querySelectorAll(".cancel-event-confirm");
+  existingConfirm.forEach((confirm) => {
+    if (document.body.contains(confirm)) {
+      document.body.removeChild(confirm);
+    }
+  });
+
+  const confirmModal = document.createElement("div");
+  confirmModal.className = "cancel-event-confirm";
+
+  // 設置樣式 - 影城黑紫粉配色風格
+  confirmModal.style.position = "fixed";
+  confirmModal.style.top = "50%";
+  confirmModal.style.left = "50%";
+  confirmModal.style.transform = "translate(-50%, -50%)";
+  confirmModal.style.padding = "2.5rem";
+  confirmModal.style.borderRadius = "25px";
+  confirmModal.style.zIndex = "99999";
+  confirmModal.style.fontSize = "1.1rem";
+  confirmModal.style.boxShadow =
+    "0 25px 80px rgba(179, 136, 255, 0.3), 0 10px 40px rgba(0, 0, 0, 0.25)";
+  confirmModal.style.backdropFilter = "blur(25px)";
+  confirmModal.style.maxWidth = "500px";
+  confirmModal.style.fontWeight = "600";
+  confirmModal.style.transition =
+    "all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+  confirmModal.style.display = "flex";
+  confirmModal.style.flexDirection = "column";
+  confirmModal.style.alignItems = "center";
+  confirmModal.style.gap = "1.5rem";
+  confirmModal.style.textAlign = "center";
+  confirmModal.style.border = "2px solid rgba(255, 255, 255, 0.4)";
+  confirmModal.style.background =
+    "linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(42, 42, 74, 0.95) 50%, rgba(26, 26, 46, 0.95) 100%)";
+  confirmModal.style.color = "#f3f3fa";
+  confirmModal.style.overflow = "hidden";
+
+  // 添加背景裝飾元素
+  confirmModal.innerHTML = `
+    <div style="
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 100px;
+      height: 100px;
+      background: rgba(179, 136, 255, 0.15);
+      border-radius: 50%;
+      animation: float 3s ease-in-out infinite;
+    "></div>
+    <div style="
+      position: absolute;
+      bottom: -30px;
+      left: -30px;
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 105, 180, 0.12);
+      border-radius: 50%;
+      animation: float 3s ease-in-out infinite reverse;
+    "></div>
+    
+    <div style="
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      animation: bounceIn 0.8s ease-out, pulse 2s ease-in-out infinite 1s;
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 8px 32px rgba(179, 136, 255, 0.2);
+      color: #e91e63;
+      font-weight: bold;
+    ">∞</div>
+    
+    <div style="
+      font-size: 1.4rem; 
+      font-weight: 700; 
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(45deg, #b388ff, #ff69b4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    ">確定要取消此活動嗎？</div>
+    
+    <div style="
+      background: linear-gradient(135deg, rgba(179, 136, 255, 0.15) 0%, rgba(255, 105, 180, 0.1) 100%);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(179, 136, 255, 0.1);
+      animation: slideInUp 0.6s ease-out 0.3s both;
+      max-width: 400px;
+    ">
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: #ff69b4;
+        font-weight: 600;
+      ">
+        <span style="font-size: 1.2rem;">⚠️</span>
+        <span>注意事項</span>
+      </div>
+      <div style="
+        text-align: left;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        color: #f3f3fa;
+      ">
+        <div style="margin-bottom: 0.5rem;">• 活動取消後無法恢復</div>
+        <div style="margin-bottom: 0.5rem;">• 所有已報名的參加者將被自動取消</div>
+        <div>• 已付款的參加者將獲得退款</div>
+      </div>
+    </div>
+    
+    <div style="
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    ">
+      <button id="confirmCancelBtn" style="
+        padding: 0.8rem 2rem;
+        background: linear-gradient(135deg, #b388ff 0%, #7c7cfb 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(179, 136, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      ">確定取消</button>
+      
+      <button id="cancelCancelBtn" style="
+        padding: 0.8rem 2rem;
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.25) 0%, rgba(255, 105, 180, 0.15) 100%);
+        color: #ff69b4;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      ">返回</button>
+    </div>
+  `;
+
+  // 初始狀態
+  confirmModal.style.transform =
+    "translate(-50%, -50%) scale(0.3) rotate(-10deg)";
+  confirmModal.style.opacity = "0";
+
+  // 添加動畫樣式
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes bounceIn {
+      0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+      50% { transform: scale(1.1) rotate(5deg); }
+      70% { transform: scale(0.9) rotate(-2deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    @keyframes slideInUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(confirmModal);
+
+  // 顯示動畫
+  setTimeout(() => {
+    confirmModal.style.transform =
+      "translate(-50%, -50%) scale(1) rotate(0deg)";
+    confirmModal.style.opacity = "1";
+  }, 10);
+
+  // 添加按鈕事件
+  const confirmBtn = confirmModal.querySelector("#confirmCancelBtn");
+  const cancelBtn = confirmModal.querySelector("#cancelCancelBtn");
+
+  confirmBtn.addEventListener("click", () => {
+    // 隱藏確認視窗
+    confirmModal.style.transform =
+      "translate(-50%, -50%) scale(0.7) rotate(5deg)";
+    confirmModal.style.opacity = "0";
+    setTimeout(() => {
+      if (document.body.contains(confirmModal)) {
+        document.body.removeChild(confirmModal);
+      }
+      // 執行取消活動邏輯
+      executeCancelEvent();
+    }, 400);
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    // 隱藏確認視窗
+    confirmModal.style.transform =
+      "translate(-50%, -50%) scale(0.7) rotate(-5deg)";
+    confirmModal.style.opacity = "0";
+    setTimeout(() => {
+      if (document.body.contains(confirmModal)) {
+        document.body.removeChild(confirmModal);
+      }
+    }, 400);
+  });
+
+  // 移除自動隱藏功能，讓用戶手動關閉
+};
+
+// 執行取消活動的邏輯
+const executeCancelEvent = async () => {
   if (!event.value || !isOrganizer.value) return;
-
-  // 確認對話框
-  const confirmed = confirm(
-    "確定要取消此活動嗎？\n\n⚠️ 注意：\n• 活動取消後無法恢復\n• 所有已報名的參加者將被自動取消\n• 已付款的參加者將獲得退款"
-  );
-
-  if (!confirmed) return;
 
   try {
     const res = await fetch(
@@ -509,7 +807,7 @@ const forceCancelEvent = async () => {
     );
 
     if (res.ok) {
-      showSuccessMessage("✅ 活動已成功取消！");
+      showSuccessMessage("活動已成功取消！");
       // 更新活動狀態
       event.value.status = "已取消";
       // 延遲跳轉到活動主頁
@@ -526,9 +824,17 @@ const forceCancelEvent = async () => {
   }
 };
 
+// 修改原有的強制取消活動函數
+const forceCancelEvent = async () => {
+  if (!event.value || !isOrganizer.value) return;
+
+  // 使用新的美觀確認視窗
+  showCancelEventConfirm();
+};
+
 // 取消報名（從倒數視窗）
 const cancelFromCountdown = async () => {
-  await signupOrCancel();
+  showCancelJoinConfirm();
 };
 
 // 分享功能
@@ -649,6 +955,15 @@ const showSuccessMessage = (message) => {
       toast.innerHTML = `
         <span style="font-size: 0.9rem; line-height: 1.4;">${message}</span>
       `;
+    } else if (message.includes("活動已成功取消")) {
+      // ✅ 新增：取消活動成功的特殊樣式
+      toast.style.border = "1px solid rgba(76, 175, 80, 0.2)";
+      toast.style.background = "rgba(76, 175, 80, 0.1)";
+      toast.style.color = "#4CAF50";
+
+      toast.innerHTML = `
+        <span style="font-size: 0.9rem; line-height: 1.4;">${message}</span>
+      `;
     } else {
       toast.style.border = "1px solid rgba(76, 175, 80, 0.2)";
       toast.style.background = "rgba(76, 175, 80, 0.1)";
@@ -751,6 +1066,197 @@ const hideCountdown = () => {
     countdownInterval.value = null;
   }
 };
+
+// 取消報名確認視窗（一般會員）
+const showCancelJoinConfirm = () => {
+  // 移除現有的確認視窗
+  const existingModal = document.querySelector(".cancel-join-modal");
+  if (existingModal) {
+    document.body.removeChild(existingModal);
+  }
+
+  const modal = document.createElement("div");
+  modal.className = "cancel-join-modal";
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(8px);
+  `;
+
+  const modalContent = document.createElement("div");
+  modalContent.style.cssText = `
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 2px solid white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+  `;
+
+  // 添加浮動裝飾元素
+  const decorations = [
+    { top: "10%", left: "10%", size: "8px", delay: "0s" },
+    { top: "20%", right: "15%", size: "12px", delay: "0.5s" },
+    { top: "70%", left: "20%", size: "6px", delay: "1s" },
+    { top: "80%", right: "25%", size: "10px", delay: "1.5s" },
+  ];
+
+  decorations.forEach((dec, index) => {
+    const decEl = document.createElement("div");
+    decEl.style.cssText = `
+      position: absolute;
+      width: ${dec.size};
+      height: ${dec.size};
+      background: linear-gradient(45deg, #e91e63, #9c27b0, #673ab7);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: float 3s ease-in-out infinite;
+      animation-delay: ${dec.delay};
+      ${dec.top ? `top: ${dec.top};` : ""}
+      ${dec.left ? `left: ${dec.left};` : ""}
+      ${dec.right ? `right: ${dec.right};` : ""}
+    `;
+    modalContent.appendChild(decEl);
+  });
+
+  // 主要警告符號（使用影城符號）
+  const warningIcon = document.createElement("div");
+  warningIcon.innerHTML = "∞";
+  warningIcon.style.cssText = `
+    font-size: 4rem;
+    color: #e91e63;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+  `;
+
+  // 標題
+  const title = document.createElement("h2");
+  title.textContent = "確認取消報名";
+  title.style.cssText = `
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  `;
+
+  // 描述文字
+  const description = document.createElement("p");
+  description.textContent = "您確定要取消報名這個活動嗎？";
+  description.style.cssText = `
+    color: #b0b0b0;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  `;
+
+  // 按鈕容器
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = `
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  `;
+
+  // 取消按鈕
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "繼續參加";
+  cancelBtn.style.cssText = `
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid white;
+    min-width: 120px;
+  `;
+
+  cancelBtn.addEventListener("mouseenter", () => {
+    cancelBtn.style.transform = "translateY(-2px)";
+    cancelBtn.style.boxShadow = "0 8px 25px rgba(76, 175, 80, 0.4)";
+  });
+
+  cancelBtn.addEventListener("mouseleave", () => {
+    cancelBtn.style.transform = "translateY(0)";
+    cancelBtn.style.boxShadow = "none";
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    document.body.removeChild(modal);
+  });
+
+  // 確認取消按鈕
+  const confirmBtn = document.createElement("button");
+  confirmBtn.textContent = "確定取消";
+  confirmBtn.style.cssText = `
+    background: linear-gradient(135deg, #e91e63, #c2185b);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid white;
+    min-width: 120px;
+  `;
+
+  confirmBtn.addEventListener("mouseenter", () => {
+    confirmBtn.style.transform = "translateY(-2px)";
+    confirmBtn.style.boxShadow = "0 8px 25px rgba(233, 30, 99, 0.4)";
+  });
+
+  confirmBtn.addEventListener("mouseleave", () => {
+    confirmBtn.style.transform = "translateY(0)";
+    confirmBtn.style.boxShadow = "none";
+  });
+
+  confirmBtn.addEventListener("click", async () => {
+    document.body.removeChild(modal);
+    // 執行取消報名
+    await executeCancelJoin();
+  });
+
+  // 組裝視窗
+  buttonContainer.appendChild(cancelBtn);
+  buttonContainer.appendChild(confirmBtn);
+  modalContent.appendChild(warningIcon);
+  modalContent.appendChild(title);
+  modalContent.appendChild(description);
+  modalContent.appendChild(buttonContainer);
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  // 點擊背景關閉視窗
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  });
+
+  // 添加動畫效果
+  modal.style.animation = "fadeIn 0.3s ease-out";
+  modalContent.style.animation = "slideInUp 0.4s ease-out";
+};
 </script>
 
 <template>
@@ -782,13 +1288,14 @@ const hideCountdown = () => {
     <!-- 狀態顯示 -->
     <div
       class="signup-status"
-      v-if="hasSignedUp && !showPaymentCountdown && !isRedirectingToPayment"
+      v-if="
+        hasSignedUp &&
+        !showPaymentCountdown &&
+        !isRedirectingToPayment &&
+        !isPaid
+      "
     >
-      <p class="status-msg" v-if="isPaid">
-        <span v-if="isOrganizer">🎯 您是主辦人，已自動參加此活動！</span>
-        <span v-else>✅ 您已報名並付款成功！</span>
-      </p>
-      <p class="status-msg" v-else>✅ 您已報名此活動，請完成付款</p>
+      <p class="status-msg">✅ 您已報名此活動，請完成付款</p>
     </div>
 
     <!-- 已付款成功顯示 -->
@@ -796,7 +1303,7 @@ const hideCountdown = () => {
       v-if="hasSignedUp && isPaid && !isRedirectingToPayment"
       class="success-status"
     >
-      <div class="success-icon">{{ isOrganizer ? "🎯" : "🎉" }}</div>
+      <div class="success-icon">{{ isOrganizer ? "∞" : "🎉" }}</div>
       <div class="success-text">
         <h3>{{ isOrganizer ? "主辦人狀態" : "報名成功！" }}</h3>
         <p v-if="isOrganizer">您已成功創建並參加此活動</p>
@@ -809,11 +1316,6 @@ const hideCountdown = () => {
     <!-- 按鈕區域 -->
     <div class="btn-row">
       <button class="back-btn" @click="goBack">返回活動主頁</button>
-
-      <!-- ❌ 移除調試資訊 -->
-      <!-- <div style="color: white; font-size: 12px; margin: 10px 0;">
-        調試: hasSignedUp={{ hasSignedUp }}, isOrganizer={{ isOrganizer }}, isPaid={{ isPaid }}
-      </div> -->
 
       <!-- 簡化的報名按鈕邏輯 -->
       <button
@@ -839,7 +1341,7 @@ const hideCountdown = () => {
         class="force-cancel-btn"
         @click="forceCancelEvent"
       >
-        🔴 取消活動
+        取消活動
       </button>
 
       <!-- 分享按鈕 -->
@@ -1889,6 +2391,33 @@ h1 {
   .payment-actions .confirm-btn {
     width: 100%;
     order: unset; /* 手機版恢復正常順序 */
+  }
+}
+
+.processing-status {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.processing-status .status-msg {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 </style>

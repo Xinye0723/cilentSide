@@ -152,7 +152,7 @@ const swiperOptions = {
     <div v-if="myEvents.length > 0" class="event-section">
       <div class="section-header">
         <h2 class="section-title">
-          <i class="bi bi-star-fill"></i>
+          <span class="cinema-icon">∞</span>
           我辦的活動
         </h2>
         <span class="event-count">{{ myEvents.length }} 個活動</span>
@@ -222,7 +222,7 @@ const swiperOptions = {
     <div v-if="otherEvents.length > 0" class="event-section">
       <div class="section-header">
         <h2 class="section-title">
-          <i class="bi bi-people-fill"></i>
+          <span class="cinema-icon">∞</span>
           {{ myEvents.length > 0 ? "其他活動" : "所有活動" }}
         </h2>
         <span class="event-count">{{ otherEvents.length }} 個活動</span>
@@ -665,6 +665,28 @@ const swiperOptions = {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+}
+
+/* 影城符號樣式 */
+.cinema-icon {
+  display: inline-block;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #e91e63; /* 影城標題的粉紅色 */
+  margin-right: 0.5rem;
+  text-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+  50% { 
+    transform: scale(1.1); 
+    opacity: 0.8; 
   }
 }
 </style>
