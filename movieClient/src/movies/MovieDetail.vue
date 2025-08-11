@@ -13,18 +13,41 @@ const reviews = ref([]);
 const movieId = route.params.movieId;
 const imgBaseUrl = "https://localhost:7181/";
 const anonymousNames = [
-  "影迷小王", "電影狂人", "匿名觀眾", "電影達人", "看片高手",
-  "光影旅人", "膠片收藏家", "銀幕粉絲", "劇情狂熱者", "獨立評論家",
-  "膠片守護者", "銀幕追隨者", "午夜觀影者", "爆米花達人", "電影探險家",
-  "畫面魔術師", "票房殺手", "劇情解析者", "光影獵人", "放映室常客",
-  "導演迷妹", "影評小師", "劇本讀者", "幕後英雄", "視覺饗宴者"
+  "影迷小王",
+  "電影狂人",
+  "匿名觀眾",
+  "電影達人",
+  "看片高手",
+  "光影旅人",
+  "膠片收藏家",
+  "銀幕粉絲",
+  "劇情狂熱者",
+  "獨立評論家",
+  "膠片守護者",
+  "銀幕追隨者",
+  "午夜觀影者",
+  "爆米花達人",
+  "電影探險家",
+  "畫面魔術師",
+  "票房殺手",
+  "劇情解析者",
+  "光影獵人",
+  "放映室常客",
+  "導演迷妹",
+  "影評小師",
+  "劇本讀者",
+  "幕後英雄",
+  "視覺饗宴者",
 ];
 const showModal = ref(false);
 const newReview = ref({
   rating: 5,
-  comment: ''
+  comment: "",
 });
 const hoverRating = ref(0);
+const showSlideTicket = ref(false);
+const slideTicket = ref({ user: "", comment: "", date: "" });
+const slideAnimKey = ref(0); // 重新觸發動畫用（變 key）
 
 // 產生分好行的主演陣列
 const starsPerRow = 4;
@@ -55,7 +78,7 @@ function getAnonymousName(reviewId, comment = "") {
   let hash = 0;
   const str = String(reviewId) + comment.length + "otherSalt";
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = (hash << 5) - hash + str.charCodeAt(i);
     hash |= 0;
   }
   return anonymousNames[Math.abs(hash) % anonymousNames.length];
@@ -75,6 +98,21 @@ function setHover(score) {
 }
 function clearHover() {
   hoverRating.value = 0;
+}
+
+function triggerSlideTicket(payload) {
+  slideTicket.value = {
+    user: getAnonymousName(Date.now(), payload.comment || ""),
+    comment: payload.comment || "",
+    date: new Date().toLocaleDateString(),
+  };
+  slideAnimKey.value++; // 變 key 強制重播動畫
+  showSlideTicket.value = true;
+
+  // 自動收回
+  setTimeout(() => {
+    showSlideTicket.value = false;
+  }, 1600); // 動畫 1.5s，留一點緩衝
 }
 
 async function fetchReviews() {
@@ -97,29 +135,36 @@ async function submitReview() {
     // 準備要送出的資料，補上 movieId 與匿名 memberId
     const payload = {
       movieId: movieId,
-      memberId: 1,          // 你後端預設1是匿名會員
+      memberId: 1, // 你後端預設1是匿名會員
       rating: newReview.value.rating,
       comment: newReview.value.comment,
-      isPublic: true        // 假設公開
+      isPublic: true, // 假設公開
     };
 
-    const res = await fetch('https://localhost:7181/api/MovieReviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const res = await fetch("https://localhost:7181/api/MovieReviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error('新增評論失敗');
+    if (!res.ok) throw new Error("新增評論失敗");
+
+    // 先在中央列印→停留→向右滑出（在 modal 下方）
+    triggerSlideTicket(payload);
+
+    // 等待動畫播放完再關彈窗與刷新
+    await new Promise((r) => setTimeout(r, 1800));
+    showSlideTicket.value = false;
 
     // 送出成功，關閉彈窗，清空輸入欄位
     showModal.value = false;
-    newReview.value = { rating: 5, comment: '' };
+    newReview.value = { rating: 5, comment: "" };
 
     // 重新抓取最新評論更新畫面
     await fetchReviews();
   } catch (err) {
     console.error(err);
-    alert('新增評論失敗，請稍後再試');
+    alert("新增評論失敗，請稍後再試");
   }
 }
 
@@ -188,12 +233,12 @@ function goToTicket(movieId) {
               </div>
             </div>
           </div>
-  
+
           <div class="movie-detail-plot">
             <div class="section-title">劇情簡介</div>
             <div>{{ movie.plot }}</div>
           </div>
-  
+
           <div v-if="movie.trailerUrl" class="movie-detail-trailer">
             <div class="section-title">預告片</div>
             <iframe
@@ -204,7 +249,7 @@ function goToTicket(movieId) {
             >
             </iframe>
           </div>
-  
+
           <div class="movie-detail-bottom">
             <button @click="$router.back()" class="btn btn-outline-secondary">
               <i class="bi bi-box-arrow-left"></i> 電影清單
@@ -219,7 +264,9 @@ function goToTicket(movieId) {
                 off: movie.movieStatusId === 3,
               }"
               :disabled="movie.movieStatusId !== 2"
-              @click.stop="movie.movieStatusId === 2 && goToTicket(movie.movieId)"
+              @click.stop="
+                movie.movieStatusId === 2 && goToTicket(movie.movieId)
+              "
             >
               <i class="bi bi-ticket-perforated me-1"></i>
               <span v-if="movie.movieStatusId === 2">立即訂票</span>
@@ -229,12 +276,19 @@ function goToTicket(movieId) {
           </div>
         </div>
       </div>
-  
+
       <!-- 右邊評論區 -->
       <div class="right-container review-block">
         <div class="review-header">
           <h3 class="review-title"><i class="bi bi-chat-dots"></i> 網友評論</h3>
-          <button @click="showModal = true" class="add-review-btn"><i class="bi bi-plus"></i></button>
+          <button
+            @click="showModal = true"
+            class="add-review-btn"
+            :disabled="movie.movieStatusId === 1"
+            :class="{ disabled: movie.movieStatusId === 1 }"
+          >
+            <i class="bi bi-plus"></i>
+          </button>
         </div>
         <div
           class="review-cards-group"
@@ -274,23 +328,46 @@ function goToTicket(movieId) {
           <div v-else class="review-card-empty">暫無{{ score }}分評論</div>
         </div>
         <!-- 新增評論彈窗 -->
-        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+        <div
+          v-if="showModal"
+          class="modal-overlay"
+          @click.self="showModal = false"
+        >
+          <!-- 送出後：讓票從彈窗右邊滑出 -->
+          <div
+            v-if="showSlideTicket"
+            :key="slideAnimKey"
+            class="floating-ticket floating-ticket--under-modal print-and-slide"
+          >
+            <div class="corner-cut corner-top-left"></div>
+            <div class="review-card-user">
+              <i class="bi bi-person-circle"></i> {{ slideTicket.user }}
+            </div>
+            <div class="review-card-content">{{ slideTicket.comment }}</div>
+            <div class="review-card-date">{{ slideTicket.date }}</div>
+          </div>
+          <!-- 彈窗本體（在票上層） -->
           <div class="modal-content">
             <h4>新增電影評論</h4>
             <label>評分：</label>
-              <div class="star-rating">
-                <span
-                  v-for="star in 5"
-                  :key="star"
-                  class="star"
-                  :class="{ filled: star <= (hoverRating || newReview.rating) }"
-                  @click="setRating(star)"
-                  @mouseover="setHover(star)"
-                  @mouseleave="clearHover"
-                >★</span>
-              </div>
+            <div class="star-rating">
+              <span
+                v-for="star in 5"
+                :key="star"
+                class="star"
+                :class="{ filled: star <= (hoverRating || newReview.rating) }"
+                @click="setRating(star)"
+                @mouseover="setHover(star)"
+                @mouseleave="clearHover"
+                >★</span
+              >
+            </div>
             <label>評論內容：</label>
-            <textarea v-model="newReview.comment" rows="4" placeholder="寫下你的評論..."></textarea>
+            <textarea
+              v-model="newReview.comment"
+              rows="4"
+              placeholder="寫下你的評論..."
+            ></textarea>
             <button @click="submitReview">送出</button>
             <button @click="showModal = false">取消</button>
           </div>
@@ -480,6 +557,11 @@ function goToTicket(movieId) {
   font-size: 1.1em;
   margin-bottom: 8px;
 }
+.add-review-btn:disabled,
+.add-review-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .review-stars {
   color: #ffd700;
   font-size: 1.16em;
@@ -560,8 +642,12 @@ function goToTicket(movieId) {
 }
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -569,8 +655,12 @@ function goToTicket(movieId) {
   animation: fadeIn 0.3s ease forwards;
 }
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .modal-content {
   background: repeating-linear-gradient(
@@ -585,11 +675,11 @@ function goToTicket(movieId) {
   border: 2.8px dashed #ffce59;
   width: 90%;
   max-width: 410px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  font-family: 'Noto Sans TC', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: "Noto Sans TC", sans-serif;
   color: #222;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 .modal-content h4 {
   margin-bottom: 12px;
@@ -685,5 +775,67 @@ textarea {
 .add-review-btn:hover {
   background: linear-gradient(90deg, #ffae00 60%, #fc41f4 100%);
   color: #fff;
+}
+/* 讓彈窗能當定位父層 */
+.modal-content {
+  position: relative; /* 新增 */
+  z-index: 2; /* 在票之上 */
+  overflow: visible; /* 讓滑出區不被裁切 */
+}
+/* 共用票券樣式（沿用你原本票外觀） */
+.floating-ticket {
+  min-width: 300px;
+  min-height: 110px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #fffbe6,
+    #fffbe6 22px,
+    #fff9d7 22px,
+    #fff9d7 44px
+  );
+  border-radius: 20px 20px 18px 18px / 30px 30px 16px 16px;
+  border: 2.8px dashed #ffce59;
+  box-shadow: 0 8px 28px #0007;
+  padding: 22px 24px 14px 24px;
+  font-size: 1.05em;
+  line-height: 1.5em;
+  color: #222;
+  pointer-events: none;
+}
+/* 票在彈窗下方，但在遮罩之上 */
+.floating-ticket--under-modal {
+  position: absolute;
+  z-index: 1; /* < modal-content 的 2，> overlay 的背景 */
+  top: 52%;
+  left: 60.5%;
+  transform: translate(-50%, -50%); /* 置中 */
+}
+.floating-ticket .corner-cut.corner-top-left {
+  content: "";
+  position: absolute;
+  width: 43px;
+  height: 43px;
+  background: #1c1d22; /* 和頁面背景一致 */
+  border-radius: 50%;
+  top: -11px;
+  left: -11px;
+}
+/* 從彈窗右側滑入動畫 */
+@keyframes printAndSlide {
+  18% {
+    transform: translate(-0%, -50%) scale(1) rotate(0);
+    opacity: 1;
+  } /* 列印完成 */
+  55% {
+    transform: translate(-0%, -50%) scale(1) rotate(0);
+    opacity: 1;
+  } /* 停留 */
+  100% {
+    transform: translate(120%, -50%) rotate(10deg);
+    opacity: 0;
+  } /* 往右滑出 */
+}
+.print-and-slide {
+  animation: printAndSlide 2s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 </style>
