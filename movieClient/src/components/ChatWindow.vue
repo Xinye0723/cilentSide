@@ -37,13 +37,13 @@ const normalizedMessages = computed(() =>
 );
 
 /* 新訊息出現後，自動捲到底 */
-watch(
-  () => normalizedMessages.value.length,
-  async () => {
-    await nextTick();
-    bottom.value?.scrollIntoView({ behavior: "smooth" });
-  }
-);
+// watch(
+//   () => normalizedMessages.value.length,
+//   async () => {
+//     await nextTick();
+//     bottom.value?.scrollIntoView({ behavior: "smooth" });
+//   }
+// );
 </script>
 
 <template>

@@ -126,8 +126,8 @@ function leaveMenu(which: keyof typeof submenuFlags) {
 
 <template>
   <nav class="navbar fixed-top" :class="{ scrolled: isScrolled }">
-    <div class="logo pe-12">
-      <RouterLink :to="{ name: 'home' }" class="pe-8"
+    <div class="logo pe-20">
+      <RouterLink :to="{ name: 'home' }" class="pe-12"
         >INFINITY CINEMA</RouterLink
       >
     </div>
@@ -340,7 +340,7 @@ function leaveMenu(which: keyof typeof submenuFlags) {
   justify-content: space-between;
   align-items: center;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 70 auto;
 }
 
 /* -------- Logo -------- */
