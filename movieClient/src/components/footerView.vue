@@ -2,32 +2,27 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { CountUp } from "countup.js";
 
-/* ─── ❶ Back-to-top ─── */
 const showBackTop = ref(false);
 const onScroll = () => (showBackTop.value = window.scrollY > 200);
 const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-/* ─── ❷ 累計觀看人數（改成真實數字） ─── */
+/* ─── 累計觀看人數（動態取） ─── */
 const viewerCount = ref(0);
-const targetCount = ref(0); // ← 從 API 取得
+const targetCount = ref(0);
 let io: IntersectionObserver | null = null;
+let pollingTimer: number | null = null;
 
-// 依你專案的 API Base 設定。若已在全域放環境變數，就用 import.meta.env。
-// 下面兩行擇一（有環境變數就用第一行）
+// 依你的專案環境變數調整
 const API_BASE = "https://localhost:7181/api";
-// const API_BASE = "https://localhost:7181/api";
 
 async function fetchTotalViewCount() {
-  try {
-    const res = await fetch(`${API_BASE}/Movies/views/total`);
-    const data = await res.json();
-    targetCount.value = Number(data?.totalViewCount ?? 0);
-  } catch {
-    targetCount.value = 0;
-  }
+  const res = await fetch(`${API_BASE}/Movies/views/total`, {
+    cache: "no-store",
+  });
+  const data = await res.json();
+  targetCount.value = Number(data?.totalViewCount ?? 0);
 }
 
-/** 執行一次動畫：先歸零，再跑到 targetCount */
 function runCountUp() {
   const finalVal = targetCount.value || 0;
   viewerCount.value = 0;
@@ -39,28 +34,66 @@ function runCountUp() {
   cu.start(() => (viewerCount.value = finalVal));
 }
 
+// 每次需要更新畫面時呼叫：先抓最新，再跑動畫
+async function fetchAndAnimate() {
+  try {
+    await fetchTotalViewCount();
+  } catch {}
+  runCountUp();
+}
+
+function startPolling() {
+  if (pollingTimer) return;
+  // 可調頻率（例如 60 秒）
+  pollingTimer = window.setInterval(fetchAndAnimate, 60_000);
+}
+function stopPolling() {
+  if (!pollingTimer) return;
+  clearInterval(pollingTimer);
+  pollingTimer = null;
+}
+
 onMounted(async () => {
   onScroll();
   window.addEventListener("scroll", onScroll);
 
-  // 先把真實總數抓回來
-  await fetchTotalViewCount();
+  // 初次也抓一次
+  await fetchAndAnimate();
 
-  // 觀察 footer：每次進視窗就重播動畫（用真實數字）
+  // 觀察 footer：進入視窗就取新數據 + 播放，並在可見時啟動輪詢
   const footer = document.getElementById("footer");
   if (footer) {
     io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) runCountUp();
+        if (entry.isIntersecting) {
+          fetchAndAnimate();
+          startPolling();
+        } else {
+          stopPolling();
+        }
       },
       { threshold: 0.3 }
     );
     io.observe(footer);
   }
+
+  // 分頁回到前景時更新（避免你在別頁操作造成數字變了）
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") fetchAndAnimate();
+  });
+  window.addEventListener("focus", fetchAndAnimate);
+
+  // （選配）跨分頁同步：其他分頁更新後用 localStorage 觸發
+  window.addEventListener("storage", (e) => {
+    if (e.key === "movieViewIncremented") fetchAndAnimate();
+  });
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", onScroll);
+  window.removeEventListener("focus", fetchAndAnimate);
+  document.removeEventListener("visibilitychange", fetchAndAnimate as any);
+  stopPolling();
   io?.disconnect();
   io = null;
 });
