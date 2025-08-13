@@ -28,6 +28,7 @@ const spinning = ref(false);
 const chosen = ref(null);
 // 使用「目前篩選/分頁前的來源陣列」來抽籤。你可改成 pagedMovies 或 movies。
 const pickerMovies = computed(() => movies.value || []);
+const tickAudio = new Audio("/sounds/stutterriseshit4.mp3");
 
 // 分頁狀態
 const page = ref(1);
@@ -111,6 +112,16 @@ function stopSpinTimers() {
   }
 }
 
+function playSpinSound(startSec = 3.4, endSec = 9) {
+  tickAudio.currentTime = startSec;
+  tickAudio.play();
+
+  setTimeout(() => {
+    tickAudio.pause();
+    tickAudio.currentTime = startSec; // 重置到開始點
+  }, (endSec - startSec) * 1000);
+}
+
 // 抽籤動畫：先快 → 再慢慢減速 → 停下
 function startSpin() {
   if (!pickerMovies.value.length || spinning.value) return;
@@ -119,13 +130,14 @@ function startSpin() {
 
   chosen.value = null;
   spinning.value = true;
+  playSpinSound(3.4, 9);
 
   // 可調參數：越小越快、越大越慢
-  const TOTAL = 6000; // 總轉動時間(ms)
-  const MIN_DELAY = 20; // 一開始兩步之間的間隔(快)
-  const MAX_DELAY = 10; // 收尾兩步之間的間隔(慢)
+  const TOTAL = 4000; // 總轉動時間(ms)
+  const MIN_DELAY = 1; // 一開始兩步之間的間隔(快)
+  const MAX_DELAY = 1; // 收尾兩步之間的間隔(慢)
   const MIN_DUR = 1; // slideNext 過渡時間(開始)
-  const MAX_DUR = 80; // slideNext 過渡時間(結尾)
+  const MAX_DUR = 50; // slideNext 過渡時間(結尾)
 
   const t0 = Date.now();
 
@@ -274,7 +286,7 @@ onMounted(() => {
         :loop="true"
         :centered-slides="true"
         :slides-per-view="5"
-        :space-between="14"
+        :space-between="1"
         class="picker-swiper"
         @swiper="onPickerReady"
       >
@@ -505,18 +517,81 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.picker-swiper::before,
+.picker-swiper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to right, #17181c, transparent);
+}
+.picker-swiper::after {
+  right: 0;
+  left: auto;
+  transform: scaleX(-1);
 }
 .picker-slide {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: transform 0.35s ease, filter 0.35s ease, opacity 0.35s ease;
 }
 .picker-slide img {
   width: 230px;
   height: 330px;
   object-fit: cover;
-  box-shadow: 0 6px 20px #000a;
+  box-shadow: 0 10px 28px #000b;
+  transition: box-shadow 0.35s ease, transform 0.35s ease, filter 0.35s ease,
+    opacity 0.35s ease;
+}
+/* 不是中央的海報：縮小、微模糊、降低飽和/透明度 */
+.picker-slide:not(.swiper-slide-active) {
+  transform: scale(0.84);
+  filter: blur(1.2px) saturate(0.85);
+  opacity: 0.55;
+}
+.picker-slide.swiper-slide-prev,
+.picker-slide.swiper-slide-next {
+  transform: scale(0.9);
+  filter: blur(0.6px) saturate(0.95);
+  opacity: 0.8;
+}
+
+/* 中央海報：放大、強烈發光 */
+.picker-slide.swiper-slide-active {
+  transform: scale(1.06);
+  opacity: 1;
+  filter: none;
+}
+.picker-slide.swiper-slide-active img {
+  /* 內外光暈 + 外投影；顏色可自行微調 */
+  box-shadow: 0 0 0 3px #ffffff22 inset, /* 內圈柔光 */ 0 0 40px 10px #7be6fa,
+    /* 青藍外暈 */ 0 16px 36px #7be6fa; /* 下方落影 */
+}
+
+/* 轉動期間：脈衝發光動畫（spinning class 由你的程式控制） */
+.picker-swiper.spinning .swiper-slide-active img {
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 3px #ffffff22 inset, 0 0 30px 6px #7be6fa,
+      0 16px 36px #7be6fa;
+  }
+  50% {
+    box-shadow: 0 0 0 3px #ffffff22 inset, 0 0 52px 14px #7be6fa,
+      0 16px 36px #7be6fa;
+  }
+  100% {
+    box-shadow: 0 0 0 3px #ffffff22 inset, 0 0 30px 6px #7be6fa,
+      0 16px 36px #7be6fa;
+  }
 }
 .picker-ctrl {
   display: flex;

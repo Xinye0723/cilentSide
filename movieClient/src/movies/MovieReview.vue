@@ -80,16 +80,21 @@ function goToDetail(movieId) {
       </button>
     </div>
     <Swiper
+      v-if="movies.length"
+      ref="swiperRef"
       :modules="[Autoplay]"
       direction="vertical"
       :freeMode="true"
+      :observer="true"
+      :observe-parents="true"
       :autoplay="{
-        delay: 0,
+        delay: 1,
         disableOnInteraction: false,
         pauseOnMouseEnter: true,
       }"
       :loop="true"
-      :speed="2000"
+      :speed="1500"
+      :allowTouchMove="false"
       class="credit-swiper"
       :slides-per-view="3"
       :space-between="10"
