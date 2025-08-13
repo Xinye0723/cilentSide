@@ -7,29 +7,49 @@ const showBackTop = ref(false);
 const onScroll = () => (showBackTop.value = window.scrollY > 200);
 const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-/* ─── ❷ 累計觀看人數 ─── */
+/* ─── ❷ 累計觀看人數（改成真實數字） ─── */
 const viewerCount = ref(0);
-const targetCount = 12_345_678; // ← 換成後端實際數字
+const targetCount = ref(0); // ← 從 API 取得
+let io: IntersectionObserver | null = null;
 
-/** 執行一次動畫：先把顯示值歸 0，再跑到 target */
+// 依你專案的 API Base 設定。若已在全域放環境變數，就用 import.meta.env。
+// 下面兩行擇一（有環境變數就用第一行）
+const API_BASE = "https://localhost:7181/api";
+// const API_BASE = "https://localhost:7181/api";
+
+async function fetchTotalViewCount() {
+  try {
+    const res = await fetch(`${API_BASE}/Movies/views/total`);
+    const data = await res.json();
+    targetCount.value = Number(data?.totalViewCount ?? 0);
+  } catch {
+    targetCount.value = 0;
+  }
+}
+
+/** 執行一次動畫：先歸零，再跑到 targetCount */
 function runCountUp() {
+  const finalVal = targetCount.value || 0;
   viewerCount.value = 0;
-  const cu = new CountUp("viewerCount", targetCount, {
+  const cu = new CountUp("viewerCount", finalVal, {
     duration: 1,
     separator: ",",
     startVal: 0,
   });
-  cu.start(() => (viewerCount.value = targetCount));
+  cu.start(() => (viewerCount.value = finalVal));
 }
 
-onMounted(() => {
+onMounted(async () => {
   onScroll();
   window.addEventListener("scroll", onScroll);
 
-  /* 觀察 footer 每次進入視窗都重新跑動畫 */
+  // 先把真實總數抓回來
+  await fetchTotalViewCount();
+
+  // 觀察 footer：每次進視窗就重播動畫（用真實數字）
   const footer = document.getElementById("footer");
   if (footer) {
-    const io = new IntersectionObserver(
+    io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) runCountUp();
       },
@@ -38,8 +58,12 @@ onMounted(() => {
     io.observe(footer);
   }
 });
-// onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
-onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", onScroll);
+  io?.disconnect();
+  io = null;
+});
 </script>
 
 <template>
@@ -69,10 +93,20 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
               </div>
             </div>
             <div class="social-links mt-3">
-              <a href="https://www.instagram.com/infinitycinemaa_/?igsh=YXAxbjJrNGV0N3Rl&utm_source=qr#" target="_blank" rel="noopener noreferrer" class="social-link me-3">
+              <a
+                href="https://www.instagram.com/infinitycinemaa_/?igsh=YXAxbjJrNGV0N3Rl&utm_source=qr#"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="social-link me-3"
+              >
                 <i class="bi bi-instagram ig-gradient fs-4"></i>
               </a>
-              <a href="https://www.facebook.com/share/17A9ELkdW6/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="social-link me-3">
+              <a
+                href="https://www.facebook.com/share/17A9ELkdW6/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="social-link me-3"
+              >
                 <i class="bi bi-facebook text-primary fs-4"></i>
               </a>
             </div>
@@ -266,7 +300,14 @@ a:hover {
 }
 
 .ig-gradient {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -277,11 +318,11 @@ a:hover {
     text-align: center !important;
     margin-top: 2rem;
   }
-  
+
   .stats-card {
     padding: 1.5rem;
   }
-  
+
   .contact-grid {
     gap: 0.5rem;
   }
