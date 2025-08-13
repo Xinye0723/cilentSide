@@ -5,7 +5,7 @@ import { useChatStore } from "@/stores/chat";
 const chat = useChatStore();
 const bottom = ref<HTMLDivElement>();
 const DEFAULT_AVATAR = "https://placehold.co/40x40?text=?";
-
+const scrollBox = ref<HTMLDivElement | null>(null);
 /* ---------------- 時間工具：正規化為 UTC，再以台北時區顯示 ---------------- */
 function normalizeToUtcIso(input: string | number | Date): string {
   // 1) "2025-08-09T06:31:00"（沒有 Z）→ 視為 UTC，補 Z
@@ -37,18 +37,22 @@ const normalizedMessages = computed(() =>
 );
 
 /* 新訊息出現後，自動捲到底 */
-// watch(
-//   () => normalizedMessages.value.length,
-//   async () => {
-//     await nextTick();
-//     bottom.value?.scrollIntoView({ behavior: "smooth" });
-//   }
-// );
+watch(
+  () => normalizedMessages.value.length,
+  async () => {
+    await nextTick();
+    const box = scrollBox.value;
+    if (!box) return;
+    // 只捲動聊天室容器
+    box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+  }
+);
 </script>
 
 <template>
   <!-- 捲動容器 -->
   <div
+    ref="scrollBox"
     class="flex-1 overflow-y-auto p-6 flex flex-col space-y-5"
     style="height: calc(100vh - 140px)"
   >

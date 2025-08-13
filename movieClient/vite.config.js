@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://explained-qc-files-provinces.trycloudflare.com",
+        host: "https://bidding-teens-roberts-historic.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },

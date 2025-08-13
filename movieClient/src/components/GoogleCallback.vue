@@ -90,7 +90,7 @@ const processGoogleLogin = async () => {
 
     // 延遲一下再跳轉，讓用戶看到成功訊息
     setTimeout(() => {
-      router.push("/memberIn");
+      router.push("/memberInform");
     }, 1000);
   } catch (e) {
     console.error("Google 登入錯誤:", e);

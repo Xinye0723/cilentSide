@@ -46,8 +46,8 @@ async function login() {
     const data = await res.json();
     console.log("登入成功，接收到的資料:", data);
 
-    const auth = useAuthStore();  //抓Pinia
-    auth.setAuth({id:data.id,token:data.token,name:data.name});
+    const auth = useAuthStore(); //抓Pinia
+    auth.setAuth({ id: data.id, token: data.token, name: data.name });
     message.value = `歡迎回來，${data.name}!`;
 
     // 觸發登入狀態變化事件
@@ -120,21 +120,25 @@ async function sendCode() {
 }
 
 async function verifyResetCode() {
-  if (!verifyCode.value) {
+  if (!verifyCode.value?.trim()) {
     message.value = "請輸入認證碼";
     return;
   }
+  if (!email.value?.trim()) {
+    message.value = "請輸入信箱";
+    return;
+  }
+
   loading.value = true;
   try {
     const res = await fetch(
-      "https://localhost:7181/api/Members/VerifyResetCode",
       "https://localhost:7181/api/Members/VerifyResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.value,
-          code: verifyCode.value,
+          email: email.value.trim(),
+          code: verifyCode.value.trim(),
         }),
       }
     );
@@ -144,15 +148,12 @@ async function verifyResetCode() {
       try {
         const errorData = await res.json();
         errorMsg = errorData.message || errorMsg;
-      } catch (e) {
-        // 不是JSON就忽略
-      }
+      } catch {}
       message.value = errorMsg;
-      loading.value = false;
       return;
     }
 
-    const data = await res.json();
+    await res.json();
     mode.value = "reset";
     message.value = "請輸入新密碼";
   } catch (err) {
