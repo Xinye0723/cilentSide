@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://bidding-teens-roberts-historic.trycloudflare.com",
+        host: "https://dui-rt-mixer-australian.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },
