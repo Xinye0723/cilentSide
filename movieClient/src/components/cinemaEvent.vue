@@ -357,17 +357,17 @@ console.log("篩選後活動:", filteredEvents.value);
   font-size: 0.8rem;
 }
 
-.detail-item i {
-  color: #b388ff;
-  width: 14px;
-  font-size: 0.8rem;
-}
-
 .event-actions {
   display: flex;
   justify-content: center;
   margin-top: auto;
 }
+
+/* .detail-item i {
+  color: #b388ff;
+  width: 14px;
+  font-size: 0.8rem;
+} */
 
 .detail-btn {
   background: linear-gradient(90deg, #b388ff 60%, #9400d3 100%);
