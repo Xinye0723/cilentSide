@@ -679,7 +679,7 @@ const showCancelEventConfirm = () => {
       ">
         <div style="margin-bottom: 0.5rem;">• 活動取消後無法恢復</div>
         <div style="margin-bottom: 0.5rem;">• 所有已報名的參加者將被自動取消</div>
-        <div>• 已付款的參加者將獲得退款</div>
+        <!-- <div>• 已付款的參加者將獲得退款</div> -->
       </div>
     </div>
     

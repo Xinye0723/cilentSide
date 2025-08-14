@@ -66,11 +66,14 @@ watch(
       v-for="m in normalizedMessages"
       :key="m.messageId"
       class="flex items-end gap-2"
-      :class="m.userId == chat.currentUserId ? 'flex-row-reverse' : ''"
+      :class="[
+        m.userId == chat.currentUserId ? 'flex-row-reverse' : '',
+        m.userId === -1 ? 'bot-message' : '',
+      ]"
     >
       <!-- 頭貼 -->
       <img
-        :src="chat.avatars[m.userId] || DEFAULT_AVATAR"
+        :src="getBotAvatar(m.userId)"
         class="w-10 h-10 rounded-full object-cover shrink-0"
       />
 
@@ -78,9 +81,7 @@ watch(
       <div
         :class="[
           'inline-block max-w-[70%] px-3 py-1.5 rounded-xl shadow-sm whitespace-pre-wrap break-words leading-snug',
-          m.userId == chat.currentUserId
-            ? 'bg-[#4FC26B] text-white'
-            : 'bg-white text-gray-900',
+          getBubbleStyle(m.userId),
         ]"
       >
         <!-- 名稱（僅對方顯示） -->
@@ -112,3 +113,20 @@ watch(
     <div ref="bottom"></div>
   </div>
 </template>
+
+<style scoped>
+.bot-message {
+  animation: fadeInBot 0.5s ease-in;
+}
+
+@keyframes fadeInBot {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

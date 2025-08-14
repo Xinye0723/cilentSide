@@ -67,9 +67,9 @@ console.log("篩選後活動:", filteredEvents.value);
 
 <template>
   <div class="cinema-event">
-    <h1 class="title">影城活動</h1>
+    <h1 class="title">INFINITY - 無限驚喜等你來</h1>
     <div class="subtitle-row">
-      <p class="subtitle">精彩電影活動，帶給你前所未有的觀影體驗！</p>
+      <p class="subtitle">「無限影像，無盡想像」帶給所有顧客前所未有的觀影體驗！</p>
       <div class="filter-buttons">
         <button
           class="filter-btn"
@@ -357,20 +357,20 @@ console.log("篩選後活動:", filteredEvents.value);
   font-size: 0.8rem;
 }
 
-.detail-item i {
-  color: #b388ff;
-  width: 14px;
-  font-size: 0.8rem;
-}
-
 .event-actions {
   display: flex;
   justify-content: center;
   margin-top: auto;
 }
 
+/* .detail-item i {
+  color: #b388ff;
+  width: 14px;
+  font-size: 0.8rem;
+} */
+
 .detail-btn {
-  background: linear-gradient(90deg, #b388ff 60%, #7c7cfb 100%);
+  background: linear-gradient(90deg, #b388ff 60%, #9400d3 100%);
   color: white;
   padding: 0.5rem 1rem;
   border: none;

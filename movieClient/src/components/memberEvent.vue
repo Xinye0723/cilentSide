@@ -16,7 +16,13 @@ const currentMemberId = ref(null);
 // 載入活動資料的函數
 const loadEvents = async () => {
   try {
-    const res = await fetch("https://localhost:7181/api/MemberEvent");
+    // 構建API URL，如果有會員ID就加上參數
+    let apiUrl = "https://localhost:7181/api/MemberEvent";
+    if (currentMemberId.value) {
+      apiUrl += `?memberId=${currentMemberId.value}`;
+    }
+    
+    const res = await fetch(apiUrl);
     const data = await res.json();
     events.value = data.map((item) => ({
       id: item.memberEventId,
@@ -25,6 +31,7 @@ const loadEvents = async () => {
       organizerId: item.organizerId,
       registered: item.registered,
       maxCapacity: item.maxCapacity,
+      isRegistered: item.isRegistered || false, // 新增：是否已報名
       startTime: item.startTime
         ? new Date(item.startTime).toLocaleDateString("zh-TW") +
           " " +
@@ -140,9 +147,9 @@ const swiperOptions = {
 
 <template>
   <div class="group-event">
-    <h1 class="title">電影揪團活動</h1>
+    <h1 class="title">INFINITY 揪團活動</h1>
     <div class="subtitle-row">
-      <p class="subtitle">一起揪團看電影，享受大堆幕震撼體驗！</p>
+      <p class="subtitle">電影可以重播，揪團必須即時！</p>
       <RouterLink to="/createMemberEvent">
         <button class="create-btn">➕ 我要辦團</button>
       </RouterLink>
@@ -153,7 +160,7 @@ const swiperOptions = {
       <div class="section-header">
         <h2 class="section-title">
           <span class="cinema-icon">∞</span>
-          我辦的活動
+          主辦人是我！
         </h2>
         <span class="event-count">{{ myEvents.length }} 個活動</span>
       </div>
@@ -176,6 +183,8 @@ const swiperOptions = {
             class="swiper-slide"
           >
             <div class="event-card my-event-card">
+              <!-- 我辦的活動不顯示已報名標識 -->
+              
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
                 <span class="organizer-badge"
@@ -223,7 +232,7 @@ const swiperOptions = {
       <div class="section-header">
         <h2 class="section-title">
           <span class="cinema-icon">∞</span>
-          {{ myEvents.length > 0 ? "其他活動" : "所有活動" }}
+          {{ myEvents.length > 0 ? "參加活動" : "所有活動" }}
         </h2>
         <span class="event-count">{{ otherEvents.length }} 個活動</span>
       </div>
@@ -246,6 +255,11 @@ const swiperOptions = {
             class="swiper-slide"
           >
             <div class="event-card other-event-card">
+              <!-- 只有其他人辦的活動且已報名才顯示標識 -->
+              <div v-if="event.isRegistered" class="registered-badge">
+                已報名
+              </div>
+              
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
                 <span class="organizer-badge other-organizer"
@@ -336,7 +350,7 @@ const swiperOptions = {
 }
 
 .create-btn {
-  background: linear-gradient(90deg, #b388ff 60%, #7c7cfb 100%);
+  background: linear-gradient(90deg, #b388ff 60%, 	#B9B9FF 100%);
   color: white;
   padding: 0.6rem 1.2rem;
   border: none;
@@ -406,6 +420,23 @@ const swiperOptions = {
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  position: relative; /* 新增：讓子元素可以絕對定位 */
+}
+
+/* 修改：已報名標識樣式 - 調整粉色更重 */
+.registered-badge {
+  position: absolute;
+  top: 24px;
+  right: 12px;
+  background: rgba(255, 105, 135, 0.9); /* 改為更重的粉色 */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 105, 135, 0.3); /* 邊框也調整為對應顏色 */
 }
 
 .my-event-card {

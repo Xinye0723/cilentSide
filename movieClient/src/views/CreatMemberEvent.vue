@@ -234,7 +234,7 @@ const loadMovies = async () => {
     const res = await fetch("https://localhost:7181/api/Movies");
     if (res.ok) {
       const data = await res.json();
-      movies.value = data.filter(movie => movie.movieStatusId === 1);
+      movies.value = data.filter(movie => movie.movieStatusId === 2);
       filteredMovies.value = movies.value;
     }
   } catch (error) {
@@ -343,8 +343,8 @@ const validateCapacity = () => {
     return false;
   }
   
-  if (maxCapacity.value > 100) {
-    capacityError.value = "容納人數不能超過100人";
+  if (maxCapacity.value > 80) {
+    capacityError.value = "容納人數不能超過80人";
     return false;
   }
   
@@ -408,9 +408,6 @@ const validateAndSubmit = async () => {
     alert("請選擇電影");
     return;
   }
-  
-  // ❌ 移除這行，避免重複調用
-  // await submitForm();
   
   // ✅ 直接在這裡處理提交邏輯
   await submitForm();

@@ -6,6 +6,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import HeaderView from "./components/headerView.vue";
 import FooterView from "./components/footerView.vue";
 import CarouselComponent from "./components/CarouselComponent.vue";
+import FloatingChatBot from "./components/FloatingChatBot.vue"; // ← 新增這行
 
 const route = useRoute();
 </script>
@@ -28,6 +29,9 @@ const route = useRoute();
     <!-- 頁腳 -->
     <!-- v-if="!$route.meta.hideFooter" -->
     <FooterView />
+    
+    <!-- 🤖 浮動AI客服機器人 - 新增這行 -->
+    <FloatingChatBot />
   </div>
 </template>
 
