@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import Swal from "sweetalert2";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -19,7 +20,6 @@ const memberEmail = ref("");
 const memberBio = ref("");
 const memberAddress = ref("");
 
-const message = ref("");
 const loading = ref(false);
 
 // 性別選項
@@ -27,6 +27,24 @@ const genderOptions = [
   { value: "true", label: "男" },
   { value: "false", label: "女" }
 ];
+
+const alertSuccess = (title,text) => Swal.fire({icon: "success",title,text,timer:1800,showConfirmButton:false});
+
+const alertError = (title,text) => Swal.fire({icon:"error",title,text,confirmButtonText:"確定"});
+
+// 正則表達式驗證
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^09\d{8}$/;
+
+// 驗證 Email 格式
+const validateEmail = (email) => {
+  return emailRegex.test(email);
+};
+
+// 驗證手機號碼格式
+const validatePhone = (phone) => {
+  return phoneRegex.test(phone);
+};
 
 async function handleImgUpload(event) {
   const file = event.target.files[0];
@@ -42,27 +60,45 @@ async function handleImgUpload(event) {
       body: formData,
     });
     if (!res.ok) {
-      message.value = "圖片上傳失敗";
+      alertError("圖片上傳失敗", "請稍後再試");
       return;
     }
     const data = await res.json();
     memberImg.value = data.path; // 儲存圖片路徑
   } catch (err) {
-    message.value = "圖片上傳失敗";
+    alertError("圖片上傳失敗", "請稍後再試");
   }
 }
 
 async function register() {
   // 驗證密碼
   if (memberPassword.value !== confirmPassword.value) {
-    message.value = "密碼確認不一致";
+    alertError("密碼確認不一致", "請確認兩次輸入的密碼相同");
+    return;
+  }
+
+  // 驗證密碼長度
+  if (memberPassword.value.length < 6) {
+    alertError("密碼長度不足", "密碼長度至少需要6位數");
     return;
   }
 
   // 驗證必填欄位（包含大頭照）
   if (!memberImg.value || !memberName.value || !memberPhone.value || !memberPassword.value || 
       !memberBirth.value || !memberGender.value || !memberEmail.value || !memberAddress.value) {
-    message.value = "請填寫所有必填欄位（包含大頭照）";
+    alertError("必填欄位未填寫", "請填寫所有必填欄位（包含大頭照）");
+    return;
+  }
+
+  // 驗證 Email 格式
+  if (!validateEmail(memberEmail.value)) {
+    alertError("Email 格式錯誤", "請輸入正確的 Email 格式");
+    return;
+  }
+
+  // 驗證手機號碼格式
+  if (!validatePhone(memberPhone.value)) {
+    alertError("手機號碼格式錯誤", "請輸入以 09 開頭的 10 位數手機號碼");
     return;
   }
 
@@ -90,7 +126,12 @@ async function register() {
         const errorData = await res.json();
         console.error("註冊錯誤回應:", errorData);
         if (typeof errorData === 'object') {
-          errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
+          // 處理後端驗證錯誤
+          if (errorData.errors && Array.isArray(errorData.errors)) {
+            errorMsg = errorData.errors.join('\n');
+          } else {
+            errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
+          }
         } else {
           errorMsg = errorData.toString();
         }
@@ -104,7 +145,7 @@ async function register() {
           console.error("讀取錯誤文字失敗:", textError);
         }
       }
-      message.value = errorMsg;
+      alertError("註冊失敗", errorMsg);
       return;
     }
 
@@ -119,7 +160,7 @@ async function register() {
         name: data.memberName
       });
       
-      message.value = `註冊成功！歡迎 ${data.memberName}，正在為您登入...`;
+      alertSuccess("註冊成功", `歡迎 ${data.memberName}，正在為您登入...`);
       
       // 延遲跳轉到首頁
       setTimeout(() => {
@@ -127,7 +168,7 @@ async function register() {
       }, 2000);
     } else {
       // 如果後端沒有返回登入資訊，顯示成功訊息後跳轉到登入頁
-      message.value = `註冊成功！歡迎 ${data.memberName}，請登入您的帳號`;
+      alertSuccess("註冊成功", `歡迎 ${data.memberName}，請登入您的帳號`);
       
       // 延遲跳轉到登入頁面
       setTimeout(() => {
@@ -136,7 +177,7 @@ async function register() {
     }
   } catch (err) {
     console.error(err);
-    message.value = "註冊失敗，請稍後再試";
+    alertError("註冊失敗", "請稍後再試");
   } finally {
     loading.value = false;
   }
@@ -207,9 +248,14 @@ function goToLogin() {
                 v-model="memberPhone"
                 type="tel"
                 class="form-control form-control-lg"
+                :class="{ 'is-invalid': memberPhone && !validatePhone(memberPhone) }"
                 placeholder="輸入電話號碼"
                 required
+                @blur="validatePhone(memberPhone)"
               />
+              <div v-if="memberPhone && !validatePhone(memberPhone)" class="invalid-feedback">
+                請輸入以 09 開頭的 10 位數手機號碼
+              </div>
             </div>
 
             <!-- Email -->
@@ -219,9 +265,14 @@ function goToLogin() {
                 v-model="memberEmail"
                 type="email"
                 class="form-control form-control-lg"
+                :class="{ 'is-invalid': memberEmail && !validateEmail(memberEmail) }"
                 placeholder="輸入電子信箱"
                 required
+                @blur="validateEmail(memberEmail)"
               />
+              <div v-if="memberEmail && !validateEmail(memberEmail)" class="invalid-feedback">
+                請輸入正確的 Email 格式
+              </div>
             </div>
 
             <!-- 密碼 -->
@@ -231,9 +282,14 @@ function goToLogin() {
                 v-model="memberPassword"
                 type="password"
                 class="form-control form-control-lg"
-                placeholder="輸入密碼"
+                :class="{ 'is-invalid': memberPassword && memberPassword.length < 6 }"
+                placeholder="輸入密碼 (至少6位數)"
                 required
+                minlength="6"
               />
+              <div v-if="memberPassword && memberPassword.length < 6" class="invalid-feedback">
+                密碼長度至少需要6位數
+              </div>
             </div>
 
             <!-- 確認密碼 -->
@@ -313,8 +369,7 @@ function goToLogin() {
               </p>
             </div>
 
-            <!-- 顯示訊息 -->
-            <p class="mt-3 text-white">{{ message }}</p>
+
           </form>
         </div>
       </div>

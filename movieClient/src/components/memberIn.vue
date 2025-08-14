@@ -34,6 +34,20 @@ const member = ref<memberUpdateDto | null>(null);
 const error = ref<string | null>(null);
 const validateError = ref("");
 
+// 正則表達式驗證
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^09\d{8}$/;
+
+// 驗證 Email 格式
+const validateEmail = (email: string) => {
+  return emailRegex.test(email);
+};
+
+// 驗證手機號碼格式
+const validatePhone = (phone: string) => {
+  return phoneRegex.test(phone);
+};
+
 async function loadMember() {
   try {
     console.log("開始載入會員資料...");
@@ -187,18 +201,34 @@ async function uploadImage(file: File) {
 async function saveMember() {
   console.log("saveMember 被觸發");
   if (!member.value) return;
+  
   // 必填欄位檢查
   if (
     !member.value.memberImg ||
     !member.value.memberPhone?.trim() ||
     !member.value.memberAddress?.trim() ||
     (member.value.memberGender !== true && member.value.memberGender !== false) ||
-    !member.value.memberBirth?.trim()
+    !member.value.memberBirth?.trim() ||
+    !member.value.memberName?.trim() ||
+    !member.value.memberEmail?.trim()
   ) {
     console.log("必填驗證失敗", member.value);
-    validateError.value = "會員照片、電話、地址、性別、生日為必填欄位";
+    validateError.value = "會員照片、姓名、電話、地址、性別、生日、Email為必填欄位";
     return;
   }
+
+  // 驗證 Email 格式
+  if (!validateEmail(member.value.memberEmail)) {
+    validateError.value = "Email格式錯誤，請輸入正確的Email格式";
+    return;
+  }
+
+  // 驗證手機號碼格式
+  if (!validatePhone(member.value.memberPhone)) {
+    validateError.value = "手機號碼格式錯誤";
+    return;
+  }
+
   validateError.value = "";
   try {
     // 1. 如果有新圖片，先上傳
@@ -242,7 +272,28 @@ async function saveMember() {
         router.push("/login");
         return;
       }
-      throw new Error("更新失敗");
+      
+      // 處理後端驗證錯誤
+      let errorMsg = "更新失敗，請稍後再試";
+      try {
+        const errorData = await res.json();
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMsg = errorData.errors.join('\n');
+        } else {
+          errorMsg = errorData.message || errorMsg;
+        }
+      } catch (e) {
+        console.error("解析錯誤回應失敗:", e);
+      }
+      
+      Swal.fire({
+        icon: "error",
+        title: "更新失敗",
+        text: errorMsg,
+        confirmButtonText: "確定",
+        confirmButtonColor: "#d33"
+      });
+      return;
     }
     Swal.fire({
       icon: "success",
@@ -281,6 +332,10 @@ async function updatePassword() {
   }
   if (newPassword.value !== confirmNewPassword.value) {
     passwordMessage.value = "新密碼與確認密碼不一致";
+    return;
+  }
+  if (newPassword.value.length < 6) {
+    passwordMessage.value = "密碼長度至少需要6位數";
     return;
   }
   
@@ -391,15 +446,20 @@ async function updatePassword() {
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end text-white"
-                  ><strong>姓名：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end text-white">
+                  <span class="text-danger">*</span><strong>姓名：</strong>
+                </label>
                 <div class="col-sm-9">
                   <input
                     v-model="member.memberName"
                     class="form-control"
+                    :class="{ 'is-invalid': member.memberName && !member.memberName.trim() }"
                     type="text"
+                    required
                   />
+                  <div v-if="member.memberName && !member.memberName.trim()" class="invalid-feedback">
+                    姓名為必填欄位
+                  </div>
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
@@ -410,8 +470,14 @@ async function updatePassword() {
                   <input
                     v-model="member.memberPhone"
                     class="form-control"
+                    :class="{ 'is-invalid': member.memberPhone && !validatePhone(member.memberPhone) }"
                     type="text"
+                    placeholder="輸入電話號碼 (09開頭10位數)"
+                    required
                   />
+                  <div v-if="member.memberPhone && !validatePhone(member.memberPhone)" class="invalid-feedback">
+                    請輸入以 09 開頭的 10 位數手機號碼
+                  </div>
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
@@ -433,8 +499,13 @@ async function updatePassword() {
                   <input
                     v-model="member.memberAddress"
                     class="form-control"
+                    :class="{ 'is-invalid': member.memberAddress && !member.memberAddress.trim() }"
                     type="text"
+                    required
                   />
+                  <div v-if="member.memberAddress && !member.memberAddress.trim()" class="invalid-feedback">
+                    地址為必填欄位
+                  </div>
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
@@ -445,20 +516,31 @@ async function updatePassword() {
                   <input
                     v-model="member.memberBirth"
                     class="form-control"
+                    :class="{ 'is-invalid': member.memberBirth && !member.memberBirth.trim() }"
                     type="date"
+                    required
                   />
+                  <div v-if="member.memberBirth && !member.memberBirth.trim()" class="invalid-feedback">
+                    生日為必填欄位
+                  </div>
                 </div>
               </div>
               <div class="row mb-2 align-items-center">
-                <label class="col-sm-3 col-form-label text-end text-white"
-                  ><strong>Email：</strong></label
-                >
+                <label class="col-sm-3 col-form-label text-end text-white">
+                  <span class="text-danger">*</span><strong>Email：</strong>
+                </label>
                 <div class="col-sm-9">
                   <input
                     v-model="member.memberEmail"
                     class="form-control"
+                    :class="{ 'is-invalid': member.memberEmail && !validateEmail(member.memberEmail) }"
                     type="email"
+                    placeholder="輸入電子信箱"
+                    required
                   />
+                  <div v-if="member.memberEmail && !validateEmail(member.memberEmail)" class="invalid-feedback">
+                    請輸入正確的 Email 格式
+                  </div>
                 </div>
               </div>
               <div class="row mb-2 align-items-start">

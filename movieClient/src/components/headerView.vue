@@ -347,6 +347,19 @@ function leaveMenu(which: keyof typeof submenuFlags) {
   margin-right: auto;
 }
 
+/* -------- Gradient Animation -------- */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* -------- Nav Links -------- */
 .nav-links {
   display: flex;

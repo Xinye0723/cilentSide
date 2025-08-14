@@ -128,7 +128,6 @@ async function verifyResetCode() {
   try {
     const res = await fetch(
       "https://localhost:7181/api/Members/VerifyResetCode",
-      "https://localhost:7181/api/Members/VerifyResetCode",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
