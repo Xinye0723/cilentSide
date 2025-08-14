@@ -371,7 +371,7 @@ async function executeCancelJoin() {
   if (!event.value) return;
 
   try {
-    const memberId = localStorage.getItem("memberId");
+    const memberId = auth.memberId;
     if (!memberId) {
       showSuccessMessage("請先登入會員");
       return;

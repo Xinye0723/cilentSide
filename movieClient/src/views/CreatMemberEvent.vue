@@ -11,10 +11,10 @@
           <div class="search-icon">
             <i class="bi bi-search"></i>
           </div>
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="搜尋電影名稱、導演或標籤..." 
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="搜尋電影名稱、導演或標籤..."
             @input="filterMovies"
             class="movie-search-input"
           />
@@ -22,15 +22,15 @@
             <i class="bi bi-x-circle"></i>
           </div>
         </div>
-        
+
         <div class="movie-grid-container">
           <div class="movie-grid-header">
             <span class="movie-count">{{ filteredMovies.length }} 部電影</span>
           </div>
-          
+
           <div class="movie-list">
-            <div 
-              v-for="movie in filteredMovies" 
+            <div
+              v-for="movie in filteredMovies"
               :key="movie.movieId"
               class="movie-item"
               :class="{ selected: selectedMovie?.movieId === movie.movieId }"
@@ -52,34 +52,30 @@
                       {{ movie.director }}
                     </span>
                     <div class="movie-tags">
-                      <span 
-                        v-for="tag in movie.tags" 
-                        :key="tag" 
-                        class="tag"
-                      >
+                      <span v-for="tag in movie.tags" :key="tag" class="tag">
                         {{ tag }}
                       </span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="select-indicator">
-                  <i class="bi bi-check-circle" v-if="selectedMovie?.movieId !== movie.movieId"></i>
+                  <i
+                    class="bi bi-check-circle"
+                    v-if="selectedMovie?.movieId !== movie.movieId"
+                  ></i>
                   <i class="bi bi-check-circle-fill" v-else></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- 懸停提示框 -->
-        <div 
-          v-if="tooltip.show" 
-          class="movie-tooltip"
-        >
+        <div v-if="tooltip.show" class="movie-tooltip">
           <div class="tooltip-poster">
-            <img 
-              :src="getMoviePosterUrl(tooltip.movie?.posterPicture)" 
+            <img
+              :src="getMoviePosterUrl(tooltip.movie?.posterPicture)"
               :alt="tooltip.movie?.movieNameChinese"
               @error="handleTooltipImageError"
               @load="handleTooltipImageLoad"
@@ -93,12 +89,14 @@
             <h4>{{ tooltip.movie?.movieNameChinese }}</h4>
             <p class="tooltip-english">{{ tooltip.movie?.movieNameEnglish }}</p>
             <div class="tooltip-meta">
-              <span class="tooltip-duration">{{ tooltip.movie?.duration }}分鐘</span>
+              <span class="tooltip-duration"
+                >{{ tooltip.movie?.duration }}分鐘</span
+              >
             </div>
             <div class="tooltip-tags">
-              <span 
-                v-for="tag in tooltip.movie?.tags" 
-                :key="tag" 
+              <span
+                v-for="tag in tooltip.movie?.tags"
+                :key="tag"
                 class="tooltip-tag"
               >
                 {{ tag }}
@@ -116,8 +114,12 @@
             <h5>{{ selectedMovie.movieNameChinese }}</h5>
             <p class="selected-plot">{{ selectedMovie.plot }}</p>
             <div class="selected-meta">
-              <span class="selected-duration">{{ selectedMovie.duration }}分鐘</span>
-              <span class="selected-director">{{ selectedMovie.director }}</span>
+              <span class="selected-duration"
+                >{{ selectedMovie.duration }}分鐘</span
+              >
+              <span class="selected-director">{{
+                selectedMovie.director
+              }}</span>
             </div>
           </div>
         </div>
@@ -127,11 +129,11 @@
         <div class="time-section">
           <label>開始時間：</label>
           <div class="time-input-container">
-            <input 
+            <input
               ref="startTimeInput"
-              v-model="startTime" 
-              type="datetime-local" 
-              required 
+              v-model="startTime"
+              type="datetime-local"
+              required
               @change="validateTime"
             />
             <div class="infinity-emoji" @click="focusDateTimeInput">∞</div>
@@ -141,15 +143,15 @@
             {{ timeError }}
           </div>
         </div>
-        
+
         <div class="capacity-section">
           <label>容納人數：</label>
           <div class="capacity-control">
             <button type="button" @click="decreaseCapacity">-</button>
-            <input 
-              v-model.number="maxCapacity" 
-              type="number" 
-              min="1" 
+            <input
+              v-model.number="maxCapacity"
+              type="number"
+              min="1"
               max="100"
               class="capacity-input"
               @input="validateCapacity"
@@ -180,12 +182,12 @@
 
       <div class="btn-row">
         <button class="back-btn" @click="goBack">返回上一頁</button>
-        <button 
-          class="submit-btn" 
-          :disabled="!canSubmit || isSubmitting" 
+        <button
+          class="submit-btn"
+          :disabled="!canSubmit || isSubmitting"
           @click="validateAndSubmit"
         >
-          {{ isSubmitting ? '建立中...' : submitButtonText }}
+          {{ isSubmitting ? "建立中..." : submitButtonText }}
         </button>
       </div>
     </form>
@@ -195,7 +197,8 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
-
+import { useAuthStore } from "@/stores/auth";
+const auth = useAuthStore();
 const router = useRouter();
 
 function goBack() {
@@ -218,13 +221,13 @@ const isSubmitting = ref(false);
 // 處理圖片URL
 const getMoviePosterUrl = (posterPath) => {
   if (!posterPath) {
-    return '/default-movie-poster.jpg';
+    return "/default-movie-poster.jpg";
   }
-  
-  if (posterPath.startsWith('http')) {
+
+  if (posterPath.startsWith("http")) {
     return posterPath;
   }
-  
+
   return `https://localhost:7181/${posterPath}`;
 };
 
@@ -234,7 +237,7 @@ const loadMovies = async () => {
     const res = await fetch("https://localhost:7181/api/Movies");
     if (res.ok) {
       const data = await res.json();
-      movies.value = data.filter(movie => movie.movieStatusId === 2);
+      movies.value = data.filter((movie) => movie.movieStatusId === 2);
       filteredMovies.value = movies.value;
     }
   } catch (error) {
@@ -248,32 +251,38 @@ const filterMovies = () => {
     filteredMovies.value = movies.value;
     return;
   }
-  
+
   const query = searchQuery.value.toLowerCase().trim();
-  filteredMovies.value = movies.value.filter(movie => {
-    if (movie.movieNameChinese && movie.movieNameChinese.toLowerCase().includes(query)) {
+  filteredMovies.value = movies.value.filter((movie) => {
+    if (
+      movie.movieNameChinese &&
+      movie.movieNameChinese.toLowerCase().includes(query)
+    ) {
       return true;
     }
-    
-    if (movie.movieNameEnglish && movie.movieNameEnglish.toLowerCase().includes(query)) {
+
+    if (
+      movie.movieNameEnglish &&
+      movie.movieNameEnglish.toLowerCase().includes(query)
+    ) {
       return true;
     }
-    
+
     if (movie.director && movie.director.toLowerCase().includes(query)) {
       return true;
     }
-    
+
     if (movie.tags && Array.isArray(movie.tags)) {
-      return movie.tags.some(tag => tag.toLowerCase().includes(query));
+      return movie.tags.some((tag) => tag.toLowerCase().includes(query));
     }
-    
+
     return false;
   });
 };
 
 // 清除搜尋
 const clearSearch = () => {
-  searchQuery.value = '';
+  searchQuery.value = "";
   filteredMovies.value = movies.value;
 };
 
@@ -284,8 +293,8 @@ const selectMovie = (movie) => {
 
 // 處理圖片載入錯誤
 const handleImageError = (event) => {
-  console.log('圖片載入失敗:', event.target.src);
-  event.target.style.display = 'none';
+  console.log("圖片載入失敗:", event.target.src);
+  event.target.style.display = "none";
 };
 
 // 處理圖片載入成功
@@ -309,76 +318,76 @@ const descriptionError = ref("");
 // 驗證時間
 const validateTime = () => {
   timeError.value = "";
-  
+
   if (!startTime.value) {
     timeError.value = "請選擇開始時間";
     return false;
   }
-  
+
   const selectedTime = new Date(startTime.value);
   const now = new Date();
-  
+
   if (selectedTime <= now) {
     timeError.value = "開始時間不能是過去或現在的時間";
     return false;
   }
-  
+
   const oneYearLater = new Date();
   oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-  
+
   if (selectedTime > oneYearLater) {
     timeError.value = "開始時間不能超過一年後";
     return false;
   }
-  
+
   return true;
 };
 
 // 驗證人數
 const validateCapacity = () => {
   capacityError.value = "";
-  
+
   if (!maxCapacity.value || maxCapacity.value < 2) {
     capacityError.value = "容納人數至少需要2人";
     return false;
   }
-  
+
   if (maxCapacity.value > 80) {
     capacityError.value = "容納人數不能超過80人";
     return false;
   }
-  
+
   return true;
 };
 
 // 驗證說明
 const validateDescription = () => {
   descriptionError.value = "";
-  
+
   if (!description.value.trim()) {
     descriptionError.value = "請輸入活動說明";
     return false;
   }
-  
+
   return true;
 };
 
 // 計算是否可以提交
 const canSubmit = computed(() => {
   // 基本檢查：必須有標題、選擇電影、開始時間、說明
-  const hasBasicInfo = title.value.trim() && 
-                      selectedMovie.value && 
-                      startTime.value && 
-                      description.value.trim();
-  
+  const hasBasicInfo =
+    title.value.trim() &&
+    selectedMovie.value &&
+    startTime.value &&
+    description.value.trim();
+
   // 檢查是否有錯誤訊息
-  const hasNoErrors = !timeError.value && 
-                     !capacityError.value && 
-                     !descriptionError.value;
-  
+  const hasNoErrors =
+    !timeError.value && !capacityError.value && !descriptionError.value;
+
   // 檢查人數是否在合理範圍內
   const validCapacity = maxCapacity.value >= 2 && maxCapacity.value <= 100;
-  
+
   return hasBasicInfo && hasNoErrors && validCapacity;
 });
 
@@ -399,16 +408,16 @@ const validateAndSubmit = async () => {
   const isTimeValid = validateTime();
   const isCapacityValid = validateCapacity();
   const isDescriptionValid = validateDescription();
-  
+
   if (!isTimeValid || !isCapacityValid || !isDescriptionValid) {
     return;
   }
-  
+
   if (!selectedMovie.value) {
     alert("請選擇電影");
     return;
   }
-  
+
   // ✅ 直接在這裡處理提交邏輯
   await submitForm();
 };
@@ -419,7 +428,7 @@ const submitForm = async () => {
     console.log("正在提交中，請稍候...");
     return;
   }
-  
+
   if (!selectedMovie.value) {
     alert("請選擇電影");
     return;
@@ -427,12 +436,12 @@ const submitForm = async () => {
 
   try {
     isSubmitting.value = true; // 設置提交中標記
-    
+
     const start = new Date(startTime.value);
     const end = new Date(start);
     end.setHours(start.getHours() + 2);
 
-    const currentMemberId = localStorage.getItem('memberId') || 1;
+    const currentMemberId = auth.memberId;
 
     const newEvent = {
       title: title.value,
@@ -444,7 +453,7 @@ const submitForm = async () => {
       price: 300,
       description: description.value,
       maxCapacity: maxCapacity.value,
-      organizerId: Number(currentMemberId)
+      organizerId: Number(currentMemberId),
     };
 
     console.log("開始提交活動:", newEvent);
@@ -459,9 +468,8 @@ const submitForm = async () => {
       const result = await res.json();
       console.log("活動建立成功:", result);
       showSuccessToast("您的活動已成功建立！");
-      
+
       // 提示函數會自動處理跳轉，不需要手動跳轉
-      
     } else {
       const errorData = await res.json();
       console.error("建立失敗:", errorData);
@@ -480,7 +488,7 @@ const tooltip = ref({
   show: false,
   x: 0,
   y: 0,
-  movie: null
+  movie: null,
 });
 
 const tooltipImageLoaded = ref(false);
@@ -507,7 +515,8 @@ const showSuccessToast = (message) => {
   toast.style.borderRadius = "25px";
   toast.style.zIndex = "99999";
   toast.style.fontSize = "1.1rem";
-  toast.style.boxShadow = "0 25px 80px rgba(100, 181, 246, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
+  toast.style.boxShadow =
+    "0 25px 80px rgba(100, 181, 246, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
   toast.style.backdropFilter = "blur(25px)";
   toast.style.maxWidth = "450px";
   toast.style.fontWeight = "600";
@@ -518,7 +527,8 @@ const showSuccessToast = (message) => {
   toast.style.gap = "1.2rem";
   toast.style.textAlign = "center";
   toast.style.border = "2px solid rgba(255, 255, 255, 0.3)";
-  toast.style.background = "linear-gradient(135deg, rgba(100, 181, 246, 0.95) 0%, rgba(144, 202, 249, 0.95) 50%, rgba(100, 181, 246, 0.95) 100%)";
+  toast.style.background =
+    "linear-gradient(135deg, rgba(100, 181, 246, 0.95) 0%, rgba(144, 202, 249, 0.95) 50%, rgba(100, 181, 246, 0.95) 100%)";
   toast.style.color = "#fff";
   toast.style.overflow = "hidden";
 
@@ -689,7 +699,8 @@ const showErrorToast = (message) => {
   toast.style.borderRadius = "25px";
   toast.style.zIndex = "99999";
   toast.style.fontSize = "1.1rem";
-  toast.style.boxShadow = "0 25px 80px rgba(255, 107, 107, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
+  toast.style.boxShadow =
+    "0 25px 80px rgba(255, 107, 107, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2)";
   toast.style.backdropFilter = "blur(25px)";
   toast.style.maxWidth = "450px";
   toast.style.fontWeight = "600";
@@ -700,7 +711,8 @@ const showErrorToast = (message) => {
   toast.style.gap = "1.2rem";
   toast.style.textAlign = "center";
   toast.style.border = "2px solid rgba(255, 255, 255, 0.3)";
-  toast.style.background = "linear-gradient(135deg, rgba(255, 107, 107, 0.95) 0%, rgba(255, 138, 138, 0.95) 50%, rgba(255, 107, 107, 0.95) 100%)";
+  toast.style.background =
+    "linear-gradient(135deg, rgba(255, 107, 107, 0.95) 0%, rgba(255, 138, 138, 0.95) 50%, rgba(255, 107, 107, 0.95) 100%)";
   toast.style.color = "#fff";
   toast.style.overflow = "hidden";
 
@@ -840,18 +852,18 @@ const showErrorToast = (message) => {
 const showTooltip = (event, movie) => {
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
-  
+
   const tooltipWidth = 280;
   const tooltipHeight = 320;
-  
+
   const x = windowWidth - tooltipWidth - 50;
   const y = Math.max(50, (windowHeight - tooltipHeight) / 2);
-  
+
   tooltip.value = {
     show: true,
     x: x,
     y: y,
-    movie: movie
+    movie: movie,
   };
   tooltipImageLoaded.value = false;
 };
@@ -863,13 +875,13 @@ const hideTooltip = () => {
 };
 
 const handleTooltipImageError = (event) => {
-  console.log('提示框圖片載入失敗:', event.target.src);
-  event.target.style.display = 'none';
+  console.log("提示框圖片載入失敗:", event.target.src);
+  event.target.style.display = "none";
   tooltipImageLoaded.value = false;
 };
 
 const handleTooltipImageLoad = (event) => {
-  console.log('提示框圖片載入成功');
+  console.log("提示框圖片載入成功");
   tooltipImageLoaded.value = true;
 };
 
@@ -933,7 +945,11 @@ select {
 
 /* 美化活動標題輸入欄位 */
 input[type="text"] {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   color: #fff;
@@ -954,7 +970,11 @@ input[type="text"]::placeholder {
 input[type="text"]:focus {
   outline: none;
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
   box-shadow: 0 0 20px rgba(163, 135, 255, 0.3);
   transform: translateY(-1px);
   color: #fff;
@@ -965,7 +985,11 @@ input[type="text"]:focus {
 .movie-search-input {
   width: 100%;
   padding: 0.8rem 1rem 0.8rem 2.8rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   color: #fff;
@@ -983,7 +1007,11 @@ input[type="text"]:focus {
 .movie-search-input:focus {
   outline: none;
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
   box-shadow: 0 0 20px rgba(163, 135, 255, 0.3);
   transform: translateY(-1px);
 }
@@ -1021,7 +1049,11 @@ input[type="text"]:focus {
 
 /* 電影選擇區域樣式 */
 .movie-selection {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 74, 0.8) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(26, 26, 46, 0.8) 0%,
+    rgba(42, 42, 74, 0.8) 100%
+  );
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -1062,7 +1094,11 @@ input[type="text"]:focus {
 }
 
 .movie-item {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(42, 42, 74, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(26, 26, 46, 0.9) 0%,
+    rgba(42, 42, 74, 0.9) 100%
+  );
   border-radius: 12px;
   margin-bottom: 0.8rem;
   cursor: pointer;
@@ -1080,7 +1116,11 @@ input[type="text"]:focus {
 
 .movie-item.selected {
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(163, 135, 255, 0.2) 0%, rgba(124, 124, 251, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(163, 135, 255, 0.2) 0%,
+    rgba(124, 124, 251, 0.2) 100%
+  );
   box-shadow: 0 0 20px rgba(163, 135, 255, 0.3);
 }
 
@@ -1160,7 +1200,11 @@ input[type="text"]:focus {
 }
 
 .tag {
-  background: linear-gradient(135deg, rgba(163, 135, 255, 0.3) 0%, rgba(124, 124, 251, 0.3) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(163, 135, 255, 0.3) 0%,
+    rgba(124, 124, 251, 0.3) 100%
+  );
   color: #a387ff;
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
@@ -1180,7 +1224,11 @@ input[type="text"]:focus {
 .movie-tooltip {
   position: fixed;
   z-index: 99999;
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(42, 42, 74, 0.98) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(26, 26, 46, 0.98) 0%,
+    rgba(42, 42, 74, 0.98) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.6);
   border-radius: 12px;
   padding: 1rem;
@@ -1288,7 +1336,11 @@ input[type="text"]:focus {
 }
 
 .selected-movie-info {
-  background: linear-gradient(135deg, rgba(163, 135, 255, 0.1) 0%, rgba(124, 124, 251, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(163, 135, 255, 0.1) 0%,
+    rgba(124, 124, 251, 0.1) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   padding: 1.5rem;
@@ -1411,14 +1463,16 @@ input[type="text"]:focus {
     transform: translateY(-50%) scale(1);
   }
   100% {
-    text-shadow: 0 0 20px rgba(163, 135, 255, 0.9), 0 0 30px rgba(163, 135, 255, 0.5);
+    text-shadow: 0 0 20px rgba(163, 135, 255, 0.9),
+      0 0 30px rgba(163, 135, 255, 0.5);
     transform: translateY(-50%) scale(1.05);
   }
 }
 
 .infinity-emoji:hover {
   color: #fff;
-  text-shadow: 0 0 25px rgba(163, 135, 255, 1), 0 0 35px rgba(163, 135, 255, 0.7);
+  text-shadow: 0 0 25px rgba(163, 135, 255, 1),
+    0 0 35px rgba(163, 135, 255, 0.7);
   transform: translateY(-50%) scale(1.15);
   background: rgba(163, 135, 255, 0.1);
 }
@@ -1431,7 +1485,11 @@ input[type="text"]:focus {
 .time-section input[type="datetime-local"] {
   width: 100%;
   padding: 0.8rem 3.5rem 0.8rem 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   color: #fff;
@@ -1447,7 +1505,11 @@ input[type="text"]:focus {
 .time-section input[type="datetime-local"]:focus {
   outline: none;
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
   box-shadow: 0 0 20px rgba(163, 135, 255, 0.3);
   transform: translateY(-1px);
   color: #fff;
@@ -1472,7 +1534,11 @@ input[type="text"]:focus {
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   padding: 0.8rem;
@@ -1517,7 +1583,11 @@ input[type="text"]:focus {
 }
 
 .capacity-input {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 8px;
   color: #fff;
@@ -1538,7 +1608,11 @@ input[type="text"]:focus {
 .capacity-input:focus {
   outline: none;
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
   box-shadow: 0 0 15px rgba(163, 135, 255, 0.3);
   transform: translateY(-1px);
   color: #fff;
@@ -1557,7 +1631,7 @@ input[type="text"]:focus {
   margin: 0;
 }
 
-.capacity-input[type=number] {
+.capacity-input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -1571,7 +1645,11 @@ input[type="text"]:focus {
 .description-textarea {
   width: 100%;
   padding: 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border: 2px solid rgba(163, 135, 255, 0.3);
   border-radius: 12px;
   color: #fff;
@@ -1595,7 +1673,11 @@ input[type="text"]:focus {
 .description-textarea:focus {
   outline: none;
   border-color: #a387ff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
   box-shadow: 0 0 20px rgba(163, 135, 255, 0.3);
   transform: translateY(-1px);
   color: #fff;
@@ -1628,9 +1710,16 @@ input[type="text"]:focus {
 }
 
 @keyframes errorShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 /* 按鈕樣式 */
@@ -1641,7 +1730,8 @@ input[type="text"]:focus {
   margin-top: 2rem;
 }
 
-.back-btn, .submit-btn {
+.back-btn,
+.submit-btn {
   background: #a387ff;
   color: #fff;
   border: none;
@@ -1652,7 +1742,8 @@ input[type="text"]:focus {
   transition: background 0.2s;
 }
 
-.back-btn:hover, .submit-btn:hover:not(:disabled) {
+.back-btn:hover,
+.submit-btn:hover:not(:disabled) {
   background: #7e5de4;
 }
 

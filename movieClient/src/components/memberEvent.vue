@@ -4,15 +4,17 @@ import { useRouter, useRoute } from "vue-router";
 import { RouterLink } from "vue-router";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import { useAuthStore } from "@/stores/auth";
+
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { useAuthStore } from "@/stores/auth";
-const memberId = useAuthStore;
+const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const events = ref([]);
 const currentMemberId = ref(null);
+
 // 載入活動資料的函數
 const loadEvents = async () => {
   try {
@@ -21,7 +23,7 @@ const loadEvents = async () => {
     if (currentMemberId.value) {
       apiUrl += `?memberId=${currentMemberId.value}`;
     }
-    
+
     const res = await fetch(apiUrl);
     const data = await res.json();
     events.value = data.map((item) => ({
@@ -49,7 +51,7 @@ const loadEvents = async () => {
 
 onMounted(async () => {
   // 獲取當前會員ID
-  currentMemberId.value = memberId.memberId;
+  currentMemberId.value = auth.memberId;
   // 載入活動資料
   await loadEvents();
 });
@@ -184,7 +186,7 @@ const swiperOptions = {
           >
             <div class="event-card my-event-card">
               <!-- 我辦的活動不顯示已報名標識 -->
-              
+
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
                 <span class="organizer-badge"
@@ -259,7 +261,7 @@ const swiperOptions = {
               <div v-if="event.isRegistered" class="registered-badge">
                 已報名
               </div>
-              
+
               <div class="event-card-header">
                 <h3 class="event-card-title">{{ event.title }}</h3>
                 <span class="organizer-badge other-organizer"
@@ -350,7 +352,7 @@ const swiperOptions = {
 }
 
 .create-btn {
-  background: linear-gradient(90deg, #b388ff 60%, 	#B9B9FF 100%);
+  background: linear-gradient(90deg, #b388ff 60%, #b9b9ff 100%);
   color: white;
   padding: 0.6rem 1.2rem;
   border: none;
@@ -365,7 +367,10 @@ const swiperOptions = {
   background: linear-gradient(90deg, #7c7cfb 60%, #b388ff 100%);
   box-shadow: 0 0 18px #b388ff77;
 }
-
+.create-btn:hover {
+  background: linear-gradient(90deg, #7c7cfb 60%, #b388ff 100%);
+  box-shadow: 0 0 18px #b388ff77;
+}
 .event-section {
   margin-bottom: 3rem;
 }

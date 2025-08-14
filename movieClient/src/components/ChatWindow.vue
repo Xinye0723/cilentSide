@@ -52,7 +52,6 @@ watch(
 <template>
   <!-- 捲動容器 -->
   <div
-    ref="scrollBox"
     class="flex-1 overflow-y-auto p-6 flex flex-col space-y-5"
     style="height: calc(100vh - 140px)"
   >
@@ -66,14 +65,11 @@ watch(
       v-for="m in normalizedMessages"
       :key="m.messageId"
       class="flex items-end gap-2"
-      :class="[
-        m.userId == chat.currentUserId ? 'flex-row-reverse' : '',
-        m.userId === -1 ? 'bot-message' : '',
-      ]"
+      :class="m.userId == chat.currentUserId ? 'flex-row-reverse' : ''"
     >
       <!-- 頭貼 -->
       <img
-        :src="getBotAvatar(m.userId)"
+        :src="chat.avatars[m.userId] || DEFAULT_AVATAR"
         class="w-10 h-10 rounded-full object-cover shrink-0"
       />
 
@@ -81,7 +77,9 @@ watch(
       <div
         :class="[
           'inline-block max-w-[70%] px-3 py-1.5 rounded-xl shadow-sm whitespace-pre-wrap break-words leading-snug',
-          getBubbleStyle(m.userId),
+          m.userId == chat.currentUserId
+            ? 'bg-[#4FC26B] text-white'
+            : 'bg-white text-gray-900',
         ]"
       >
         <!-- 名稱（僅對方顯示） -->
@@ -113,20 +111,3 @@ watch(
     <div ref="bottom"></div>
   </div>
 </template>
-
-<style scoped>
-.bot-message {
-  animation: fadeInBot 0.5s ease-in;
-}
-
-@keyframes fadeInBot {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
