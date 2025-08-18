@@ -24,7 +24,7 @@ export default defineConfig({
         secure: false,
       },
       hmr: {
-        host: "https://dui-rt-mixer-australian.trycloudflare.com",
+        host: "https://typically-tan-tt-parade.trycloudflare.com",
         protocol: "wss",
         clientPort: 443,
       },

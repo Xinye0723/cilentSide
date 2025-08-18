@@ -17,7 +17,10 @@ const router = useRouter();
 const directorList = computed(() => {
   if (!movie.value?.director) return [];
   // 可依你後端分隔符號改，這裡支援中、英文逗號
-  return movie.value.director.split(/,|、|\n/).map(s => s.trim()).filter(Boolean);
+  return movie.value.director
+    .split(/,|、|\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 });
 
 // 點擊事件
@@ -35,7 +38,7 @@ function onSlideChange(swiper) {
   activeIndex.value = swiper.realIndex;
 }
 
-function truncatePlot(str, len = 56) {
+function truncatePlot(str, len = 55) {
   if (!str) return "";
   return str.length > len ? str.slice(0, len) + "......" : str;
 }
@@ -191,14 +194,28 @@ watch(
             />
             <div class="summary-title-ch">{{ movie.movieNameChinese }}</div>
             <div class="summary-title-en">{{ movie.movieNameEnglish }}</div>
-            <div class="summary-meta">類型：{{ movie.tags ? movie.tags.join('、') : '-'  }}</div>
-            <div class="summary-meta">片長：{{ movie.duration || "-" }} 分鐘</div>
-            <div class="summary-meta">導演：
-              {{ movie.director ? movie.director.split(/,|、|\n/).map(s => s.trim()).filter(Boolean).join('、') : '-' }}</div>
+            <div class="summary-meta">
+              類型：{{ movie.tags ? movie.tags.join("、") : "-" }}
+            </div>
+            <div class="summary-meta">
+              片長：{{ movie.duration || "-" }} 分鐘
+            </div>
+            <div class="summary-meta">
+              導演：
+              {{
+                movie.director
+                  ? movie.director
+                      .split(/,|、|\n/)
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .join("、")
+                  : "-"
+              }}
+            </div>
             <div class="summary-meta">製作商：{{ movie.production }}</div>
             <div class="summary-meta">產地：{{ movie.country }}</div>
             <div class="summary-desc">
-              {{ truncatePlot(movie.plot, 56) }}
+              {{ truncatePlot(movie.plot, 55) }}
               <span v-if="movie.plot">
                 <button
                   class="detail-link"

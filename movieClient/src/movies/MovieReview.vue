@@ -94,7 +94,7 @@ function goToDetail(movieId) {
       }"
       :loop="true"
       :speed="1500"
-      :allowTouchMove="false"
+      :allowTouchMove="true"
       class="credit-swiper"
       :slides-per-view="3"
       :space-between="10"

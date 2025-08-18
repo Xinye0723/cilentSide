@@ -11,8 +11,8 @@ let memberId = memeberInform.memberId;
 const email = ref(booking.email || "test@example.com");
 const desc = computed(() => booking.movieName || "電影票");
 const grandTotal = computed(() => booking.ticketTotal + booking.snackTotal);
-const ngrokBaseUrl = "https://14c392fbcfbe.ngrok-free.app";
-const frontendUrl = "https://dui-rt-mixer-australian.trycloudflare.com";
+const ngrokBaseUrl = "https://0fbce1f9d15f.ngrok-free.app";
+const frontendUrl = "https://typically-tan-tt-parade.trycloudflare.com";
 const itemName = computed(() => {
   const tickets = Object.entries(booking.ticketCounts as Record<string, number>)
     .filter(([, c]) => c > 0)
